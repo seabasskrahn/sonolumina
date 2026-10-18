@@ -16,9 +16,12 @@ export function createNarrator() {
   if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; }
 
   // Speak a verse at the pace the music reads it (words per minute).
+  // A verse still being read is never cut off: the next one waits its turn.
+  // Only if a whole verse is already waiting (the voice is over a verse
+  // behind) is the backlog dropped, so the lag can never grow.
   function speak(text, wpm) {
     if (!on || !synth) return;
-    synth.cancel();
+    if (synth.speaking && synth.pending) synth.cancel();
     const u = new SpeechSynthesisUtterance(text);
     if (voice) u.voice = voice;
     u.lang = voice?.lang || 'en';

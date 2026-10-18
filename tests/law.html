@@ -61,9 +61,10 @@
   const inScale = (f, mode) => MODES[mode].some(m => near(m, pc(f / 110), 1e-9)) || near(pc(f / 110), 15 / 8, 1e-9);
   check('31 verses scored', ch.verses.length === 31);
   check('feeling is smoothed verse to verse', near(ch.verses[1].E.v, (verseE(vad, 1, 2).v + verseE(vad, 1, 1).v) / 2, 1e-12));
-  check('every word tone of Genesis 1 lies in its verse mode',
-    ch.verses.every(vs => scoreVerseOk(vs)));
-  function scoreVerseOk(vs) { return vs.bars.every(b => b.tones.every(f => inScale(f, vs.mode))); }
+  check('every chord tone lies in its verse mode (15/8 allowed on the cadential V)',
+    ch.verses.every(vs => vs.bars.every(b => b.tones.every(f => inScale(f, vs.mode)))));
+  check('every melody note and partial lies in its verse mode (15/8 allowed)',
+    ch.verses.every(vs => vs.melody.every(n => inScale(n.freq, vs.mode) && n.partials.every(p => inScale(p.freq, vs.mode)))));
   check('every melody note sits in the register 523–1568 Hz × 2^(0.6(D−.5))',
     ch.verses.every(vs => vs.melody.every(n => n.freq >= 523 * vs.k.reg - 1e-6 && n.freq <= 1568 * vs.k.reg + 1e-6)));
   check('melody only on key words (fewer than 200 uses)',
