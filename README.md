@@ -11,7 +11,7 @@ Built in the order of the creation days:
 1. Light: the home note, and light drawn from what sounds. **(done)**
 2. Separation: the Law apart from the Form, and proven on its own. **(done)**
 3. Seed bearing fruit: each word's tone from the codebook. **(done)**
-4. Lights for seasons: time at three scales.
+4. Lights for seasons: time at three scales, feeling setting mode, tempo and colour. **(done)**
 5. Living things: voices and cymatic visuals.
 6. Man: the reader and the controls.
 7. Rest: resolution. Everything comes home to 110 Hz.
@@ -19,6 +19,8 @@ Built in the order of the creation days:
 ## Sources and credits
 - Text: Berean Standard Bible (BSB), public domain.
 - Word codebook: built from the KJV and BSB text alone (first appearance, counts, companions). Rebuilt and matched entry for entry by `tools/verify_codebook.py`.
+- Verse feeling: NRC Valence, Arousal, and Dominance Lexicon (Saif M. Mohammad, National Research Council Canada, 2018). It is a modern English word list, not from Scripture. Research/non-commercial use with credit; only per-verse scores (built by logos-theta `tools/build_vad.py`) are shipped, never the lexicon.
+- Modes in just intonation; feeling → mode is a Western musical convention.
 - Home note 110 Hz: a human tuning choice, not from Scripture.
 - Overtones: the harmonic series (physics).
 - Dish ripple: Bessel J0 (Abramowitz & Stegun 9.4.1, 9.4.3); cymatics after Ernst Chladni (1787).

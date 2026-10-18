@@ -17,6 +17,7 @@
   #verse { max-width: 32rem; text-align: center; font-size: 1.15rem;
     line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
   #ref { display: block; margin-top: .5rem; font-size: .8rem; opacity: .6; }
+  #state { font: .8rem system-ui, sans-serif; opacity: .7; letter-spacing: .04em; min-height: 1.2em; }
   #labels { font: .72rem/1.5 system-ui, sans-serif; opacity: .45; text-align: center; }
   #verse span.now { color: #fff3c4; text-shadow: 0 0 .6em rgba(255,220,140,.6); }
   #verse span { transition: color .25s; }
@@ -27,27 +28,40 @@
   <h1>Sonolumina</h1>
   <canvas id="dish" width="200" height="200" aria-hidden="true"></canvas>
   <p id="verse" aria-live="polite"></p>
+  <div id="state"></div>
   <div id="labels"></div>
   <div id="hint">tap anywhere</div>
 <script type="module">
   import { LABELS } from './law/home.js';
+  import { EMOTION_SOURCE, feeling } from './law/emotion.js';
   import { createEngine } from './form/engine.js';
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
 
   const el = id => document.getElementById(id);
-  const [gen, cb] = await Promise.all([
+  const [gen, cb, vad] = await Promise.all([
     fetch('./data/bsb/Genesis.json').then(r => r.json()),
     fetch('./data/codebook/eng.json').then(r => r.json()),
+    fetch('./data/vad/Genesis.json').then(r => r.json()),
   ]);
   const chapter = gen.c[0];
   const engine = createEngine();
-  createDish(el('dish'), engine);
+  // Light for the season: hue from valence (cool blue at sorrow, warm gold at joy).
+  let hue = 45;
+  const hsl = (h, s, l) => {
+    const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+    return [0, 8, 4].map(n => 255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+  };
+  createDish(el('dish'), engine, () => hsl(hue, 0.55, 0.78));
   window.__sono = engine;   // for smoke tests
 
   let spans = [];
   const p = el('verse');
-  const showVerse = (v, words) => {
+  const showVerse = (v, words, E, k) => {
+    if (k) {
+      hue = k.hue;
+      el('state').textContent = `${k.mode} · ${Math.round(k.bpm)} BPM · ${feeling(E)}`;
+    }
     p.innerHTML = '';
     spans = words.map((w, i) => {
       const s = document.createElement('span');
@@ -66,9 +80,9 @@
     if (playing) return;
     playing = true;
     el('hint').style.visibility = 'hidden';
-    el('labels').innerHTML = [LABELS.F0, LABELS.WORD, LABELS.DISH].join('<br>');
+    el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LABELS.DISH].join('<br>');
     createPlayer({
-      engine, lex: cb.lex, chapterText: chapter,
+      engine, lex: cb.lex, vadBook: vad, chapter: 1, chapterText: chapter,
       onVerse: showVerse,
       onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
       onEnd: () => { playing = false; el('hint').style.visibility = 'visible'; },

@@ -7,6 +7,7 @@ import { dishProfile } from '../law/home.js';
 const STEPS = 256;
 
 export function createDish(canvas, engine, colour = () => [255, 235, 190]) {
+  let rgb = colour();
   const g = canvas.getContext('2d');
   let level = 0, key = '', profile = new Float32Array(STEPS);
   const W = canvas.width, H = canvas.height, R = Math.min(W, H) / 2;
@@ -24,7 +25,10 @@ export function createDish(canvas, engine, colour = () => [255, 235, 190]) {
     if (k !== key) { key = k; profile = dishProfile(tones, STEPS); }
     // Gentle smoothing so brightness never flickers (no flashing).
     level += (engine.level() - level) * 0.08;
-    const [cr, cg, cb] = colour();
+    // Colour glides toward its target so seasons change gently.
+    const want = colour();
+    rgb = rgb.map((c, i) => c + (want[i] - c) * 0.02);
+    const [cr, cg, cb] = rgb;
     const d = img.data;
     for (let i = 0, p = 0; i < rIdx.length; i++, p += 4) {
       const ri = rIdx[i];

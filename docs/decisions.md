@@ -9,3 +9,5 @@
 - 2026-10-18: The dish's rings use J0 with wavenumber ∝ √(frequency ratio), the plate (Chladni) dispersion rule, so high word tones stay drawable. (Claude's call)
 - 2026-10-18: The home note sounds as a quiet drone (110 Hz + overtones) under the whole chapter. (Claude's call)
 - 2026-10-18: Verses are scheduled about 2 s ahead of time, not all at once, to spare phones. Known gap: scheduling uses requestAnimationFrame, which pauses when the screen locks. Fix due on Day 6. (Claude)
+- 2026-10-18: Day 4 follows the approved engine header (logos-theta engine.js, build 2026101301): E from the stored per-verse scores ÷99, smoothed by half with the previous verse; K(E) mode thresholds, tempo 54+30A, and every tone (word and companions) snapped to the verse's mode. Companion indexes are decoded with the codebook's own table (1, 5/4, 4/3, 3/2, 2). (Law, as written)
+- 2026-10-18: Each word is an eighth note, so the reading pace follows the tempo (108–168 words a minute, about speech pace). The light's hue = 210 − 170·V, gliding gently. (Claude's call)

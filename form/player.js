@@ -3,9 +3,10 @@
 // schedules it on the audio clock and tells the page what is current.
 
 import { F0, HARMONICS } from '../law/home.js';
-import { scoreWords } from '../law/score.js';
+import { scoreVerse } from '../law/score.js';
+import { verseE, smooth } from '../law/emotion.js';
 
-export function createPlayer({ engine, lex, chapterText, onVerse, onWord, onEnd, beatSec = 0.5 }) {
+export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onEnd }) {
   const timeline = [];    // { at, verse, index } in AudioContext seconds
   let raf = 0, cursor = 0, endAt = 0, drone = [];
 
@@ -21,14 +22,15 @@ export function createPlayer({ engine, lex, chapterText, onVerse, onWord, onEnd,
   let verses = [], next = 0;
 
   function scheduleVerse(vs) {
+    const { beatSec } = vs.score;
     for (const e of vs.score.events) {
       const at = vs.at + e.beat * beatSec;
       timeline.push({ at, verse: vs.verse, index: e.index });
-      if (!e.tone) continue;
-      const dur = e.beats * beatSec * 1.2;
-      engine.tone({ freq: e.tone.freq, ratio: e.tone.ratio, at, dur, gain: 0.16 });
+      if (!e.freq) continue;
+      const dur = e.beats * beatSec * 1.6;
+      engine.tone({ freq: e.freq, ratio: e.freq / F0, at, dur, gain: 0.16 });
       // Companion partials sound softly at 0.35 alpha (one level deep).
-      for (const p of e.tone.partials) {
+      for (const p of e.partials) {
         engine.tone({ freq: p.freq, ratio: p.freq / F0, at, dur, gain: 0.16 * 0.35 * p.alpha });
       }
     }
@@ -39,11 +41,13 @@ export function createPlayer({ engine, lex, chapterText, onVerse, onWord, onEnd,
     engine.start();
     let t = engine.time + 0.3;
     const begin = t;
+    let E = null;
     for (let v = startVerse; v <= chapterText.length; v++) {
-      const score = scoreWords(lex, chapterText[v - 1]);
+      E = smooth(verseE(vadBook, chapter, v), E);
+      const score = scoreVerse(lex, chapterText[v - 1], E);
       verses.push({ verse: v, at: t, score });
-      timeline.push({ at: t, verse: v, words: score.words });
-      t += (score.beats + 1) * beatSec;   // a breath between verses
+      timeline.push({ at: t, verse: v, words: score.words, E, k: score.k });
+      t += (score.beats + 1) * score.beatSec;   // a breath between verses
     }
     endAt = t;
     homeDrone(begin, endAt + 3);
@@ -57,7 +61,7 @@ export function createPlayer({ engine, lex, chapterText, onVerse, onWord, onEnd,
     while (next < verses.length && verses[next].at - now < 2) scheduleVerse(verses[next++]);
     while (cursor < timeline.length && timeline[cursor].at <= now) {
       const ev = timeline[cursor++];
-      if (ev.words) onVerse?.(ev.verse, ev.words);
+      if (ev.words) onVerse?.(ev.verse, ev.words, ev.E, ev.k);
       else onWord?.(ev.verse, ev.index);
     }
     if (now >= endAt) { onEnd?.(); return; }

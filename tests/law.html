@@ -5,7 +5,8 @@
 <script type="module">
   import { F0, J0 } from '../law/home.js';
   import { stem, tone, JUST } from '../law/codebook.js';
-  import { scoreWords, restAfter } from '../law/score.js';
+  import { scoreWords, scoreVerse, restAfter } from '../law/score.js';
+  import { verseE, smooth, K, snapMode, modeOf, MODES } from '../law/emotion.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -37,10 +38,34 @@
   const gen = await (await fetch('../data/bsb/Genesis.json')).json();
   const s1 = scoreWords(lex, gen.c[0][0]);   // "In the beginning God created the heavens and the earth."
   check('Genesis 1:1 has 10 words, all with tones', s1.events.length === 10 && s1.events.every(e => e.tone));
-  check('Genesis 1:1 lasts 10 beats + 1 rest at the full stop', s1.beats === 11, s1.beats);
+  check('Genesis 1:1 lasts 10 eighths + 1 beat rest at the full stop = 6 beats', s1.beats === 6, s1.beats);
   check('rests: full stop 1, comma 0.5, none 0', restAfter('light.') === 1 && restAfter('void,') === 0.5 && restAfter('God') === 0);
   check('rest after a closing quote: “Let there be light,”', restAfter('light,”') === 0.5);
   check('word order kept', s1.events.map(e => e.word).join(' ') === gen.c[0][0]);
+
+  // Emotion and K(E) (Day 4).
+  const vad = await (await fetch('../data/vad/Genesis.json')).json();
+  const E1 = verseE(vad, 1, 1);
+  check('Genesis 1:1 feeling = V .77 A .28 D .67 (as documented)', near(E1.v, .77, .005) && near(E1.a, .28, .005) && near(E1.d, .67, .005), JSON.stringify(E1));
+  check('Genesis 1:1 → Lydian (V > .7, D > .6)', K(E1).mode === 'Lydian');
+  check('tempo = 54 + 30·A = 62.5 BPM', near(K(E1).bpm, 54 + 30 * 28 / 99, 1e-9), K(E1).bpm);
+  check('mode thresholds', modeOf({v:.71,d:.5}) === 'Ionian' && modeOf({v:.6}) === 'Mixolydian' && modeOf({v:.4}) === 'Dorian' && modeOf({v:.32}) === 'Aeolian');
+  check('smoothing halves toward the last verse', near(smooth({v:1,a:1,d:1},{v:0,a:0,d:0}).v, .5, 1e-12));
+  check('snap 16/15 → 9/8 in Ionian (nearer by log distance)', near(snapMode(110*16/15, 110, 'Ionian'), 110*9/8, 1e-9));
+  check('snap 45/32 → 4/3 in Ionian, keeps octave', near(snapMode(440*45/32, 110, 'Ionian'), 440*4/3, 1e-9));
+  check('snap 15/8 stays 15/8 in Ionian', near(snapMode(110*15/8, 110, 'Ionian'), 110*15/8, 1e-9));
+  let inMode = true;
+  for (let v = 1; v <= gen.c[0].length; v++) {
+    const sv = scoreVerse(lex, gen.c[0][v - 1], verseE(vad, 1, v));
+    for (const e of sv.events) {
+      const freqs = [e.freq, ...(e.partials || []).map(p => p.freq)].filter(Boolean);
+      for (const f of freqs) {
+        let r = f / 110; while (r >= 2) r /= 2;
+        if (!MODES[sv.k.mode].concat([2]).some(m => near(m, r, 1e-9))) inMode = false;
+      }
+    }
+  }
+  check('every tone of Genesis 1 lies in its verse mode', inMode);
 
   const pass = results.filter(r => r.ok).length;
   document.getElementById('out').textContent =
