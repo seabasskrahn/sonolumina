@@ -125,5 +125,13 @@ export function scoreChapter({ lex, text, vadBook, chapter, home = F0, prevMode 
     t0 += dur + beat;   // a breath between verses
   });
 
-  return { verses, dur: t0, home, lastMode, melPrev };
+  // The close: after the chapter's IV–I "Amen", the tonic chord rests and fades.
+  // Bass on the home note itself (110 Hz), strings on I, the melody's last tonic held.
+  const lastVs = verses[verses.length - 1];
+  const I = chordR(lastMode, 'I').map(r => home * r);
+  const close = {
+    t: lastVs.at + lastVs.dur, dur: 6,
+    bass: reg(home, 65 * home / F0), pad: I.map(f => reg(f, 196)), melody: melPrev,
+  };
+  return { verses, close, dur: close.t + close.dur, home, lastMode, melPrev };
 }

@@ -118,6 +118,22 @@
           narrator.speak(words.join(' '), words.length / (vs.dur / 60));
         },
         onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
+        onClose: () => {
+          // Rest. The chapter has come home; then the seventh day (Genesis 2:2, from the data).
+          spans.forEach(s => s.className = '');
+          el('state').textContent = 'Amen · IV–I · home 110 Hz';
+          setTimeout(() => {
+            p.style.opacity = 0;
+            setTimeout(() => {
+              p.innerHTML = '';
+              p.append(gen.c[1][1]);
+              const r = document.createElement('span');
+              r.id = 'ref'; r.textContent = 'Genesis 2:2 · BSB';
+              p.append(r);
+              p.style.opacity = 1;
+            }, 2000);
+          }, 2500);
+        },
         onEnd: () => { state = 'ready'; playBtn.textContent = 'Begin again'; wake(false); },
       });
       player.play();

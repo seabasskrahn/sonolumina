@@ -9,7 +9,7 @@ import { createVoices } from './voices.js';
 // The music dips about 8 dB while the voice reads, and swells in the gaps.
 const DUCK = 0.4;
 
-export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onEnd, narrating = () => false }) {
+export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onClose, onEnd, narrating = () => false }) {
   const score = scoreChapter({ lex, text: chapterText, vadBook, chapter });
   const timeline = [];    // page events: { at, verse } or { at, verse, index }
   let cursor = 0, next = 0, t0 = 0, voices = null, timer = 0, paused = false;
@@ -42,6 +42,15 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
     }
   }
 
+  // Rest: the tonic chord, with the bass on the home note itself, held and fading.
+  function scheduleClose(c) {
+    const t = t0 + c.t, k = score.verses[score.verses.length - 1].k;
+    voices.loudness(k.loud, t);
+    voices.cello(c.bass, t, c.dur * 0.7, 0.22);
+    voices.strings(c.pad, t, c.dur - 1.6, k.strV);
+    voices.celesta(c.melody, t, k.celV * 0.6);
+  }
+
   function play() {
     engine.start();
     voices = voices || createVoices(engine);
@@ -50,8 +59,9 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
       timeline.push({ at: t0 + vs.at, verse: vs.verse, vs });
       for (const w of vs.words) timeline.push({ at: t0 + w.t, verse: vs.verse, index: w.index });
     }
+    timeline.push({ at: t0 + score.close.t, close: true });
     timeline.sort((a, b) => a.at - b.at || (b.vs ? 1 : 0) - (a.vs ? 1 : 0));
-    homeDrone(t0, t0 + score.dur + 3);
+    homeDrone(t0, t0 + score.dur);
     // A timer, not animation frames, drives the music: it keeps going when the
     // screen is off (browsers slow timers to about once a second, so look ahead 3 s).
     timer = setInterval(tick, 50);
@@ -74,12 +84,14 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
     const now = engine.time;
     // Schedule each verse about three seconds before it begins.
     while (next < score.verses.length && t0 + score.verses[next].at - now < 3) scheduleVerse(score.verses[next++]);
+    if (next === score.verses.length && t0 + score.close.t - now < 3) { scheduleClose(score.close); next++; }
     while (cursor < timeline.length && timeline[cursor].at <= now) {
       const ev = timeline[cursor++];
-      if (ev.vs) onVerse?.(ev.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k, ev.vs);
+      if (ev.close) onClose?.();
+      else if (ev.vs) onVerse?.(ev.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k, ev.vs);
       else onWord?.(ev.verse, ev.index);
     }
-    if (now >= t0 + score.dur + 2) { clearInterval(timer); onEnd?.(); }
+    if (now >= t0 + score.dur + 1) { clearInterval(timer); onEnd?.(); }
   }
 
   return { play, pause, resume, score, get paused() { return paused; } };

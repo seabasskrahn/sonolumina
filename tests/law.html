@@ -73,6 +73,26 @@
   check('pivot Ionian → Mixolydian uses a shared chord', ['IV', 'vi', 'I'].includes(pivot('Ionian', 'Mixolydian')));
 
 
+  // Res, the Resolution rule, on the chapter as heard (Day 7).
+  const one = r => near(pc(r), 1, 1e-9);
+  check('every verse ends V–I, the last verse IV–I ("Amen")', ch.verses.every(vs => {
+    const [a, b] = vs.bars.slice(-2).map(x => x.chord);
+    return b === 'I' && a === (vs.last ? 'IV' : 'V');
+  }));
+  check('every cadential V carries the leading tone 15/8', ch.verses.filter(vs => !vs.last).every(vs => {
+    const c = vs.bars[vs.bars.length - 2];
+    return c.cad && c.tones.some(f => near(pc(f / 110), 15 / 8, 1e-9));
+  }));
+  check("every verse's last melody note is the home note (a power of 2 × 110 Hz)",
+    ch.verses.every(vs => { const m = vs.melody[vs.melody.length - 1]; return m.res === 'tonic' && one(m.freq / 110); }));
+  check("every verse's last bass note is the home note", ch.verses.every(vs => one(vs.bars[vs.bars.length - 1].bass / 110)));
+  check('phrase-end melody notes are chord tones', ch.verses.every(vs => vs.melody.filter(n => n.res === 'phrase-end').every(n => {
+    const b = vs.bars.find(x => n.t >= x.t - 1e-9 && n.t < x.t + x.dur - 1e-9) || vs.bars[vs.bars.length - 1];
+    return b.tones.some(f => near(pc(n.freq / f), 1, 1e-9));
+  })));
+  check('the close: bass on 110 Hz itself, strings on the tonic chord, melody on home',
+    ch.close.bass === 110 && ch.close.pad.every(f => chordR(ch.lastMode, 'I').some(r => near(pc(f / 110), pc(r), 1e-9))) && one(ch.close.melody / 110));
+
   // Chladni (Day 5).
   const [cn, cm] = chladniMode(5);   // 5·5 = 25 = 5² + 0² or 4² + 3²; first found wins
   check('Chladni mode for ratio 5: n² + m² = 25', cn * cn + cm * cm === 25, [cn, cm]);

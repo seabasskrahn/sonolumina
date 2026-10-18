@@ -14,7 +14,7 @@ Built in the order of the creation days:
 4. Lights for seasons: time at three scales, feeling setting mode, tempo and colour. **(done)**
 5. Living things: the Score's voices and harmony, and the Chladni figures. **(done)**
 6. Man: the reading voice, Begin/Pause/Resume, Voice on/off, screen kept awake. **(done)**
-7. Rest: resolution. Everything comes home to 110 Hz.
+7. Rest: resolution. Every verse V–I, the chapter IV–I "Amen", the close on 110 Hz itself; proven in tests/law.html. **(done)**
 
 ## Sources and credits
 - Text: Berean Standard Bible (BSB), public domain.
@@ -29,5 +29,6 @@ No frequency is named in Scripture. Sonolumina makes no medical or spiritual cla
 
 ## Checks
 - `python3 -I tools/verify_codebook.py <dir with kjv/ and bsb/>` rebuilds the codebook from the Law and compares it.
-- Open `tests/law.html` in a browser to run the Law tests.
+- Open `tests/law.html` in a browser to run the Law tests (41 checks, including every resolution rule on Genesis 1 as heard).
+- Open `tests/mix.html` to measure the balance of the four sections.
 - `python3 tools/smoke.py <url> <seconds> <shot.png> [js expression] [tap|notap]` drives headless Chrome at phone size.
