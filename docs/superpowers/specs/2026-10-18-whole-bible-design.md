@@ -112,5 +112,17 @@ Success means you can open any chapter from Genesis 1 to Revelation 22 on a phon
 ## Left to the builder
 File layout inside `law/` and `form/`, the cache method, the Node test runner shape, and the visual details of the tabs. These follow the seed's existing style.
 
-## Open questions for Seabass (do not block building)
-- **Companion set:** the engine header says (1, 3/2, 4/3, 5/4, 6/5), and the codebook's data table says (1, 5/4, 4/3, 3/2, 2). The build keeps the data table.
+## Decided by Seabass (2026-10-18, "yes to all, use the data table, headings shown only")
+- **Companion set:** the codebook's data table {1, 5/4, 4/3, 3/2, 2} is the law. It is used both for word companions and for snapping a verse's signature (verseSig) tones. A linked tone is first snapped to that consonance and then into the current verse's mode.
+- **Between chapters:** a chapter ends with its "Amen" (IV–I) and a breath of rest, then play goes straight into the next chapter, with a pivot chord if the mode changes. The 6 s close on 110 Hz comes only once, after Revelation 22:21. The Genesis 2:2 "seventh day" screen after Genesis 1 is removed, because Genesis 2 now simply follows.
+- **Psalm headings** (115 Psalms, where the BSB puts the heading inside verse 1): the heading is shown but does not sound and does not count toward feeling or tones. The rule that separates the heading from verse 1 is drawn from the data, never typed by hand, and is checked against tools/audit_canon.py's list of 115.
+
+## Builder's calls (Claude's, after the builder check)
+- Node isn't installed, so the whole-Bible proof runs the `law/*.js` modules in headless Chrome, driven from Python as `tools/smoke.py` already does. Nothing new is installed.
+- On Day 1, a chapter opens from the web address (for example `?Psalms.23`) until the navigation concept is approved on Day 6.
+- Building stops at Day 4 (the seasons strip) and Day 6 (the navigation) to show Seabass a concept, and continues only after his yes.
+- The proof checks every chapter both from a cold start and as one continuous walk from Genesis 1 to Revelation 22.
+- Philippians 1:16–17 are in opposite order in the BSB and the KJV, so the feeling for those two slots blends both verses. This is logged in decisions.md and not corrected.
+- The cross-reference source key 3 John 1:15 is moved to 1:14, where the BSB keeps that greeting.
+- Of each cross-reference, only [book, chapter, verse, votes] is copied into `data/`.
+- Work on the whole-canon proof is shared with a second Claude session, which writes the test harness only. law/ and form/ stay with the lead session.
