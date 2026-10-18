@@ -9,6 +9,7 @@
   import { verseE, smooth, K, snapMode, modeOf, MODES } from '../law/emotion.js';
   import { scoreChapter } from '../law/chapter.js';
   import { chordR, progression, pivot, pc } from '../law/harmony.js';
+  import { parseRef, next, prev, isFinal, sung, gIndex } from '../law/canon.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -118,6 +119,21 @@
   })));
   check('the close: bass on 110 Hz itself, strings on the tonic chord, melody on home',
     ch.close.bass === 110 && ch.close.pad.every(f => chordR(ch.lastMode, 'I').some(r => near(pc(f / 110), pc(r), 1e-9))) && one(ch.close.melody / 110));
+
+  // The canon (whole Bible).
+  const canon = await (await fetch('../data/canon.json')).json();
+  check('canon: 66 books, 1,189 chapters, 31,102 verse slots', canon.length === 66 && canon.reduce((n, b) => n + b[2].length, 0) === 1189 && canon.reduce((n, b) => n + b[2].reduce((x, y) => x + y, 0), 0) === 31102);
+  const ps = parseRef(canon, 'Psalms.23'), so = parseRef(canon, 'SongofSolomon.2');
+  check('parseRef reads "Psalms.23" and "SongofSolomon.2"', canon[ps.book][0] === 'Psalms' && ps.chapter === 23 && canon[so.book][0] === 'Song of Solomon' && so.chapter === 2);
+  check('parseRef refuses Psalms.151 and nonsense', parseRef(canon, 'Psalms.151') === null && parseRef(canon, 'Hezekiah.1') === null && parseRef(canon, '') === null);
+  const mal = parseRef(canon, 'Malachi.4'), rev = parseRef(canon, 'Revelation.22');
+  check('next: Malachi 4 → Matthew 1; Revelation 22 → none (final)', canon[next(canon, mal).book][0] === 'Matthew' && next(canon, mal).chapter === 1 && next(canon, rev) === null && isFinal(canon, rev));
+  check('prev: Genesis 1 → none; Matthew 1 → Malachi 4', prev(canon, { book: 0, chapter: 1 }) === null && prev(canon, next(canon, mal)).chapter === 4);
+  check('gIndex: Genesis 1:1 = 0, Revelation 22:21 = 31,101', gIndex(canon, 0, 1, 1) === 0 && gIndex(canon, 65, 22, 21) === 31101);
+  const psalms = await (await fetch('../data/bsb/Psalms.json')).json();
+  const p23 = sung(psalms, 23, 1), p119 = sung(psalms, 119, 1);
+  check('Psalm 23:1: heading shown, not sung', p23.heading === 'A Psalm of David.' && p23.text === 'The LORD is my shepherd; I shall not want.', JSON.stringify(p23));
+  check('116 Psalms carry a heading; Psalm 119 has none', Object.keys(psalms.h).length === 116 && p119.heading === '' && p119.text === psalms.c[118][0]);
 
   // Chladni (Day 5).
   const [cn, cm] = chladniMode(5);   // 5·5 = 25 = 5² + 0² or 4² + 3²; first found wins

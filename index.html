@@ -16,6 +16,7 @@
   canvas { width: min(78vw, 46vh); aspect-ratio: 1; border-radius: 50%; }
   #verse { max-width: 32rem; text-align: center; font-size: 1.15rem;
     line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
+  #heading { display: block; margin-bottom: .5rem; font-size: .85rem; font-style: italic; opacity: .6; }
   #ref { display: block; margin-top: .5rem; font-size: .8rem; opacity: .6; }
   #state { font: .8rem system-ui, sans-serif; opacity: .7; letter-spacing: .04em; min-height: 1.2em; }
   #labels { font: .72rem/1.5 system-ui, sans-serif; opacity: .45; text-align: center; }
@@ -44,14 +45,18 @@
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
   import { createNarrator } from './form/narrator.js';
+  import { parseRef, sung, isFinal } from './law/canon.js';
 
   const el = id => document.getElementById(id);
-  const [gen, cb, vad] = await Promise.all([
-    fetch('./data/bsb/Genesis.json').then(r => r.json()),
-    fetch('./data/codebook/eng.json').then(r => r.json()),
-    fetch('./data/vad/Genesis.json').then(r => r.json()),
-  ]);
-  const chapter = gen.c[0];
+  const json = u => fetch(u).then(r => r.json());
+  const [canon, cb] = await Promise.all([json('./data/canon.json'), json('./data/codebook/eng.json')]);
+  // Any chapter opens from the address (?Psalms.23); Genesis 1 by default. Only that book is fetched.
+  const at = parseRef(canon, location.search.slice(1)) || { book: 0, chapter: 1 };
+  const [name, file] = canon[at.book];
+  const [bsb, vad] = await Promise.all([json('./data/bsb/' + file), json('./data/vad/' + file)]);
+  const parts = bsb.c[at.chapter - 1].map((_, i) => sung(bsb, at.chapter, i + 1));
+  const chapter = parts.map(x => x.text);   // what is sung: headings are shown, never sung
+  document.title = `${name} ${at.chapter} · Sonolumina`;
   const engine = createEngine();
   // Light for the season: hue from valence (cool blue at sorrow, warm gold at joy).
   let hue = 45;
@@ -70,6 +75,8 @@
       el('state').textContent = `${k.mode} · ${Math.round(k.bpm)} BPM · ${feeling(E)}`;
     }
     p.innerHTML = '';
+    const head = parts[v - 1] && parts[v - 1].heading;
+    if (head) { const h = document.createElement('span'); h.id = 'heading'; h.textContent = head; p.append(h); }
     spans = words.map((w, i) => {
       const s = document.createElement('span');
       s.textContent = w;
@@ -77,10 +84,13 @@
       return s;
     });
     const r = document.createElement('span');
-    r.id = 'ref'; r.textContent = `Genesis 1:${v} · BSB`;
+    r.id = 'ref'; r.textContent = `${name} ${at.chapter}:${v} · BSB`;
+    // A verse the BSB leaves out (not in the oldest manuscripts) is named with the verse after it.
+    if (v > 1 && !chapter[v - 2].trim()) r.textContent += ` · ${at.chapter}:${v - 1} omitted (not in the oldest manuscripts)`;
     p.append(r);
   };
-  showVerse(2, chapter[1].split(/\s+/));   // before the first tap: darkness over the deep
+  // Before the first tap: Genesis 1 shows the darkness over the deep; any other chapter its first verse.
+  { const v0 = at.book === 0 && at.chapter === 1 ? 2 : 1; showVerse(v0, chapter[v0 - 1].split(/\s+/)); }
 
   const narrator = createNarrator();
   const voiceBtn = el('voice'), playBtn = el('play');
@@ -111,7 +121,7 @@
       playBtn.textContent = 'Pause';
       el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LABELS.DISH].join('<br>');
       player = createPlayer({
-        engine, lex: cb.lex, vadBook: vad, chapter: 1, chapterText: chapter,
+        engine, lex: cb.lex, vadBook: vad, chapter: at.chapter, chapterText: chapter, final: isFinal(canon, at),
         narrating: () => narrator.on,
         onVerse: (v, words, E, k, vs) => {
           showVerse(v, words, E, k);
@@ -119,20 +129,9 @@
         },
         onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
         onClose: () => {
-          // Rest. The chapter has come home; then the seventh day (Genesis 2:2, from the data).
-          spans.forEach(s => s.className = '');
+          // Rest. The whole Bible has come home: the close on 110 Hz.
+          spans.forEach(x => x.className = '');
           el('state').textContent = 'Amen · IV–I · home 110 Hz';
-          setTimeout(() => {
-            p.style.opacity = 0;
-            setTimeout(() => {
-              p.innerHTML = '';
-              p.append(gen.c[1][1]);
-              const r = document.createElement('span');
-              r.id = 'ref'; r.textContent = 'Genesis 2:2 · BSB';
-              p.append(r);
-              p.style.opacity = 1;
-            }, 2000);
-          }, 2500);
         },
         onEnd: () => { state = 'ready'; playBtn.textContent = 'Begin again'; wake(false); },
       });

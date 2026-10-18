@@ -9,8 +9,8 @@ import { createVoices } from './voices.js';
 // The music dips about 8 dB while the voice reads, and swells in the gaps.
 const DUCK = 0.4;
 
-export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onClose, onEnd, narrating = () => false }) {
-  const score = scoreChapter({ lex, text: chapterText, vadBook, chapter });
+export function createPlayer({ engine, lex, vadBook, chapter, chapterText, final = false, onVerse, onWord, onClose, onEnd, narrating = () => false }) {
+  const score = scoreChapter({ lex, text: chapterText, vadBook, chapter, final });
   const timeline = [];    // page events: { at, verse } or { at, verse, index }
   let cursor = 0, next = 0, t0 = 0, voices = null, timer = 0, paused = false;
 

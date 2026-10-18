@@ -30,3 +30,11 @@
 - 2026-10-18: Loudness = 0.75 + 0.5·D (the Law: "register and loudness rise with D"; same scale as before, now on D). (Seabass: "Dominance (Law)")
 - 2026-10-18: The chapter-final Amen is always the major IV (4/3, 5/3, 2) → I. In Lydian (45/32) and Aeolian (8/5) that is a borrowed chord, and it is labelled so in law/harmony.js. (Seabass: "Major IV, labelled", Q13; applying it to Aeolian as well is Claude's reading of "always major")
 - 2026-10-18: Chapters flow on: a chapter that is not the last ends with its Amen and a breath of 2 beats. Only Revelation 22 (final) gets the 6 s close on 110 Hz. Omitted verses (empty BSB slots) have no music and no time, and the last sung verse says the Amen. (Seabass, design approval; the 2-beat breath is Claude's call)
+- 2026-10-18: Whole Bible, Day 1 (Light): tools/build_data.py copies and checks all 66 books into data/:
+  - Totals asserted: 1,189 chapters, 31,102 verse slots, 16 omitted, 116 Psalm headings, 133,357 links.
+  - The BSB text stays identical to the source. The Psalms file also carries "h", the BSB's own `\d` headings.
+  - Cross references keep only [book, chapter, verse, votes]. The 3 John 1:15 key joins 1:14.
+  - Any chapter opens from the address (?Psalms.23), and only its own book is fetched.
+  - Headings are shown in italics above verse 1 and never sung. An omitted verse is named beside the reference of the verse after it.
+  - The Genesis 2:2 screen is gone.
+  (Design as approved; the address form and the omission wording are Claude's calls)
