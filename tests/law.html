@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sonolumina · Law tests</title>
+<pre id="out">running…</pre>
+<script type="module">
+  import { F0, J0 } from '../law/home.js';
+  import { stem, tone, JUST } from '../law/codebook.js';
+  const results = [];
+  const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+
+  // Bessel J0 against tabulated values.
+  check('J0(0) = 1', near(J0(0), 1, 1e-7));
+  check('J0(1) = 0.7651977', near(J0(1), 0.7651977, 1e-6));
+  check('J0 first zero at 2.404826', near(J0(2.404826), 0, 1e-6));
+  check('J0(5) = -0.1775968', near(J0(5), -0.1775968, 1e-6));
+  check('J0(10) = -0.2459358', near(J0(10), -0.2459358, 1e-6));
+
+  // Stems: JavaScript must match the Python rules the codebook was built with.
+  const fx = await (await fetch('./stems.json')).json();
+  const wrong = Object.entries(fx).filter(([t, s]) => stem(t) !== s);
+  check(`stem matches Python on ${Object.keys(fx).length} words`, wrong.length === 0, wrong.slice(0, 5).join(' | '));
+
+  // Tones from the codebook, worked by hand from the Law.
+  const lex = (await (await fetch('../data/codebook/eng.json')).json()).lex;
+  const god = tone(lex, 'God');        // entry [10,0,3,0,4712,0]: step 10 = 9/5, octave 0
+  check('God = 110 × 9/5 = 198 Hz', near(god.freq, 198, 1e-9), god.freq);
+  check('God companions = 3/2 and 1 of its tone', near(god.partials[0].freq, 297, 1e-9) && near(god.partials[1].freq, 198, 1e-9));
+  const beg = tone(lex, 'beginning'); // [2,1,...]: step 2 = 9/8, octave 1
+  check('beginning = 110 × 9/8 × 2 = 247.5 Hz', near(beg.freq, 247.5, 1e-9), beg.freq);
+  check('all six fields read', beg.count === 107 && beg.first === 0, JSON.stringify(beg));
+  check('F0 is 110 Hz', F0 === 110);
+  check('every tone lies on the just scale', Object.values(lex).every(e => e.length === 6 && JUST[e[0]] && e[1] >= 0 && e[1] <= 2));
+
+  const pass = results.filter(r => r.ok).length;
+  document.getElementById('out').textContent =
+    results.map(r => `${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.ok ? '' : '  ' + r.detail}`).join('\n') +
+    `\n\n${pass}/${results.length} passed`;
+  window.__law = { pass, total: results.length, results };
+</script>

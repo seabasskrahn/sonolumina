@@ -4,3 +4,4 @@
 - 2026-10-18: Build order follows the seven creation days, starting with Genesis 1 as the seed chapter. (Claude's framing and pick, approved by Seabass)
 - 2026-10-18: All new code. Data is reused (BSB, KJV, OpenBible cross-references, codebook); the old index.html and Butterchurn are not. (Claude's call)
 - 2026-10-18: Day 1 voice = 110 Hz plus overtones 2–5 at amplitude 1/n, so phone speakers carry the home note. (Claude's call)
+- 2026-10-18: Day 2 = proving the Law on its own. The shipped English codebook (14,973 entries) was rebuilt from KJV+BSB by the stated rules and matched exactly, so it is reused as is. (Claude)
