@@ -3,10 +3,12 @@
 <title>Sonolumina · Law tests</title>
 <pre id="out">running…</pre>
 <script type="module">
-  import { F0, J0 } from '../law/home.js';
+  import { F0, J0, chladniMode, chladni } from '../law/home.js';
   import { stem, tone, JUST } from '../law/codebook.js';
   import { scoreWords, scoreVerse, restAfter } from '../law/score.js';
   import { verseE, smooth, K, snapMode, modeOf, MODES } from '../law/emotion.js';
+  import { scoreChapter } from '../law/chapter.js';
+  import { chordR, progression, pivot, pc } from '../law/harmony.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -54,18 +56,27 @@
   check('snap 16/15 → 9/8 in Ionian (nearer by log distance)', near(snapMode(110*16/15, 110, 'Ionian'), 110*9/8, 1e-9));
   check('snap 45/32 → 4/3 in Ionian, keeps octave', near(snapMode(440*45/32, 110, 'Ionian'), 440*4/3, 1e-9));
   check('snap 15/8 stays 15/8 in Ionian', near(snapMode(110*15/8, 110, 'Ionian'), 110*15/8, 1e-9));
-  let inMode = true;
-  for (let v = 1; v <= gen.c[0].length; v++) {
-    const sv = scoreVerse(lex, gen.c[0][v - 1], verseE(vad, 1, v));
-    for (const e of sv.events) {
-      const freqs = [e.freq, ...(e.partials || []).map(p => p.freq)].filter(Boolean);
-      for (const f of freqs) {
-        let r = f / 110; while (r >= 2) r /= 2;
-        if (!MODES[sv.k.mode].concat([2]).some(m => near(m, r, 1e-9))) inMode = false;
-      }
-    }
-  }
-  check('every tone of Genesis 1 lies in its verse mode', inMode);
+  // The chapter as heard (smoothed feeling), Day 5.
+  const ch = scoreChapter({ lex, text: gen.c[0], vadBook: vad, chapter: 1 });
+  const inScale = (f, mode) => MODES[mode].some(m => near(m, pc(f / 110), 1e-9)) || near(pc(f / 110), 15 / 8, 1e-9);
+  check('31 verses scored', ch.verses.length === 31);
+  check('feeling is smoothed verse to verse', near(ch.verses[1].E.v, (verseE(vad, 1, 2).v + verseE(vad, 1, 1).v) / 2, 1e-12));
+  check('every word tone of Genesis 1 lies in its verse mode',
+    ch.verses.every(vs => scoreVerseOk(vs)));
+  function scoreVerseOk(vs) { return vs.bars.every(b => b.tones.every(f => inScale(f, vs.mode))); }
+  check('every melody note sits in the register 523–1568 Hz × 2^(0.6(D−.5))',
+    ch.verses.every(vs => vs.melody.every(n => n.freq >= 523 * vs.k.reg - 1e-6 && n.freq <= 1568 * vs.k.reg + 1e-6)));
+  check('melody only on key words (fewer than 200 uses)',
+    ch.verses.every(vs => vs.melody.filter(n => n.word != null).every(n => lex[stem(vs.words[n.word].word)][4] < 200)));
+  check('progression ends V–I, chapter end IV–I', progression(4, 'I', false).slice(-2).join() === 'V,I' && progression(4, 'I', true).slice(-2).join() === 'IV,I');
+  check('cadential V carries the leading tone 15/8 in Aeolian', chordR('Aeolian', 'V', true).some(r => near(pc(r), 15 / 8, 1e-12)));
+  check('pivot Ionian → Mixolydian uses a shared chord', ['IV', 'vi', 'I'].includes(pivot('Ionian', 'Mixolydian')));
+
+
+  // Chladni (Day 5).
+  const [cn, cm] = chladniMode(5);   // 5·5 = 25 = 5² + 0² or 4² + 3²; first found wins
+  check('Chladni mode for ratio 5: n² + m² = 25', cn * cn + cm * cm === 25, [cn, cm]);
+  check('Chladni figure is zero on the diagonal (n ≠ m)', near(chladni(3, 1, 0.3, 0.3), 0, 1e-12));
 
   const pass = results.filter(r => r.ok).length;
   document.getElementById('out').textContent =

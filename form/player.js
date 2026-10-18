@@ -1,72 +1,67 @@
-// The Form: reading a chapter aloud in tones.
-// The Law (law/score.js) says what sounds and when; this file only
-// schedules it on the audio clock and tells the page what is current.
+// The Form: playing a chapter. The Law (law/chapter.js) has already decided
+// every note; this file only schedules it on the audio clock and tells the
+// page what is current.
 
 import { F0, HARMONICS } from '../law/home.js';
-import { scoreVerse } from '../law/score.js';
-import { verseE, smooth } from '../law/emotion.js';
+import { scoreChapter } from '../law/chapter.js';
+import { createVoices } from './voices.js';
 
 export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onEnd }) {
-  const timeline = [];    // { at, verse, index } in AudioContext seconds
-  let raf = 0, cursor = 0, endAt = 0, drone = [];
+  const score = scoreChapter({ lex, text: chapterText, vadBook, chapter });
+  const timeline = [];    // page events: { at, verse } or { at, verse, index }
+  let cursor = 0, next = 0, t0 = 0, voices = null;
 
-  // The home note sounds under everything: the pupil every tone is measured from.
+  // The home note sounds quietly under everything: the pupil every tone is measured from.
   function homeDrone(at, until) {
     const total = HARMONICS.reduce((s, h) => s + h.amp, 0);
-    drone = HARMONICS.map(h => engine.tone({
+    for (const h of HARMONICS) engine.tone({
       freq: F0 * h.ratio, ratio: h.ratio, at, dur: until - at,
-      gain: 0.07 * h.amp / total, attack: 2.5, release: 3,
-    }));
+      gain: 0.04 * h.amp / total, attack: 2.5, release: 3,
+    });
   }
-
-  let verses = [], next = 0;
 
   function scheduleVerse(vs) {
-    const { beatSec } = vs.score;
-    for (const e of vs.score.events) {
-      const at = vs.at + e.beat * beatSec;
-      timeline.push({ at, verse: vs.verse, index: e.index });
-      if (!e.freq) continue;
-      const dur = e.beats * beatSec * 1.6;
-      engine.tone({ freq: e.freq, ratio: e.freq / F0, at, dur, gain: 0.16 });
-      // Companion partials sound softly at 0.35 alpha (one level deep).
-      for (const p of e.partials) {
-        engine.tone({ freq: p.freq, ratio: p.freq / F0, at, dur, gain: 0.16 * 0.35 * p.alpha });
-      }
+    const T = t => t0 + t, { k, E } = vs;
+    voices.brightness(1100 + k.bright * 0.6, T(vs.at));
+    voices.loudness(k.loud, T(vs.at));
+    for (const b of vs.bars) {
+      voices.cello(b.bass, T(b.t), b.dur * 0.96, 0.22);
+      voices.strings(b.pad, T(b.t), b.dur, k.strV);
+      for (const n of b.arp) voices.epiano(n.freq, T(n.t), n.dur, 0.07 + 0.03 * E.a + (n.accent ? 0.03 : 0));
     }
-    timeline.sort((a, b) => a.at - b.at || (b.words ? 1 : 0) - (a.words ? 1 : 0));
+    for (const n of vs.melody) {
+      voices.celesta(n.freq, T(n.t), k.celV * n.vel);
+      // Companion partials sound softly with the melody note (0.35 alpha).
+      for (const p of n.partials) voices.celesta(p.freq, T(n.t) + 0.03, k.celV * n.vel * 0.35 * p.alpha);
+    }
   }
 
-  function play(startVerse = 1) {
+  function play() {
     engine.start();
-    let t = engine.time + 0.3;
-    const begin = t;
-    let E = null;
-    for (let v = startVerse; v <= chapterText.length; v++) {
-      E = smooth(verseE(vadBook, chapter, v), E);
-      const score = scoreVerse(lex, chapterText[v - 1], E);
-      verses.push({ verse: v, at: t, score });
-      timeline.push({ at: t, verse: v, words: score.words, E, k: score.k });
-      t += (score.beats + 1) * score.beatSec;   // a breath between verses
+    voices = voices || createVoices(engine);
+    t0 = engine.time + 0.4;
+    for (const vs of score.verses) {
+      timeline.push({ at: t0 + vs.at, verse: vs.verse, vs });
+      for (const w of vs.words) timeline.push({ at: t0 + w.t, verse: vs.verse, index: w.index });
     }
-    endAt = t;
-    homeDrone(begin, endAt + 3);
+    timeline.sort((a, b) => a.at - b.at || (b.vs ? 1 : 0) - (a.vs ? 1 : 0));
+    homeDrone(t0, t0 + score.dur + 3);
     tick();
-    return endAt - begin;
+    return score.dur;
   }
 
   function tick() {
     const now = engine.time;
     // Schedule each verse about two seconds before it begins.
-    while (next < verses.length && verses[next].at - now < 2) scheduleVerse(verses[next++]);
+    while (next < score.verses.length && t0 + score.verses[next].at - now < 2) scheduleVerse(score.verses[next++]);
     while (cursor < timeline.length && timeline[cursor].at <= now) {
       const ev = timeline[cursor++];
-      if (ev.words) onVerse?.(ev.verse, ev.words, ev.E, ev.k);
+      if (ev.vs) onVerse?.(ev.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k);
       else onWord?.(ev.verse, ev.index);
     }
-    if (now >= endAt) { onEnd?.(); return; }
-    raf = requestAnimationFrame(tick);
+    if (now >= t0 + score.dur + 2) { onEnd?.(); return; }
+    requestAnimationFrame(tick);
   }
 
-  return { play, get endAt() { return endAt; }, get timeline() { return timeline; } };
+  return { play, score };
 }

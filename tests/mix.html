@@ -1,0 +1,50 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sonolumina · mix balance</title>
+<pre id="out">rendering…</pre>
+<script type="module">
+  // Renders Genesis 1:1–4 offline, one section at a time, and measures each
+  // section's loudness (RMS, dBFS). Balance target: sections within about 3 dB.
+  import { createEngine } from '../form/engine.js';
+  import { createVoices } from '../form/voices.js';
+  import { scoreChapter } from '../law/chapter.js';
+
+  const [gen, cb, vad] = await Promise.all([
+    fetch('../data/bsb/Genesis.json').then(r => r.json()),
+    fetch('../data/codebook/eng.json').then(r => r.json()),
+    fetch('../data/vad/Genesis.json').then(r => r.json()),
+  ]);
+  const score = scoreChapter({ lex: cb.lex, text: gen.c[0].slice(0, 4), vadBook: vad, chapter: 1 });
+  const rate = 44100, len = Math.ceil((score.dur + 3) * rate);
+  const out = {};
+  for (const solo of ['bass', 'pad', 'counter', 'melody']) {
+    const ctx = new OfflineAudioContext(1, len, rate);
+    const engine = createEngine(ctx);
+    engine.start();
+    const v = createVoices(engine);
+    for (const [name, g] of Object.entries(v.bus)) if (name !== solo) g.gain.value = 0;
+    for (const vs of score.verses) {
+      const { k, E } = vs;
+      v.brightness(1100 + k.bright * 0.6, vs.at);
+      v.loudness(k.loud, vs.at);
+      for (const b of vs.bars) {
+        v.cello(b.bass, b.t, b.dur * 0.96, 0.22);
+        v.strings(b.pad, b.t, b.dur, k.strV);
+        for (const n of b.arp) v.epiano(n.freq, n.t, n.dur, 0.07 + 0.03 * E.a + (n.accent ? 0.03 : 0));
+      }
+      for (const n of vs.melody) {
+        v.celesta(n.freq, n.t, k.celV * n.vel);
+        for (const p of n.partials) v.celesta(p.freq, n.t + 0.03, k.celV * n.vel * 0.35 * p.alpha);
+      }
+    }
+    const buf = await ctx.startRendering();
+    const d = buf.getChannelData(0);
+    let s = 0, peak = 0;
+    for (let i = 0; i < d.length; i++) { s += d[i] * d[i]; peak = Math.max(peak, Math.abs(d[i])); }
+    out[solo] = { rms: +(20 * Math.log10(Math.sqrt(s / d.length))).toFixed(1), peak: +(20 * Math.log10(peak)).toFixed(1) };
+  }
+  const rms = Object.values(out).map(o => o.rms);
+  const spread = +(Math.max(...rms) - Math.min(...rms)).toFixed(1);
+  document.getElementById('out').textContent = JSON.stringify({ out, spread });
+  window.__mix = { out, spread };
+</script>

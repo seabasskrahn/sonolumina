@@ -24,7 +24,7 @@ async def main():
         for t in (('mousePressed','mouseReleased') if TAP else ()):
             await cmd('Input.dispatchMouseEvent', type=t, x=200, y=430, button='left', clickCount=1)
         await asyncio.sleep(wait)
-        r=await cmd('Runtime.evaluate', expression=EXPR, returnByValue=True)
+        r=await cmd('Runtime.evaluate', expression=EXPR, returnByValue=True, awaitPromise=True)
         print(r['result'].get('value'))
         s=await cmd('Page.captureScreenshot'); open(out,'wb').write(base64.b64decode(s['data']))
 asyncio.run(main()); p.terminate()

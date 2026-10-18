@@ -16,7 +16,7 @@ export const HARMONICS = [1, 2, 3, 4, 5].map(n => ({ n, ratio: n, amp: 1 / n }))
 export const LABELS = {
   F0: '110 Hz home note · a human tuning choice, not from Scripture',
   HARMONICS: 'overtones 2× 3× 4× 5× · physics (harmonic series)',
-  DISH: 'rings: Bessel ripple, spaced ∝ √frequency as on a vibrating plate (Chladni)',
+  DISH: 'rings: Bessel ripple, spaced ∝ √frequency as on a vibrating plate · figure: Chladni (1787) mode of the melody note',
   WORD: 'word tones: codebook R(w), from how Scripture uses each word · ratios: just intonation',
 };
 
@@ -55,6 +55,25 @@ export function dishProfile(partials, steps, k = 9) {
     out[i] = Math.abs(s / total);
   }
   return out;
+}
+
+// Chladni figure for a tone: the square-plate mode (n, m) with n² + m² nearest
+// 5·f/F0 (n ≠ m). Origin: Ernst Chladni (1787); the plate's pattern is
+// approximated by cos(nπx)cos(mπy) − cos(mπx)cos(nπy), whose zero lines are
+// where sand gathers. The factor 5 is a design choice (logos-theta spec).
+export function chladniMode(ratio) {
+  const target = 5 * ratio;
+  let best = [2, 1], bd = Infinity;
+  for (let n = 1; n <= 12; n++) for (let m = 0; m < n; m++) {
+    const d = Math.abs(n * n + m * m - target);
+    if (d < bd) { bd = d; best = [n, m]; }
+  }
+  return best;
+}
+
+export function chladni(n, m, x, y) {
+  const P = Math.PI;
+  return Math.cos(n * P * x) * Math.cos(m * P * y) - Math.cos(m * P * x) * Math.cos(n * P * y);
 }
 
 // Exact verse text from the data file. Never typed by hand.

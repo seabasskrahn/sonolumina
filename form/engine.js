@@ -2,8 +2,8 @@
 // All tones pass through one output, which is measured live so that the
 // light can follow what is actually sounding.
 
-export function createEngine() {
-  let ctx = null, out = null, analyser = null, fine = null, buf = null;
+export function createEngine(given = null) {
+  let ctx = given, out = null, analyser = null, fine = null, buf = null;
   const sounding = new Set();   // tones playing now: { ratio, amp, end }
 
   function start() {
@@ -47,6 +47,14 @@ export function createEngine() {
     return item;
   }
 
+  // Record a tone made elsewhere (by an instrument) so the dish can draw it.
+  function track(freq, amp, start, end, tag = '', home = 110) {
+    const item = { ratio: freq / home, amp, start, end, freq, tag };
+    sounding.add(item);
+    setTimeout(() => sounding.delete(item), (end - ctx.currentTime) * 1000 + 200);
+    return item;
+  }
+
   // Tones sounding at this instant (for the dish).
   function now() {
     if (!ctx) return [];
@@ -77,7 +85,7 @@ export function createEngine() {
   }
 
   return {
-    start, tone, now, level, peakHz,
+    start, tone, track, now, level, peakHz,
     get ctx() { return ctx; },
     get out() { return out; },
     get time() { return ctx ? ctx.currentTime : 0; },

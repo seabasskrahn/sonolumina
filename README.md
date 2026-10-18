@@ -12,7 +12,7 @@ Built in the order of the creation days:
 2. Separation: the Law apart from the Form, and proven on its own. **(done)**
 3. Seed bearing fruit: each word's tone from the codebook. **(done)**
 4. Lights for seasons: time at three scales, feeling setting mode, tempo and colour. **(done)**
-5. Living things: voices and cymatic visuals.
+5. Living things: the Score's voices and harmony, and the Chladni figures. **(done)**
 6. Man: the reader and the controls.
 7. Rest: resolution. Everything comes home to 110 Hz.
 
