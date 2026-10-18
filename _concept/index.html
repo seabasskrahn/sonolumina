@@ -1,0 +1,46 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;background:#000;color:#e9e2cf;font-family:Georgia,serif;padding:1rem 1.2rem}
+h2{font:600 .8rem system-ui;letter-spacing:.15em;text-transform:uppercase;opacity:.6;margin:1.2rem 0 .5rem}
+.note{font:.72rem/1.45 system-ui;opacity:.55;margin:.4rem 0 1rem}
+#strip,#strip2{display:flex;height:34px;border-radius:4px;overflow:hidden;position:relative}
+#strip i,#strip2 i{flex:1}
+.mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff}
+.lab{position:relative;height:1em;font:.62rem system-ui;opacity:.5;margin-top:.3rem}
+.nav{display:flex;gap:.5rem;align-items:center;justify-content:center;margin:.6rem 0}
+.nav button,.pill{font:.85rem system-ui;color:#e9e2cf;background:#15130f;border:1px solid #3a352a;border-radius:2rem;padding:.5rem 1rem}
+.sheet{background:#0f0e0b;border:1px solid #2a261e;border-radius:12px;padding:.8rem}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;font:.75rem system-ui}
+.grid span{padding:.35rem .4rem;border-radius:6px;background:#17150f;text-align:center}
+.grid span.on{background:#3a3020}
+.chs{display:grid;grid-template-columns:repeat(8,1fr);gap:.3rem;margin-top:.6rem;font:.75rem system-ui}
+.chs span{padding:.35rem 0;text-align:center;border-radius:6px;background:#17150f}
+.chs span.on{background:#3a3020}
+</style>
+<h2>Day 4 · Seasons (concept)</h2>
+<div class="note" style="margin:0 0 .3rem">A · each chapter's own feeling (as the light now colours it)</div><div id="strip" class="st"></div><div class="lab" id="labA"></div><div class="note" style="margin:.8rem 0 .3rem">B · each chapter ranked against all the others (same colours, the whole range used)</div><div id="strip2" class="st"></div><div class="lab" id="labB"></div>
+<p class="note">One thin band per chapter (1,189), Genesis at the left and Revelation at the right. Each band's colour is that chapter's mean feeling (V), with the same hue rule as the light: cool blue for sorrow, warm gold for joy. The white mark is where you are now (here, Psalm 23). Tap the strip to jump to that chapter. It is drawn only from the stored feeling scores.</p>
+<h2>Day 6 · Walking the garden (concept)</h2>
+<div class="nav"><button>‹ Psalm 22</button><span class="pill">Psalms 23 ▾</span><button>Psalm 24 ›</button></div>
+<p class="note">Previous and next chapter on either side. Tap the middle to open the picker below. When you have followed a link tab, a "↩ back to John 1:1" button appears here. The last place you were is remembered on this phone.</p>
+<div class="sheet"><div class="grid" id="books"></div><div class="chs" id="chs"></div></div>
+<p class="note">The picker: 66 books in Bible order (Old Testament, then New), then that book's chapters. Choosing a chapter starts it at verse 1, or at a verse when you came from a link.</p>
+<script type="module">
+const j=u=>fetch(u).then(r=>r.json());
+const canon=await j('../data/canon.json');
+const S=document.getElementById('strip'),S2=document.getElementById('strip2');let n=0,here=0;const Vs=[],starts={};
+for(const [name,file,counts] of canon){const v=await j('../data/vad/'+file);starts[name]=n;
+ v.forEach((s,ci)=>{let t=0;for(let i=0;i<s.length;i+=6)t+=+s.slice(i,i+2)/99;Vs.push(t/(s.length/6));
+  if(name==='Psalms'&&ci===22)here=n;n++;});}
+const col=V=>`hsl(${210-170*V},55%,${35+25*V}%)`;
+const order=Vs.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]),rank=[];order.forEach(([v,i],r)=>rank[i]=r/(n-1));
+Vs.forEach((V,i)=>{const a=document.createElement('i');a.style.background=col(V);S.append(a);const b=document.createElement('i');b.style.background=col(rank[i]);S2.append(b)});
+for(const X of [S,S2]){const m=document.createElement('div');m.className='mark';m.style.left=(100*here/n)+'%';X.append(m);}
+for(const L of ['labA','labB'])for(const nm of ['Genesis','Psalms','Isaiah','Matthew','Revelation']){const sp=document.createElement('span');sp.textContent=nm;sp.style.cssText=`position:absolute;left:${100*starts[nm]/n}%;transform:translateX(${nm==='Revelation'?'-60%':'0'})`;document.getElementById(L).append(sp)}
+console.log(Math.min(...Vs),Math.max(...Vs));window.range=[Math.min(...Vs),Math.max(...Vs)];
+const B=document.getElementById('books');canon.slice(0,12).forEach(([nm])=>{const s=document.createElement('span');s.textContent=nm;if(nm==='Psalms')s.className='on';B.append(s)});
+const ps=document.createElement('span');ps.textContent='Psalms';ps.className='on';B.append(ps);
+B.append(Object.assign(document.createElement('span'),{textContent:'… 66 books'}));
+const C=document.getElementById('chs');for(let c=17;c<=32;c++){const s=document.createElement('span');s.textContent=c;if(c===23)s.className='on';C.append(s)}
+window.done=true;
+</script>
