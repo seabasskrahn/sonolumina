@@ -18,3 +18,6 @@
 - 2026-10-18: Section levels set by measurement (tests/mix.html): bass, strings, piano and celesta each at −33.0 dBFS RMS on Genesis 1:1–4. (Claude's call, measured)
 - 2026-10-18: The home drone is kept, quieter (a tonic pedal under the harmony). (Claude's call)
 - 2026-10-18: The dish adds the Chladni figure of the current melody note (n² + m² nearest 5·f/F0, from the old spec), crossfading between notes. (Law as written, drawing is Claude's)
+- 2026-10-18: Day 6 reads each verse with the phone's own speech voice at the music's pace (rate = words per minute ÷ 175, clamped 0.7–1.4), the music ducking about 8 dB under it. The voice is outside the audio graph, so the light cannot follow it (known gap, as in the old build). (Claude's call)
+- 2026-10-18: Pause suspends the audio clock, so text and music stay in step. The music scheduler runs on a timer with 3 s lookahead, so it keeps going when the screen is off. Untested on a locked real phone. (Claude)
+- 2026-10-18: Dish brightness = √(measured loudness), so it stays visible under the voice. (Claude's call)

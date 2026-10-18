@@ -6,10 +6,13 @@ import { F0, HARMONICS } from '../law/home.js';
 import { scoreChapter } from '../law/chapter.js';
 import { createVoices } from './voices.js';
 
-export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onEnd }) {
+// The music dips about 8 dB while the voice reads, and swells in the gaps.
+const DUCK = 0.4;
+
+export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVerse, onWord, onEnd, narrating = () => false }) {
   const score = scoreChapter({ lex, text: chapterText, vadBook, chapter });
   const timeline = [];    // page events: { at, verse } or { at, verse, index }
-  let cursor = 0, next = 0, t0 = 0, voices = null;
+  let cursor = 0, next = 0, t0 = 0, voices = null, timer = 0, paused = false;
 
   // The home note sounds quietly under everything: the pupil every tone is measured from.
   function homeDrone(at, until) {
@@ -23,7 +26,10 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
   function scheduleVerse(vs) {
     const T = t => t0 + t, { k, E } = vs;
     voices.brightness(1100 + k.bright * 0.6, T(vs.at));
-    voices.loudness(k.loud, T(vs.at));
+    if (narrating()) {
+      voices.loudness(k.loud * DUCK, T(vs.at));
+      voices.loudness(k.loud, T(Math.max(vs.at + 0.5, vs.at + vs.dur - 1.1)));
+    } else voices.loudness(k.loud, T(vs.at));
     for (const b of vs.bars) {
       voices.cello(b.bass, T(b.t), b.dur * 0.96, 0.22);
       voices.strings(b.pad, T(b.t), b.dur, k.strV);
@@ -46,22 +52,35 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
     }
     timeline.sort((a, b) => a.at - b.at || (b.vs ? 1 : 0) - (a.vs ? 1 : 0));
     homeDrone(t0, t0 + score.dur + 3);
+    // A timer, not animation frames, drives the music: it keeps going when the
+    // screen is off (browsers slow timers to about once a second, so look ahead 3 s).
+    timer = setInterval(tick, 50);
     tick();
     return score.dur;
   }
 
-  function tick() {
-    const now = engine.time;
-    // Schedule each verse about two seconds before it begins.
-    while (next < score.verses.length && t0 + score.verses[next].at - now < 2) scheduleVerse(score.verses[next++]);
-    while (cursor < timeline.length && timeline[cursor].at <= now) {
-      const ev = timeline[cursor++];
-      if (ev.vs) onVerse?.(ev.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k);
-      else onWord?.(ev.verse, ev.index);
-    }
-    if (now >= t0 + score.dur + 2) { onEnd?.(); return; }
-    requestAnimationFrame(tick);
+  function pause() {
+    if (paused || !engine.ctx) return;
+    paused = true;
+    engine.ctx.suspend();   // the audio clock stops, so text and music stay together
+  }
+  function resume() {
+    if (!paused) return;
+    paused = false;
+    engine.ctx.resume();
   }
 
-  return { play, score };
+  function tick() {
+    const now = engine.time;
+    // Schedule each verse about three seconds before it begins.
+    while (next < score.verses.length && t0 + score.verses[next].at - now < 3) scheduleVerse(score.verses[next++]);
+    while (cursor < timeline.length && timeline[cursor].at <= now) {
+      const ev = timeline[cursor++];
+      if (ev.vs) onVerse?.(ev.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k, ev.vs);
+      else onWord?.(ev.verse, ev.index);
+    }
+    if (now >= t0 + score.dur + 2) { clearInterval(timer); onEnd?.(); }
+  }
+
+  return { play, pause, resume, score, get paused() { return paused; } };
 }

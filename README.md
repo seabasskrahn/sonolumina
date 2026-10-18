@@ -13,7 +13,7 @@ Built in the order of the creation days:
 3. Seed bearing fruit: each word's tone from the codebook. **(done)**
 4. Lights for seasons: time at three scales, feeling setting mode, tempo and colour. **(done)**
 5. Living things: the Score's voices and harmony, and the Chladni figures. **(done)**
-6. Man: the reader and the controls.
+6. Man: the reading voice, Begin/Pause/Resume, Voice on/off, screen kept awake. **(done)**
 7. Rest: resolution. Everything comes home to 110 Hz.
 
 ## Sources and credits

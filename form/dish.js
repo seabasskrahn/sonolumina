@@ -49,10 +49,13 @@ export function createDish(canvas, engine, colour = () => [255, 235, 190]) {
     const want = colour();
     rgb = rgb.map((c, i) => c + (want[i] - c) * 0.02);
     const [cr, cg, cb] = rgb;
+    // Perceived brightness: the square root of loudness, so the light stays
+    // visible while the music dips under the voice.
+    const lv = Math.sqrt(level);
     const d = img.data;
     for (let i = 0, p = 0; i < rIdx.length; i++, p += 4) {
       const ri = rIdx[i];
-      const v = ri < 0 ? 0 : (profile[ri] * 0.75 + (sand[i] * mix + old[i] * (1 - mix)) * sandLevel * 0.6) * level;
+      const v = ri < 0 ? 0 : (profile[ri] * 0.75 + (sand[i] * mix + old[i] * (1 - mix)) * sandLevel * 0.6) * lv;
       d[p] = cr * Math.min(1, v * 1.6);
       d[p + 1] = cg * Math.min(1, v * 1.5);
       d[p + 2] = cb * Math.min(1, v * 1.3);

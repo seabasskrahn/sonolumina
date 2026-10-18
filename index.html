@@ -10,7 +10,7 @@
     font-family: Georgia, 'Times New Roman', serif; }
   body { display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 1.4rem; padding: 1.5rem; box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; user-select: none; cursor: pointer; }
+    -webkit-tap-highlight-color: transparent; user-select: none; }
   h1 { font-weight: normal; letter-spacing: .3em; font-size: .85rem;
     opacity: .55; margin: 0; text-transform: uppercase; }
   canvas { width: min(78vw, 46vh); aspect-ratio: 1; border-radius: 50%; }
@@ -21,7 +21,10 @@
   #labels { font: .72rem/1.5 system-ui, sans-serif; opacity: .45; text-align: center; }
   #verse span.now { color: #fff3c4; text-shadow: 0 0 .6em rgba(255,220,140,.6); }
   #verse span { transition: color .25s; }
-  #hint { font: .8rem system-ui, sans-serif; opacity: .5; }
+  #controls { display: flex; gap: .8rem; }
+  #controls button { font: .9rem system-ui, sans-serif; color: #e9e2cf; background: #15130f;
+    border: 1px solid #3a352a; border-radius: 2rem; padding: .7rem 1.4rem; min-width: 7rem; }
+  #controls button:active { background: #24201a; }
 </style>
 </head>
 <body>
@@ -30,13 +33,17 @@
   <p id="verse" aria-live="polite"></p>
   <div id="state"></div>
   <div id="labels"></div>
-  <div id="hint">tap anywhere</div>
+  <div id="controls">
+    <button id="play" type="button">Begin</button>
+    <button id="voice" type="button" aria-pressed="true">Voice on</button>
+  </div>
 <script type="module">
   import { LABELS } from './law/home.js';
   import { EMOTION_SOURCE, feeling } from './law/emotion.js';
   import { createEngine } from './form/engine.js';
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
+  import { createNarrator } from './form/narrator.js';
 
   const el = id => document.getElementById(id);
   const [gen, cb, vad] = await Promise.all([
@@ -75,19 +82,54 @@
   };
   showVerse(2, chapter[1].split(/\s+/));   // before the first tap: darkness over the deep
 
-  let playing = false;
-  document.body.addEventListener('click', () => {
-    if (playing) return;
-    playing = true;
-    el('hint').style.visibility = 'hidden';
-    el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LABELS.DISH].join('<br>');
-    createPlayer({
-      engine, lex: cb.lex, vadBook: vad, chapter: 1, chapterText: chapter,
-      onVerse: showVerse,
-      onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
-      onEnd: () => { playing = false; el('hint').style.visibility = 'visible'; },
-    }).play();
+  const narrator = createNarrator();
+  const voiceBtn = el('voice'), playBtn = el('play');
+  const setVoice = on => {
+    narrator.on = on;
+    voiceBtn.textContent = narrator.on ? 'Voice on' : 'Voice off';
+    voiceBtn.setAttribute('aria-pressed', narrator.on);
+  };
+  if (!narrator.available) { voiceBtn.disabled = true; voiceBtn.textContent = 'No voice'; }
+  voiceBtn.onclick = () => setVoice(!narrator.on);
+
+  // Keep the screen awake while reading.
+  let lock = null;
+  const wake = async on => {
+    try {
+      if (on && !lock && 'wakeLock' in navigator) lock = await navigator.wakeLock.request('screen');
+      if (!on && lock) { await lock.release(); lock = null; }
+    } catch { lock = null; }
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && player && !player.paused && state === 'playing') { lock = null; wake(true); }
   });
+
+  let player = null, state = 'ready';
+  playBtn.onclick = () => {
+    if (state === 'ready') {
+      state = 'playing';
+      playBtn.textContent = 'Pause';
+      el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LABELS.DISH].join('<br>');
+      player = createPlayer({
+        engine, lex: cb.lex, vadBook: vad, chapter: 1, chapterText: chapter,
+        narrating: () => narrator.on,
+        onVerse: (v, words, E, k, vs) => {
+          showVerse(v, words, E, k);
+          narrator.speak(words.join(' '), words.length / (vs.dur / 60));
+        },
+        onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
+        onEnd: () => { state = 'ready'; playBtn.textContent = 'Begin again'; wake(false); },
+      });
+      player.play();
+      wake(true);
+    } else if (state === 'playing') {
+      state = 'paused'; playBtn.textContent = 'Resume';
+      player.pause(); narrator.pause(); wake(false);
+    } else if (state === 'paused') {
+      state = 'playing'; playBtn.textContent = 'Pause';
+      player.resume(); narrator.resume(); wake(true);
+    }
+  };
 </script>
 </body>
 </html>
