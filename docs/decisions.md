@@ -1,0 +1,6 @@
+# Decisions (Sonolumina seed)
+- 2026-10-18: Fresh build from the seed, in a new repo `sonolumina`. The old site (logos-theta, build 2026101305) stays untouched. (Seabass)
+- 2026-10-18: Verse emotion reuses the NRC VAD per-verse scores from the old build, clearly labelled as NRC, until a Scripture-only source exists. (Seabass)
+- 2026-10-18: Build order follows the seven creation days, starting with Genesis 1 as the seed chapter. (Claude's framing and pick, approved by Seabass)
+- 2026-10-18: All new code. Data is reused (BSB, KJV, OpenBible cross-references, codebook); the old index.html and Butterchurn are not. (Claude's call)
+- 2026-10-18: Day 1 voice = 110 Hz plus overtones 2–5 at amplitude 1/n, so phone speakers carry the home note. (Claude's call)

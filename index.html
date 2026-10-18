@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Sonolumina</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #e9e2cf;
+    font-family: Georgia, 'Times New Roman', serif; }
+  body { display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 1.4rem; padding: 1.5rem; box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; user-select: none; cursor: pointer; }
+  h1 { font-weight: normal; letter-spacing: .3em; font-size: .85rem;
+    opacity: .55; margin: 0; text-transform: uppercase; }
+  canvas { width: min(78vw, 46vh); aspect-ratio: 1; border-radius: 50%; }
+  #verse { max-width: 32rem; text-align: center; font-size: 1.15rem;
+    line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
+  #ref { display: block; margin-top: .5rem; font-size: .8rem; opacity: .6; }
+  #labels { font: .72rem/1.5 system-ui, sans-serif; opacity: .45; text-align: center; }
+  #hint { font: .8rem system-ui, sans-serif; opacity: .5; }
+</style>
+</head>
+<body>
+  <h1>Sonolumina</h1>
+  <canvas id="dish" width="200" height="200" aria-hidden="true"></canvas>
+  <p id="verse" aria-live="polite"></p>
+  <div id="labels"></div>
+  <div id="hint">tap anywhere</div>
+<script type="module">
+  import { verse, LABELS } from './law/home.js';
+  import { createLight } from './form/light.js';
+
+  const el = id => document.getElementById(id);
+  const gen = await (await fetch('./data/bsb/Genesis.json')).json();
+  const show = (v, fade = true) => {
+    const p = el('verse');
+    const set = () => {
+      p.innerHTML = '';
+      p.append(verse(gen, 1, v));
+      const r = document.createElement('span');
+      r.id = 'ref'; r.textContent = `Genesis 1:${v} · BSB`;
+      p.append(r);
+      p.style.opacity = 1;
+    };
+    if (!fade) return set();
+    p.style.opacity = 0;
+    setTimeout(set, 2000);
+  };
+
+  show(2, false);   // darkness over the surface of the deep
+  const light = createLight(el('dish'));
+  window.__sono = light;   // for smoke tests
+
+  let busy = false;
+  document.body.addEventListener('click', () => {
+    if (busy) return;
+    busy = true;
+    el('hint').style.visibility = 'hidden';
+    show(3);           // "Let there be light"
+    el('labels').innerHTML = `${LABELS.F0}<br>${LABELS.HARMONICS}`;
+    const ms = light.sound();
+    setTimeout(() => show(4), ms * 0.55);   // "the light was good"
+    setTimeout(() => { busy = false; el('hint').style.visibility = 'visible'; }, ms + 500);
+  });
+</script>
+</body>
+</html>
