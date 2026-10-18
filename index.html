@@ -18,6 +18,8 @@
     line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
   #ref { display: block; margin-top: .5rem; font-size: .8rem; opacity: .6; }
   #labels { font: .72rem/1.5 system-ui, sans-serif; opacity: .45; text-align: center; }
+  #verse span.now { color: #fff3c4; text-shadow: 0 0 .6em rgba(255,220,140,.6); }
+  #verse span { transition: color .25s; }
   #hint { font: .8rem system-ui, sans-serif; opacity: .5; }
 </style>
 </head>
@@ -28,40 +30,49 @@
   <div id="labels"></div>
   <div id="hint">tap anywhere</div>
 <script type="module">
-  import { verse, LABELS } from './law/home.js';
-  import { createLight } from './form/light.js';
+  import { LABELS } from './law/home.js';
+  import { createEngine } from './form/engine.js';
+  import { createDish } from './form/dish.js';
+  import { createPlayer } from './form/player.js';
 
   const el = id => document.getElementById(id);
-  const gen = await (await fetch('./data/bsb/Genesis.json')).json();
-  const show = (v, fade = true) => {
-    const p = el('verse');
-    const set = () => {
-      p.innerHTML = '';
-      p.append(verse(gen, 1, v));
-      const r = document.createElement('span');
-      r.id = 'ref'; r.textContent = `Genesis 1:${v} · BSB`;
-      p.append(r);
-      p.style.opacity = 1;
-    };
-    if (!fade) return set();
-    p.style.opacity = 0;
-    setTimeout(set, 2000);
+  const [gen, cb] = await Promise.all([
+    fetch('./data/bsb/Genesis.json').then(r => r.json()),
+    fetch('./data/codebook/eng.json').then(r => r.json()),
+  ]);
+  const chapter = gen.c[0];
+  const engine = createEngine();
+  createDish(el('dish'), engine);
+  window.__sono = engine;   // for smoke tests
+
+  let spans = [];
+  const p = el('verse');
+  const showVerse = (v, words) => {
+    p.innerHTML = '';
+    spans = words.map((w, i) => {
+      const s = document.createElement('span');
+      s.textContent = w;
+      p.append(s, i < words.length - 1 ? ' ' : '');
+      return s;
+    });
+    const r = document.createElement('span');
+    r.id = 'ref'; r.textContent = `Genesis 1:${v} · BSB`;
+    p.append(r);
   };
+  showVerse(2, chapter[1].split(/\s+/));   // before the first tap: darkness over the deep
 
-  show(2, false);   // darkness over the surface of the deep
-  const light = createLight(el('dish'));
-  window.__sono = light;   // for smoke tests
-
-  let busy = false;
+  let playing = false;
   document.body.addEventListener('click', () => {
-    if (busy) return;
-    busy = true;
+    if (playing) return;
+    playing = true;
     el('hint').style.visibility = 'hidden';
-    show(3);           // "Let there be light"
-    el('labels').innerHTML = `${LABELS.F0}<br>${LABELS.HARMONICS}`;
-    const ms = light.sound();
-    setTimeout(() => show(4), ms * 0.55);   // "the light was good"
-    setTimeout(() => { busy = false; el('hint').style.visibility = 'visible'; }, ms + 500);
+    el('labels').innerHTML = [LABELS.F0, LABELS.WORD, LABELS.DISH].join('<br>');
+    createPlayer({
+      engine, lex: cb.lex, chapterText: chapter,
+      onVerse: showVerse,
+      onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
+      onEnd: () => { playing = false; el('hint').style.visibility = 'visible'; },
+    }).play();
   });
 </script>
 </body>

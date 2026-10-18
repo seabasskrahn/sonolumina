@@ -10,7 +10,7 @@ Governed by [SPIRIT.md](SPIRIT.md) (Spirit > Law > Form).
 Built in the order of the creation days:
 1. Light: the home note, and light drawn from what sounds. **(done)**
 2. Separation: the Law apart from the Form, and proven on its own. **(done)**
-3. Seed bearing fruit: each word's tone from the codebook.
+3. Seed bearing fruit: each word's tone from the codebook. **(done)**
 4. Lights for seasons: time at three scales.
 5. Living things: voices and cymatic visuals.
 6. Man: the reader and the controls.

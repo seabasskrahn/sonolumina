@@ -5,6 +5,7 @@
 <script type="module">
   import { F0, J0 } from '../law/home.js';
   import { stem, tone, JUST } from '../law/codebook.js';
+  import { scoreWords, restAfter } from '../law/score.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -31,6 +32,15 @@
   check('all six fields read', beg.count === 107 && beg.first === 0, JSON.stringify(beg));
   check('F0 is 110 Hz', F0 === 110);
   check('every tone lies on the just scale', Object.values(lex).every(e => e.length === 6 && JUST[e[0]] && e[1] >= 0 && e[1] <= 2));
+
+  // Scoring a verse (Day 3).
+  const gen = await (await fetch('../data/bsb/Genesis.json')).json();
+  const s1 = scoreWords(lex, gen.c[0][0]);   // "In the beginning God created the heavens and the earth."
+  check('Genesis 1:1 has 10 words, all with tones', s1.events.length === 10 && s1.events.every(e => e.tone));
+  check('Genesis 1:1 lasts 10 beats + 1 rest at the full stop', s1.beats === 11, s1.beats);
+  check('rests: full stop 1, comma 0.5, none 0', restAfter('light.') === 1 && restAfter('void,') === 0.5 && restAfter('God') === 0);
+  check('rest after a closing quote: “Let there be light,”', restAfter('light,”') === 0.5);
+  check('word order kept', s1.events.map(e => e.word).join(' ') === gen.c[0][0]);
 
   const pass = results.filter(r => r.ok).length;
   document.getElementById('out').textContent =

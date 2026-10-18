@@ -16,6 +16,8 @@ export const HARMONICS = [1, 2, 3, 4, 5].map(n => ({ n, ratio: n, amp: 1 / n }))
 export const LABELS = {
   F0: '110 Hz home note · a human tuning choice, not from Scripture',
   HARMONICS: 'overtones 2× 3× 4× 5× · physics (harmonic series)',
+  DISH: 'rings: Bessel ripple, spaced ∝ √frequency as on a vibrating plate (Chladni)',
+  WORD: 'word tones: codebook R(w), from how Scripture uses each word · ratios: just intonation',
 };
 
 // Bessel function of the first kind, order 0 (Abramowitz & Stegun 9.4.1/9.4.3).
@@ -35,17 +37,21 @@ export function J0(x) {
   return f0 * Math.cos(t0) / Math.sqrt(ax);
 }
 
-// Radial standing-wave profile of the dish for a set of sounding partials.
-// r runs 0..1 from centre to rim. Each partial's ripple has spatial frequency
-// proportional to its frequency ratio, so the pattern grows from the sound.
+// Radial standing-wave profile of the dish for a set of sounding partials
+// ({ ratio, amp }, ratio relative to F0). r runs 0..1 from centre to rim.
+// Origin: physics of a vibrating circular plate (Chladni), where bending
+// waves have frequency proportional to wavenumber squared, so each
+// partial's ring spacing follows the square root of its frequency.
+// k is the wavenumber of the home note across the dish (a design choice).
 export function dishProfile(partials, steps, k = 9) {
   const out = new Float32Array(steps);
   let total = 0;
   for (const p of partials) total += p.amp;
+  if (!total) return out;
   for (let i = 0; i < steps; i++) {
     const r = i / (steps - 1);
     let s = 0;
-    for (const p of partials) s += p.amp * J0(k * p.ratio * r);
+    for (const p of partials) s += p.amp * J0(k * Math.sqrt(p.ratio) * r);
     out[i] = Math.abs(s / total);
   }
   return out;

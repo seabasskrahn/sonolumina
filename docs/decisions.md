@@ -5,3 +5,7 @@
 - 2026-10-18: All new code. Data is reused (BSB, KJV, OpenBible cross-references, codebook); the old index.html and Butterchurn are not. (Claude's call)
 - 2026-10-18: Day 1 voice = 110 Hz plus overtones 2–5 at amplitude 1/n, so phone speakers carry the home note. (Claude's call)
 - 2026-10-18: Day 2 = proving the Law on its own. The shipped English codebook (14,973 entries) was rebuilt from KJV+BSB by the stated rules and matched exactly, so it is reused as is. (Claude)
+- 2026-10-18: Day 3 plays Genesis 1 word by word at a fixed 0.5 s beat, with rests at punctuation (1 beat after . ! ? ; :, half after , —). Tempo from emotion comes on Day 4. (Claude's call)
+- 2026-10-18: The dish's rings use J0 with wavenumber ∝ √(frequency ratio), the plate (Chladni) dispersion rule, so high word tones stay drawable. (Claude's call)
+- 2026-10-18: The home note sounds as a quiet drone (110 Hz + overtones) under the whole chapter. (Claude's call)
+- 2026-10-18: Verses are scheduled about 2 s ahead of time, not all at once, to spare phones. Known gap: scheduling uses requestAnimationFrame, which pauses when the screen locks. Fix due on Day 6. (Claude)
