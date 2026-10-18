@@ -13,7 +13,8 @@
   import { MODES } from '../law/emotion.js';
   import { scoreChapter } from '../law/chapter.js';
   import { pivot, pc, AMEN_IV } from '../law/harmony.js';
-  import { sung } from '../law/canon.js';
+  import { sung, gIndex } from '../law/canon.js';
+  import { links, signature, swells, MAX_LINKS } from '../law/links.js';
 
   const out = document.getElementById('out');
   const checks = new Map();   // name -> { n, fails: [] }
@@ -31,11 +32,12 @@
   const lex = (await (await fetch('../data/codebook/eng.json')).json()).lex;
   const books = [];
   for (const [name, file] of canon) {
-    const [bsb, vad] = await Promise.all([
+    const [bsb, vad, xref] = await Promise.all([
       fetch(`../data/bsb/${file}`).then(r => r.json()),
       fetch(`../data/vad/${file}`).then(r => r.json()),
+      fetch(`../data/xref/${file}`).then(r => r.json()),
     ]);
-    books.push({ name, bsb, vad });
+    books.push({ name, bsb, vad, xref });
     out.textContent = `loaded ${books.length}/66 books…`;
   }
   const lastBook = books.length - 1;
@@ -43,7 +45,7 @@
   // The text each verse sings (Psalm headings shown but never sung).
   const textOf = (b, c) => books[b].bsb.c[c - 1].map((_, i) => sung(books[b].bsb, c, i + 1).text);
 
-  const totals = { chapters: 0, slots: 0, sung: 0, omitted: 0, melodyNotes: 0, modes: {} };
+  const totals = { chapters: 0, slots: 0, sung: 0, omitted: 0, melodyNotes: 0, links: 0, modes: {} };
 
   function checkChapter(where, b, c, ch, text, isFinal, prev) {
     const sungSlots = text.filter(t => t && t.trim()).length;
@@ -75,6 +77,21 @@
       ok('every chord tone in mode (15/8 and the Amen allowed)', bars.every(x => x.tones.every(f => inSet(f, allowed))), at);
       ok('every melody note and partial in mode', vs.melody.every(m => inSet(m.freq, allowed) && m.partials.every(p => inSet(p.freq, allowed))), at);
       ok('words timed inside their verse', vs.words.every(w => w.t >= vs.at - 1e-9 && w.t <= vs.at + vs.dur + 1e-9), at);
+      // Day 5: linked verses (checked once, in the walk, against the mode the verse really plays in).
+      if (where.startsWith('walk')) {
+        const ls = links(canon, books[b].xref, b, c, vs.verse);
+        const me = gIndex(canon, b, c, vs.verse);
+        ok('links: at most 8, strongest first', ls.length <= MAX_LINKS && ls.every((l, i) => i === 0 || l.votes <= ls[i - 1].votes), at);
+        if (ls.length) ok('links: α in (0, 1], the strongest exactly 1', near(ls[0].alpha, 1) && ls.every(l => l.alpha > 0 && l.alpha <= 1), at);
+        ok('links: earlier in the Bible comes from the left (−0.7), later from the right (+0.7)',
+           ls.every(l => l.dir === (gIndex(canon, l.book, l.c, l.v) < me ? -0.7 : 0.7)), at);
+        ok('links: every target is a sung verse', ls.every(l => books[l.book] && sung(books[l.book].bsb, l.c, l.v).text.trim()), at);
+        const sw = swells(ls, vs.dur);
+        ok('links: every swell starts inside its verse', sw.every(x => x.t > 0 && x.t < vs.dur), at);
+        const sig = signature(lex, text[vs.verse - 1], vs.mode);
+        ok('signature: at most 3 tones, each in the verse mode', sig.length <= 3 && sig.every(f => inSet(f, MODES[vs.mode])), at);
+        totals.links += ls.length;
+      }
       totals.melodyNotes += vs.melody.length;
       totals.modes[vs.mode] = (totals.modes[vs.mode] || 0) + 1;
     }
@@ -108,7 +125,7 @@
   const cold = { ...totals, modes: { ...totals.modes } };
 
   // Pass 2: the whole Bible as one walk, Genesis 1 to Revelation 22.
-  Object.assign(totals, { chapters: 0, slots: 0, sung: 0, omitted: 0, melodyNotes: 0, modes: {} });
+  Object.assign(totals, { chapters: 0, slots: 0, sung: 0, omitted: 0, melodyNotes: 0, links: 0, modes: {} });
   let prev = null;
   for (let b = 0; b < books.length; b++) {
     for (let c = 1; c <= books[b].bsb.c.length; c++) {
@@ -140,7 +157,7 @@
   window.__canon = {
     done: true, pass, total, failures,
     totals: { chapters: totals.chapters, 'sung verses': totals.sung, omitted: totals.omitted,
-              'melody notes': totals.melodyNotes, 'mode shares (walk)': JSON.stringify(share) },
+              'melody notes': totals.melodyNotes, 'links (walk)': totals.links, 'mode shares (walk)': JSON.stringify(share) },
   };
   out.textContent = [...checks].map(([name, c]) => `${c.fails.length ? 'FAIL' : 'PASS'}  ${name}  (${c.n} checked${c.fails.length ? `, ${c.fails.length} failed` : ''})`).join('\n')
     + `\n\n${pass}/${total} checks passed`;
