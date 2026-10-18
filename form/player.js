@@ -17,10 +17,12 @@ const AHEAD = 25;
 
 // first: a loaded chapter { ref, text: [sung text per verse], vadBook, final, ... } (anything else is passed back).
 // load(ref) → Promise of the chapter after ref, or null at the end of the Bible.
-export function createPlayer({ engine, lex, first, load, onVerse, onWord, onChapter, onClose, onEnd, narrating = () => false }) {
+// linksFor(ch, vs) → Promise of [{ mine: [Hz], theirs: [Hz], dir, t, len, gain, ... }] (t within the verse), or [].
+export function createPlayer({ engine, lex, first, load, linksFor, onVerse, onWord, onChapter, onLink, onClose, onEnd, narrating = () => false }) {
   const segs = [];        // { ch, score, t0, next }: chapters in play order
   const timeline = [];    // page events, in time order
   let cursor = 0, timer = 0, paused = false, voices = null, asked = false, ended = false;
+  const pending = [];     // link swells, for the page to light their tabs when they sound
 
   // The home note sounds quietly under everything: the pupil every tone is measured from.
   // Between chapters one drone fades out as the next fades in (3 s, equal and opposite).
@@ -50,8 +52,8 @@ export function createPlayer({ engine, lex, first, load, onVerse, onWord, onChap
     return seg;
   }
 
-  function scheduleVerse(t0, vs) {
-    const T = t => t0 + t, { k, E } = vs;
+  function scheduleVerse(seg, vs) {
+    const T = t => seg.t0 + t, { k, E } = vs;
     voices.brightness(1100 + k.bright * 0.6, T(vs.at));
     if (narrating()) {
       voices.loudness(k.loud * DUCK, T(vs.at));
@@ -62,6 +64,16 @@ export function createPlayer({ engine, lex, first, load, onVerse, onWord, onChap
       voices.strings(b.pad, T(b.t), b.dur, k.strV);
       for (const n of b.arp) voices.epiano(n.freq, T(n.t), n.dur, 0.07 + 0.03 * E.a + (n.accent ? 0.03 : 0));
     }
+    // Linked verses: each swell is sounded only if its tones are ready before it is due; never late.
+    linksFor?.(seg.ch, vs).then(ls => {
+      for (const l of ls) {
+        const at = T(vs.at + l.t);
+        if (ended || at < engine.time + 0.05 || !l.theirs.length) continue;
+        voices.swell(l.mine, l.theirs, l.dir, at, l.len, l.gain);
+        pending.push({ at, link: l, seg, vs });
+        pending.sort((a, b) => a.at - b.at);
+      }
+    }).catch(() => {});
     for (const n of vs.melody) {
       voices.celesta(n.freq, T(n.t), k.celV * n.vel);
       // Companion partials sound softly with the melody note (0.35 alpha).
@@ -121,7 +133,7 @@ export function createPlayer({ engine, lex, first, load, onVerse, onWord, onChap
       const vs = seg.score.verses;
       while (seg.next < vs.length && seg.t0 + vs[seg.next].at - now < 3) {
         const v = vs[seg.next++];
-        if (!v.omitted) scheduleVerse(seg.t0, v);
+        if (!v.omitted) scheduleVerse(seg, v);
       }
       if (seg.score.close && seg.next === vs.length && seg.t0 + seg.score.close.t - now < 3) { scheduleClose(seg); seg.next++; }
     }
@@ -132,6 +144,7 @@ export function createPlayer({ engine, lex, first, load, onVerse, onWord, onChap
       else if (ev.vs) onVerse?.(ev.seg.ch, ev.vs.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k, ev.vs);
       else onWord?.(ev.seg.ch, ev.verse, ev.index);
     }
+    while (pending.length && pending[0].at <= now) { const p = pending.shift(); onLink?.(p.seg.ch, p.vs.verse, p.link); }
     if (!asked && now >= end + 1 && segs[segs.length - 1] === last) { stop(); onEnd?.(); }
   }
 

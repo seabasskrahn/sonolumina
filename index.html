@@ -6,11 +6,12 @@
 <meta name="theme-color" content="#000000">
 <title>Sonolumina</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #000; color: #e9e2cf;
+  html, body { margin: 0; min-height: 100%; background: #000; color: #e9e2cf;
     font-family: Georgia, 'Times New Roman', serif; }
-  body { display: flex; flex-direction: column; align-items: center;
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 1.4rem; padding: 1.5rem; box-sizing: border-box;
     -webkit-tap-highlight-color: transparent; user-select: none; }
+  body > * { flex-shrink: 0; }   /* nothing is squeezed; the page scrolls if it must */
   h1 { font-weight: normal; letter-spacing: .3em; font-size: .85rem;
     opacity: .55; margin: 0; text-transform: uppercase; }
   canvas { width: min(78vw, 46vh); aspect-ratio: 1; border-radius: 50%; }
@@ -18,6 +19,10 @@
     line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
   #heading { display: block; margin-bottom: .5rem; font-size: .85rem; font-style: italic; opacity: .6; }
   #ref { display: block; margin-top: .5rem; font-size: .8rem; opacity: .6; }
+  #links { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; max-width: 32rem; min-height: 1.6rem; }
+  #links a { font: .75rem system-ui, sans-serif; color: #e9e2cf; opacity: .55; text-decoration: none;
+    border: 1px solid #3a352a; border-radius: 1rem; padding: .25rem .7rem; transition: opacity .3s, background .3s; }
+  #links a.lit { opacity: 1; background: #2a2418; }
   #state { font: .8rem system-ui, sans-serif; opacity: .7; letter-spacing: .04em; min-height: 1.2em; }
   #labels { font: .72rem/1.5 system-ui, sans-serif; opacity: .45; text-align: center; }
   #verse span.now { color: #fff3c4; text-shadow: 0 0 .6em rgba(255,220,140,.6); }
@@ -32,6 +37,7 @@
   <h1>Sonolumina</h1>
   <canvas id="dish" width="200" height="200" aria-hidden="true"></canvas>
   <p id="verse" aria-live="polite"></p>
+  <div id="links"></div>
   <div id="state"></div>
   <div id="labels"></div>
   <div id="controls">
@@ -46,6 +52,7 @@
   import { createPlayer } from './form/player.js';
   import { createNarrator } from './form/narrator.js';
   import { parseRef, sung, isFinal, next } from './law/canon.js';
+  import { links, signature, swells, LINK_SOURCE } from './law/links.js';
 
   const el = id => document.getElementById(id);
   const json = u => fetch(u).then(r => r.json());
@@ -61,6 +68,25 @@
     const [bsb, vad] = await book(ref.book);
     const parts = bsb.c[ref.chapter - 1].map((_, i) => sung(bsb, ref.chapter, i + 1));
     return { ref, name: canon[ref.book][0], parts, text: parts.map(x => x.text), vadBook: vad, final: isFinal(canon, ref) };
+  };
+  // Linked verses (Day 5): the cross references of a book, fetched once; a link's tones are
+  // drawn from the linked verse's own words, so its book is fetched too, in time or not at all.
+  const xrefs = new Map();
+  const xref = b => { if (!xrefs.has(b)) xrefs.set(b, json('./data/xref/' + canon[b][1]).catch(() => ({}))); return xrefs.get(b); };
+  const within = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+  const linkSets = new Map();
+  const linksFor = (ch, vs) => {
+    const key = `${ch.ref.book}.${ch.ref.chapter}.${vs.verse}`;
+    if (!linkSets.has(key)) linkSets.set(key, (async () => {
+      const ls = swells(links(canon, await xref(ch.ref.book), ch.ref.book, ch.ref.chapter, vs.verse), vs.dur);
+      const mine = signature(cb.lex, ch.text[vs.verse - 1], vs.mode);
+      return Promise.all(ls.map(async l => {
+        const got = await within(book(l.book), 2500);
+        const theirs = got ? signature(cb.lex, sung(got[0], l.c, l.v).text, vs.mode) : [];
+        return { ...l, mine, theirs, label: `${canon[l.book][0]} ${l.c}:${l.v}`, file: canon[l.book][1].replace(/\.json$/, '') };
+      }));
+    })());
+    return linkSets.get(key);
   };
   // Any chapter opens from the address (?Psalms.23); Genesis 1 by default.
   const start = await loadChapter(parseRef(canon, location.search.slice(1)) || { book: 0, chapter: 1 });
@@ -80,6 +106,7 @@
   };
   createDish(el('dish'), engine, () => hsl(hue, 0.55, 0.78));
   window.__sono = engine;   // for smoke tests
+  window.__links = linkSets;
 
   let spans = [];
   const p = el('verse');
@@ -102,6 +129,18 @@
     // A verse the BSB leaves out (not in the oldest manuscripts) is named with the verse after it.
     if (v > 1 && !ch.text[v - 2].trim()) r.textContent += ` · ${ch.ref.chapter}:${v - 1} omitted (not in the oldest manuscripts)`;
     p.append(r);
+    // The verse's links, as tabs under it; each lights when it sounds, and a tap opens its chapter.
+    const tabs = el('links');
+    tabs.innerHTML = '';
+    linkSets.get(`${ch.ref.book}.${ch.ref.chapter}.${v}`)?.then(ls => {
+      if (el('ref') !== r) return;   // a later verse is showing now
+      for (const l of ls) {
+        const a = document.createElement('a');
+        a.href = `?${l.file}.${l.c}`; a.textContent = l.label;
+        a.dataset.k = `${l.book}.${l.c}.${l.v}`;
+        tabs.append(a);
+      }
+    });
   };
   // Before the first tap: Genesis 1 shows the darkness over the deep; any other chapter its first verse.
   { const v0 = start.ref.book === 0 && start.ref.chapter === 1 ? 2 : 1; showVerse(start, v0, start.text[v0 - 1].split(/\s+/)); }
@@ -133,7 +172,7 @@
     if (state === 'ready') {
       state = 'playing';
       playBtn.textContent = 'Pause';
-      el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LABELS.DISH].join('<br>');
+      el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LINK_SOURCE, LABELS.DISH].join('<br>');
       player = createPlayer({
         engine, lex: cb.lex, first: start,
         load: ref => { const n = next(canon, ref); return n ? loadChapter(n) : Promise.resolve(null); },
@@ -142,6 +181,11 @@
         onVerse: (ch, v, words, E, k, vs) => {
           showVerse(ch, v, words, E, k);
           narrator.speak(words.join(' '), words.length / (vs.dur / 60));
+        },
+        linksFor,
+        onLink: (ch, v, l) => {
+          const a = el('links').querySelector(`a[data-k="${l.book}.${l.c}.${l.v}"]`);
+          if (a) { a.classList.add('lit'); setTimeout(() => a.classList.remove('lit'), 1300); }
         },
         onWord: (ch, v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
         onClose: () => {

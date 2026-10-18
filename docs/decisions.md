@@ -40,3 +40,14 @@
   (Design as approved; the address form and the omission wording are Claude's calls)
 - 2026-10-18: Whole Bible, Day 2 (Separation): tests/canon.html and tools/run_canon.py (written by the peer session oem-87) prove the Law on all 1,189 chapters, each from a cold start and as one Genesis→Revelation walk. 19/19 checks over 31,086 sung verses: V–I everywhere, every Amen the major IV, 15/8 on every cadential V, melody and bass ending home, register, every tone in mode, pivots at mode changes between chapters, the close only on Revelation 22. Finding for Seabass: with M[⌊5V⌋] on today's feeling data (percentiles, smoothed), the walk is Mixolydian 52.9%, Dorian 23.3%, Ionian 22.4%, Lydian 1.1%, Aeolian 0.4%, so sorrow rarely sounds as Aeolian. Whether the feeling scale should be stretched is his decision. (Law as ruled; the observation is Claude's)
 - 2026-10-18: Whole Bible, Day 3 (Seed bearing fruit): the player plays chapter after chapter on one audio clock. The next chapter is fetched and scored 25 s before the current one ends, carrying its mode and melody on, and starts where the Amen's breath ends. Home drones crossfade over 3 s between chapters. The address follows the chapter (?Psalms.118), so a reload resumes there. Checked at phone size: Psalm 117 → 118 and Malachi 4 → Matthew 1. (Design as approved; the 25 s lookahead and the crossfade are Claude's calls)
+- 2026-10-18: Whole Bible, Day 5 (Living things): linked verses sound together (law/links.js):
+  - Links per verse: up to 8, the Law's limit; the data keeps 5.
+  - Weight: α = votes/max, labelled as votes because no typed data exists.
+  - Each swell sits at (j+1)·dur/(n+1) within the verse. The first lasts 2 s, the others 1.2 s, at gain ×(0.4+0.6α).
+  - In each swell, this verse's signature fades from one side as the linked verse's rises from the other, meeting at the centre over the home note. Earlier verses come from the left, later ones from the right.
+  - A signature is a verse's 3 rarest words. Their tones are snapped to the data-table consonances, then into the mode now sounding.
+  - A linked book that is not loaded within 2.5 s is skipped, never late.
+  - The links show as tabs under the verse; each lights as it sounds, and a tap opens that chapter.
+  - The links bus keeps the old calibrated balance (1.09/1.27 of the strings).
+  (Law as written in the old HANDOFF §1/§3; snapping into the mode, the 2.5 s limit and the bus level are Claude's calls)
+- 2026-10-18: Layout: nothing on the page is squeezed. When the links make it taller than the screen, the page scrolls. (Claude's call)

@@ -10,6 +10,7 @@
   import { scoreChapter } from '../law/chapter.js';
   import { chordR, progression, pivot, pc } from '../law/harmony.js';
   import { parseRef, next, prev, isFinal, sung, gIndex } from '../law/canon.js';
+  import { links, signature, swells } from '../law/links.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -134,6 +135,21 @@
   const p23 = sung(psalms, 23, 1), p119 = sung(psalms, 119, 1);
   check('Psalm 23:1: heading shown, not sung', p23.heading === 'A Psalm of David.' && p23.text === 'The LORD is my shepherd; I shall not want.', JSON.stringify(p23));
   check('116 Psalms carry a heading; Psalm 119 has none', Object.keys(psalms.h).length === 116 && p119.heading === '' && p119.text === psalms.c[118][0]);
+
+  // Links (Day 5): linked verses sound together.
+  const genX = await (await fetch('../data/xref/Genesis.json')).json();
+  const jn = canon.findIndex(b => b[0] === 'John');
+  const jnX = await (await fetch('../data/xref/John.json')).json();
+  const L1 = links(canon, genX, 0, 1, 1);
+  check('Genesis 1:1 has links, strongest first, α = votes/max (first = 1)', L1.length > 0 && L1.length <= 8 && L1[0].alpha === 1 && L1.every((l, i) => i === 0 || l.votes <= L1[i - 1].votes) && L1.every(l => near(l.alpha, l.votes / L1[0].votes, 1e-12)));
+  check('a link to a later verse comes from the right (+0.7)', L1.every(l => l.dir === 0.7));
+  const LJ = links(canon, jnX, jn, 1, 1);
+  check('John 1:1 → Genesis 1:1 comes from the left (−0.7)', LJ.some(l => l.book === 0 && l.c === 1 && l.v === 1 && l.dir === -0.7));
+  check('a verse with no links has none', links(canon, {}, 0, 1, 1).length === 0);
+  const sig = signature(lex, gen.c[0][0], 'Dorian');
+  check('signature: at most 3 tones, every one in the mode', sig.length === 3 && sig.every(f => MODES.Dorian.some(m => near(pc(f / 110), m, 1e-9)) || near(pc(f / 110), 1, 1e-9)), sig.join());
+  const sw = swells([{ alpha: 1 }, { alpha: 0.5 }, { alpha: 0.25 }], 8);
+  check('swells: evenly spread, 2 s then 1.2 s, gain 0.4 + 0.6α', sw.map(x => x.t).join() === '2,4,6' && sw[0].len === 2 && sw[1].len === 1.2 && near(sw[1].gain, 0.7, 1e-12));
 
   // Chladni (Day 5).
   const [cn, cm] = chladniMode(5);   // 5·5 = 25 = 5² + 0² or 4² + 3²; first found wins

@@ -13,7 +13,8 @@ export function createVoices(engine) {
   const bus = {};
   // Section levels, set from measurement (tests/mix.html) so every section
   // sits near −33 dBFS RMS, like instruments in a balanced mix.
-  const LEVEL = { bass: 0.305, pad: 0.406, counter: 1.12, melody: 1.245 };
+  // Links: the old calibrated balance put cross-refs at 1.09/1.27 of the strings (logos-theta BAL), kept here.
+  const LEVEL = { bass: 0.305, pad: 0.406, counter: 1.12, melody: 1.245, links: 0.406 * 1.09 / 1.27 };
   for (const [name, level] of Object.entries(LEVEL)) {
     bus[name] = ctx.createGain();
     bus[name].gain.value = level;
@@ -101,8 +102,30 @@ export function createVoices(engine) {
     engine.track(f, v, t, t + 0.9, 'melody');
   }
 
+  // A link: this verse's signature fades from its side as the linked verse's rises from the
+  // other, the two meeting in the centre over the home note. Low-passed string tones, an octave up.
+  function swell(mine, theirs, dir, t, len, gain, home = 110) {
+    const ev = 0.1 * gain;
+    const voice = (f, from, up) => {
+      const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain(), p = ctx.createStereoPanner();
+      o.type = 'sawtooth'; o.frequency.value = f * 2;
+      lp.type = 'lowpass'; lp.frequency.value = 900;
+      p.pan.setValueAtTime(from, t); p.pan.linearRampToValueAtTime(0, t + len);
+      g.gain.setValueAtTime(up ? 0 : ev, t);
+      g.gain.linearRampToValueAtTime(up ? ev : 0, t + len);
+      g.gain.linearRampToValueAtTime(0, t + len + 0.4);
+      o.connect(lp).connect(g).connect(p).connect(bus.links);
+      o.start(t); o.stop(t + len + 0.5);
+      done([o, lp, g, p], o);
+      engine.track(f * 2, ev, t, t + len + 0.4, 'link');
+    };
+    voice(home, 0, true);
+    for (const f of mine) voice(f, -dir, false);
+    for (const f of theirs) voice(f, dir, true);
+  }
+
   function brightness(hz, t) { tone.frequency.setTargetAtTime(Math.min(2400, hz), t, 1.5); }
   function loudness(x, t) { music.gain.setTargetAtTime(x, t, 1.2); }
 
-  return { cello, strings, epiano, celesta, brightness, loudness, bus };
+  return { cello, strings, epiano, celesta, swell, brightness, loudness, bus };
 }
