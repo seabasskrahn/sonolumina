@@ -24,7 +24,7 @@ Success means you can open any chapter from Genesis 1 to Revelation 22 on a phon
 - No new emotion source. NRC per-verse scores stay, labelled, as already decided.
 - No original-language (Hebrew/Greek) codebooks in this growth. The English codebook stays, as in the seed.
 - No notes, highlights, reading plans, settings panel, mixer, visual styles or Solfeggio/theta options from the old app.
-- No publishing. Creating the public repo `seabasskrahn/sonolumina` needs Seabass's separate yes.
+- The seed is already public (`seabasskrahn/sonolumina`, Pages from main). Seabass, 2026-10-18: "push it". Each day is pushed to main (live) once its checks pass.
 
 ## Anti-goals (a failure even if it works)
 - Any per-book tweak, hand-typed data, or tone that does not come from the Law.
@@ -114,4 +114,3 @@ File layout inside `law/` and `form/`, the cache method, the Node test runner sh
 
 ## Open questions for Seabass (do not block building)
 - **Companion set:** the engine header says (1, 3/2, 4/3, 5/4, 6/5), and the codebook's data table says (1, 5/4, 4/3, 3/2, 2). The build keeps the data table.
-- **Publishing:** create the public repo `seabasskrahn/sonolumina` and turn on Pages? Yes or no.
