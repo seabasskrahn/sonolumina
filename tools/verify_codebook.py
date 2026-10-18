@@ -12,12 +12,15 @@ Entry: [step, octave, c1, c2, count, first_verse]
   c1, c2 = index into CONS of the 2 most frequent verse companions,
            snapped to the consonance nearest their interval to the word
 
-Usage: python3 -I tools/verify_codebook.py <dir with kjv/ and bsb/>
+Usage: python3 -I tools/verify_codebook.py <dir with kjv/ and bsb/> [frequency]
+  With 'frequency', ranks by the Law (r = 1 most common, ties by first appearance,
+  BSB-only stems after the KJV) instead of the old order of first appearance.
 """
 import sys, os, re, json, math
 from collections import Counter, defaultdict
 
 SRC = sys.argv[1]
+BY_FREQ = len(sys.argv) > 2 and sys.argv[2] == 'frequency'
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOOKS = ('Genesis Exodus Leviticus Numbers Deuteronomy Joshua Judges Ruth 1Samuel 2Samuel '
          '1Kings 2Kings 1Chronicles 2Chronicles Ezra Nehemiah Esther Job Psalms Proverbs '
@@ -80,6 +83,7 @@ def signatures(vs):
             for b in u:
                 if a != b: co[a][b] += 1
     step = {l: int(12 * ((rank[l] * PHI) % 1)) for l in cnt}
+    if BY_FREQ and RANK: step = {l: int(12 * ((RANK[l] * PHI) % 1)) for l in cnt}
     octv = {l: 0 if cnt[l] >= 200 else 1 if cnt[l] >= 20 else 2 for l in cnt}
     rel = {l: JUST[step[l]] * 2 ** octv[l] for l in cnt}
     out = {}
@@ -90,6 +94,16 @@ def signatures(vs):
     return out
 
 ev, bv = verses(kjv), verses(bsb, TOTAL)
+RANK = None
+if BY_FREQ:
+    # Independent of the builder: rank straight from counts.
+    kc, ko, ac, ao = Counter(), {}, Counter(), {}
+    for g, ls in sorted(ev, key=lambda x: x[0]):
+        for l in ls: kc[l] += 1; ko.setdefault(l, len(ko))
+    for g, ls in sorted(ev + bv, key=lambda x: x[0]):
+        for l in ls: ac[l] += 1; ao.setdefault(l, len(ao))
+    order = sorted(kc, key=lambda l: (-kc[l], ko[l])) + sorted((l for l in ac if l not in kc), key=lambda l: (-ac[l], ao[l]))
+    RANK = {l: i + 1 for i, l in enumerate(order)}
 mine = signatures(ev)
 both = signatures(ev + bv)
 for l, sig in both.items():
