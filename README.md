@@ -11,9 +11,9 @@ Built in the order of the creation days, first on Genesis 1 (all seven done), th
 1. Light: any of the 1,189 chapters opens (`?Psalms.23`). **(done)**
 2. Separation: the Law proven on every chapter, apart from the Form (`tests/canon.html`). **(done)**
 3. Seed bearing fruit: chapters flow on, one into the next, Genesis 1 to Revelation 22. **(done)**
-4. Lights for seasons: a strip of all 1,189 chapters coloured by feeling. **(concept shown in `_concept/`, waiting for Seabass's yes)**
+4. Lights for seasons: a strip of all 1,189 chapters coloured by feeling. **(concept shown in `concept/`, waiting for Seabass's yes)**
 5. Living things: linked verses sound together. **(done)**
-6. Man: book, chapter and verse navigation. **(concept shown in `_concept/`, waiting for Seabass's yes)**
+6. Man: book, chapter and verse navigation. **(concept shown in `concept/`, waiting for Seabass's yes)**
 7. Rest: the whole Bible comes home. Every sung verse ends V–I, every chapter ends on the major IV–I "Amen", and only Revelation 22 closes on 110 Hz itself. **(done)**
 
 ## Sources and credits
