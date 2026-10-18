@@ -35,16 +35,16 @@ export const MODES = {
   Aeolian:    [1, 9/8, 6/5, 4/3, 3/2, 8/5, 9/5],
 };
 
+// mode(v) = M[⌊V·|M|⌋], dark to bright, by valence alone (the Law, thesis §3.7).
+// V = 1 exactly would give index 5; it is clamped to Lydian (Q9). (Seabass: "Five even bands (Law)")
+export const M = ['Aeolian', 'Dorian', 'Mixolydian', 'Ionian', 'Lydian'];
 export function modeOf(E) {
-  if (E.v > 0.7) return E.d > 0.6 ? 'Lydian' : 'Ionian';
-  if (E.v > 0.5) return 'Mixolydian';
-  if (E.v > 0.32) return 'Dorian';
-  return 'Aeolian';
+  return M[Math.min(M.length - 1, Math.floor(E.v * M.length))];
 }
 
-// Words for what the music is doing, shown on screen (thresholds as in logos-theta emoLabel).
+// Words for what the music is doing, shown on screen (pace and stance thresholds as in logos-theta emoLabel).
 export function feeling(E) {
-  const name = E.v > 0.7 ? 'joy' : E.v > 0.5 ? 'peace' : E.v > 0.32 ? 'longing' : 'sorrow';
+  const name = ['sorrow', 'longing', 'peace', 'joy', 'joy'][M.indexOf(modeOf(E))];   // named by its mode band
   const pace = E.a > 0.62 ? 'stirring' : E.a > 0.38 ? 'moving' : 'still';
   const stance = E.d > 0.65 ? 'majestic' : E.d > 0.38 ? 'steady' : 'humble';
   return `${name} · ${pace} · ${stance}`;
@@ -56,7 +56,7 @@ export function K(E) {
     mode: modeOf(E),
     bpm: 54 + 30 * E.a,                       // arousal sets the tempo, 54–84 BPM
     dens: E.a > 0.55 ? 8 : E.a > 0.3 ? 6 : 4, // arpeggio notes per bar
-    loud: 0.75 + 0.5 * E.a,
+    loud: 0.75 + 0.5 * E.d,                   // the Law: register and loudness rise with D
     reg: 2 ** ((E.d - 0.5) * 0.6),           // dominance raises or lowers the register
     bright: 700 + 900 * E.d,                  // and brightens the sound
     celV: 0.12 + 0.08 * E.d,                  // melody (celesta) weight

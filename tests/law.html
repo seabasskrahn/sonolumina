@@ -27,11 +27,11 @@
 
   // Tones from the codebook, worked by hand from the Law.
   const lex = (await (await fetch('../data/codebook/eng.json')).json()).lex;
-  const god = tone(lex, 'God');        // entry [10,0,3,0,4712,0]: step 10 = 9/5, octave 0
-  check('God = 110 × 9/5 = 198 Hz', near(god.freq, 198, 1e-9), god.freq);
-  check('God companions = 3/2 and 1 of its tone', near(god.partials[0].freq, 297, 1e-9) && near(god.partials[1].freq, 198, 1e-9));
-  const beg = tone(lex, 'beginning'); // [2,1,...]: step 2 = 9/8, octave 1
-  check('beginning = 110 × 9/8 × 2 = 247.5 Hz', near(beg.freq, 247.5, 1e-9), beg.freq);
+  const god = tone(lex, 'God');        // entry [5,0,3,3,4712,0] (frequency rank): step 5 = 4/3, octave 0
+  check('God = 110 × 4/3 = 146.67 Hz', near(god.freq, 110 * 4 / 3, 1e-9), god.freq);
+  check('God companions = 3/2 and 3/2 of its tone', near(god.partials[0].freq, 220, 1e-9) && near(god.partials[1].freq, 220, 1e-9));
+  const beg = tone(lex, 'beginning'); // [7,1,0,0,...]: step 7 = 3/2, octave 1
+  check('beginning = 110 × 3/2 × 2 = 330 Hz', near(beg.freq, 330, 1e-9), beg.freq);
   check('all six fields read', beg.count === 107 && beg.first === 0, JSON.stringify(beg));
   check('F0 is 110 Hz', F0 === 110);
   check('every tone lies on the just scale', Object.values(lex).every(e => e.length === 6 && JUST[e[0]] && e[1] >= 0 && e[1] <= 2));
@@ -48,21 +48,25 @@
   // Emotion and K(E) (Day 4).
   const vad = await (await fetch('../data/vad/Genesis.json')).json();
   const E1 = verseE(vad, 1, 1);
-  check('Genesis 1:1 feeling = V .77 A .28 D .67 (as documented)', near(E1.v, .77, .005) && near(E1.a, .28, .005) && near(E1.d, .67, .005), JSON.stringify(E1));
-  check('Genesis 1:1 → Lydian (V > .7, D > .6)', K(E1).mode === 'Lydian');
-  check('tempo = 54 + 30·A = 62.5 BPM', near(K(E1).bpm, 54 + 30 * 28 / 99, 1e-9), K(E1).bpm);
-  check('mode thresholds', modeOf({v:.71,d:.5}) === 'Ionian' && modeOf({v:.6}) === 'Mixolydian' && modeOf({v:.4}) === 'Dorian' && modeOf({v:.32}) === 'Aeolian');
+  const raw = vad[0].slice(0, 6);       // read from the data, not typed: VVAADD
+  check('Genesis 1:1 feeling read as stored ÷ 99', near(E1.v, +raw.slice(0, 2) / 99, 1e-12) && near(E1.a, +raw.slice(2, 4) / 99, 1e-12) && near(E1.d, +raw.slice(4, 6) / 99, 1e-12), raw);
+  check('Genesis 1:1 mode = M[⌊5V⌋]', K(E1).mode === ['Aeolian', 'Dorian', 'Mixolydian', 'Ionian', 'Lydian'][Math.floor(5 * E1.v)], K(E1).mode);
+  check('tempo = 54 + 30·A', near(K(E1).bpm, 54 + 30 * E1.a, 1e-9), K(E1).bpm);
+  check('mode = M[⌊5V⌋], five even bands, by valence alone', modeOf({v:.19,d:1}) === 'Aeolian' && modeOf({v:.2}) === 'Dorian' && modeOf({v:.4}) === 'Mixolydian' && modeOf({v:.6,d:0}) === 'Ionian' && modeOf({v:.79}) === 'Ionian' && modeOf({v:.8,d:0}) === 'Lydian');
+  check('V = 1 clamps to Lydian (Q9)', modeOf({v:1}) === 'Lydian');
+  check('loudness rises with D, not A', near(K({v:.5,a:0,d:1}).loud, 1.25, 1e-12) && near(K({v:.5,a:1,d:0}).loud, 0.75, 1e-12));
   check('smoothing halves toward the last verse', near(smooth({v:1,a:1,d:1},{v:0,a:0,d:0}).v, .5, 1e-12));
   check('snap 16/15 → 9/8 in Ionian (nearer by log distance)', near(snapMode(110*16/15, 110, 'Ionian'), 110*9/8, 1e-9));
   check('snap 45/32 → 4/3 in Ionian, keeps octave', near(snapMode(440*45/32, 110, 'Ionian'), 440*4/3, 1e-9));
   check('snap 15/8 stays 15/8 in Ionian', near(snapMode(110*15/8, 110, 'Ionian'), 110*15/8, 1e-9));
   // The chapter as heard (smoothed feeling), Day 5.
-  const ch = scoreChapter({ lex, text: gen.c[0], vadBook: vad, chapter: 1 });
+  const ch = scoreChapter({ lex, text: gen.c[0], vadBook: vad, chapter: 1, final: true });
+  const one = r => near(pc(r), 1, 1e-9);
   const inScale = (f, mode) => MODES[mode].some(m => near(m, pc(f / 110), 1e-9)) || near(pc(f / 110), 15 / 8, 1e-9);
   check('31 verses scored', ch.verses.length === 31);
   check('feeling is smoothed verse to verse', near(ch.verses[1].E.v, (verseE(vad, 1, 2).v + verseE(vad, 1, 1).v) / 2, 1e-12));
-  check('every chord tone lies in its verse mode (15/8 allowed on the cadential V)',
-    ch.verses.every(vs => vs.bars.every(b => b.tones.every(f => inScale(f, vs.mode)))));
+  check('every chord tone lies in its verse mode (15/8 on the cadential V; the Amen is the major IV, borrowed where needed)',
+    ch.verses.every(vs => vs.bars.every(b => b.amen ? b.tones.every(f => [4/3, 5/3, 1].some(r => near(pc(f / 110), r, 1e-9))) : b.tones.every(f => inScale(f, vs.mode)))));
   check('every melody note and partial lies in its verse mode (15/8 allowed)',
     ch.verses.every(vs => vs.melody.every(n => inScale(n.freq, vs.mode) && n.partials.every(p => inScale(p.freq, vs.mode)))));
   check('every melody note sits in the register 523–1568 Hz × 2^(0.6(D−.5))',
@@ -71,11 +75,32 @@
     ch.verses.every(vs => vs.melody.filter(n => n.word != null).every(n => lex[stem(vs.words[n.word].word)][4] < 200)));
   check('progression ends V–I, chapter end IV–I', progression(4, 'I', false).slice(-2).join() === 'V,I' && progression(4, 'I', true).slice(-2).join() === 'IV,I');
   check('cadential V carries the leading tone 15/8 in Aeolian', chordR('Aeolian', 'V', true).some(r => near(pc(r), 15 / 8, 1e-12)));
+  check('the Amen IV is the major IV (4/3, 5/3, 2) in every mode, Lydian included (Q13)',
+    Object.keys(MODES).every(m => chordR(m, 'IV', false, true).every((r, i) => near(r, [4/3, 5/3, 2][i], 1e-12))));
+  check('without the Amen, IV is built from the mode (Lydian: 45/32)', near(chordR('Lydian', 'IV')[0], 45 / 32, 1e-12));
+  check('the last verse marks its IV bar as the Amen', ch.verses[30].bars[ch.verses[30].bars.length - 2].amen === true);
+
+  // Chapters flow on (whole Bible): only the very end has the long close.
+  const mid = scoreChapter({ lex, text: gen.c[0], vadBook: vad, chapter: 1 });
+  const lastV = mid.verses[mid.verses.length - 1];
+  check('a chapter that is not final has no close, only a breath of 2 beats', mid.close === null && near(mid.dur, lastV.at + lastV.dur + 2 * lastV.beat, 1e-9));
+  check('the next chapter can carry the mode and melody on', mid.lastMode === lastV.mode && mid.melPrev > 0);
+
+  // Omitted verses (BSB leaves 16 slots empty): no music, no time.
+  const gap = scoreChapter({ lex, text: [gen.c[0][0], '', gen.c[0][2]], vadBook: vad, chapter: 1 });
+  check('an omitted verse is marked, has no time and no notes', gap.verses[1].omitted === true && gap.verses[1].dur === 0 && !gap.verses[1].bars);
+  check('the verse after an omission starts where the one before ended', near(gap.verses[2].at, gap.verses[0].at + gap.verses[0].dur + gap.verses[0].beat, 1e-9));
+  const tail = scoreChapter({ lex, text: [gen.c[0][0], gen.c[0][1], ''], vadBook: vad, chapter: 1 });
+  check('when the last slot is omitted, the last sung verse says the Amen', tail.verses[1].last === true && tail.verses[1].bars.slice(-2).map(b => b.chord).join() === 'IV,I');
+
+  // A very short verse still comes home ("Jesus wept.").
+  const wept = scoreChapter({ lex, text: ['Jesus wept.'], vadBook: ['505050'], chapter: 1 });
+  const wv = wept.verses[0];
+  check('"Jesus wept." has at least 2 bars, ends IV–I and on the home note', wv.bars.length >= 2 && wv.bars.slice(-2).map(b => b.chord).join() === 'IV,I' && one(wv.melody[wv.melody.length - 1].freq / 110));
   check('pivot Ionian → Mixolydian uses a shared chord', ['IV', 'vi', 'I'].includes(pivot('Ionian', 'Mixolydian')));
 
 
   // Res, the Resolution rule, on the chapter as heard (Day 7).
-  const one = r => near(pc(r), 1, 1e-9);
   check('every verse ends V–I, the last verse IV–I ("Amen")', ch.verses.every(vs => {
     const [a, b] = vs.bars.slice(-2).map(x => x.chord);
     return b === 'I' && a === (vs.last ? 'IV' : 'V');

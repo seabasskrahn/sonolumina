@@ -4,6 +4,7 @@
 // Res: every verse ends V–I (authentic cadence), the last verse of a chapter
 // ends IV–I (the plagal "Amen"), and the cadential V always carries the
 // leading tone 15/8, even in the minor-flavoured modes. Gratitude is resolution.
+// The Amen's IV is always major (see AMEN_IV).
 
 import { MODES } from './emotion.js';
 
@@ -13,8 +14,13 @@ export const RING = ['I', 'vi', 'IV', 'V'];
 
 const deg = (scale, d) => scale[d % 7] * 2 ** Math.floor(d / 7);
 
-// Chord tones as ratios to the home note. cad = this is the cadential V.
-export function chordR(mode, chord, cad = false) {
+// The chapter-final "Amen" is always the major IV (4/3, 5/3, 2), whatever the mode.
+// In Lydian (45/32) and Aeolian (8/5) that is a borrowed chord. (Seabass: "Major IV, labelled", Q13)
+export const AMEN_IV = [4 / 3, 5 / 3, 2];
+
+// Chord tones as ratios to the home note. cad = this is the cadential V; amen = the chapter's last IV.
+export function chordR(mode, chord, cad = false, amen = false) {
+  if (amen && chord === 'IV') return AMEN_IV.slice();
   return DEG[chord].map(d =>
     cad && chord === 'V' && d % 7 === 6 ? (15 / 8) * 2 ** Math.floor(d / 7) : deg(MODES[mode], d));
 }

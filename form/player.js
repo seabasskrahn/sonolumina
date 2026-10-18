@@ -44,7 +44,7 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
 
   // Rest: the tonic chord, with the bass on the home note itself, held and fading.
   function scheduleClose(c) {
-    const t = t0 + c.t, k = score.verses[score.verses.length - 1].k;
+    const t = t0 + c.t, k = score.verses.filter(vs => !vs.omitted).pop().k;
     voices.loudness(k.loud, t);
     voices.cello(c.bass, t, c.dur * 0.7, 0.22);
     voices.strings(c.pad, t, c.dur - 1.6, k.strV);
@@ -56,10 +56,11 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
     voices = voices || createVoices(engine);
     t0 = engine.time + 0.4;
     for (const vs of score.verses) {
+      if (vs.omitted) continue;
       timeline.push({ at: t0 + vs.at, verse: vs.verse, vs });
       for (const w of vs.words) timeline.push({ at: t0 + w.t, verse: vs.verse, index: w.index });
     }
-    timeline.push({ at: t0 + score.close.t, close: true });
+    if (score.close) timeline.push({ at: t0 + score.close.t, close: true });
     timeline.sort((a, b) => a.at - b.at || (b.vs ? 1 : 0) - (a.vs ? 1 : 0));
     homeDrone(t0, t0 + score.dur);
     // A timer, not animation frames, drives the music: it keeps going when the
@@ -83,8 +84,8 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, onVer
   function tick() {
     const now = engine.time;
     // Schedule each verse about three seconds before it begins.
-    while (next < score.verses.length && t0 + score.verses[next].at - now < 3) scheduleVerse(score.verses[next++]);
-    if (next === score.verses.length && t0 + score.close.t - now < 3) { scheduleClose(score.close); next++; }
+    while (next < score.verses.length && t0 + score.verses[next].at - now < 3) { const vs = score.verses[next++]; if (!vs.omitted) scheduleVerse(vs); }
+    if (score.close && next === score.verses.length && t0 + score.close.t - now < 3) { scheduleClose(score.close); next++; }
     while (cursor < timeline.length && timeline[cursor].at <= now) {
       const ev = timeline[cursor++];
       if (ev.close) onClose?.();

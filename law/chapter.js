@@ -14,12 +14,17 @@ import { chordR, reg, bestChord, progression, pivot, pc } from './harmony.js';
 
 const ARP = [0, 1, 2, 1, 0, 2, 1, 2];   // broken-chord pattern of the counter-melody
 
-export function scoreChapter({ lex, text, vadBook, chapter, home = F0, prevMode = null, prevMel = 0 }) {
+// final = the last chapter of the Bible: only it ends with the long close on 110 Hz.
+// Every other chapter ends with its Amen and a breath, and the next carries on from lastMode/melPrev.
+export function scoreChapter({ lex, text, vadBook, chapter, home = F0, prevMode = null, prevMel = 0, final = false }) {
   const verses = [];
   let t0 = 0, E = null, lastMode = prevMode, melPrev = prevMel;
+  // Verses the BSB omits (empty slots) are kept in place but have no music and take no time.
+  const sungLast = text.reduce((k, t, i) => (t && t.trim() ? i : k), -1);
 
   text.forEach((verseText, vi) => {
-    const v = vi + 1, last = v === text.length;
+    const v = vi + 1, last = vi === sungLast;
+    if (!(verseText && verseText.trim())) { verses.push({ verse: v, omitted: true, at: t0, dur: 0 }); return; }
     E = smooth(verseE(vadBook, chapter, v), E);
     const s = scoreVerse(lex, verseText, E, home);
     const { k, beatSec: beat } = s;
@@ -36,11 +41,12 @@ export function scoreChapter({ lex, text, vadBook, chapter, home = F0, prevMode 
     if (pv && nb > 2) prog[0] = pv;
     lastMode = mode;
     const cad = b => b === nb - 2;
+    const amen = b => last && b === nb - 2;   // the chapter's Amen: major IV
     const sub = bar >= 2.4 ? k.dens : Math.min(4, k.dens);
     const bars = prog.map((chord, b) => {
-      const ct = chordR(mode, chord, cad(b)).map(r => home * r);
+      const ct = chordR(mode, chord, cad(b), amen(b)).map(r => home * r);
       return {
-        t: t0 + b * bar, dur: bar, chord, cad: cad(b), tones: ct,
+        t: t0 + b * bar, dur: bar, chord, cad: cad(b), amen: amen(b), tones: ct,
         bass: reg(ct[0], 65),
         pad: ct.map(f => reg(f, 196)),
         arp: Array.from({ length: sub }, (_, q) => ({
@@ -51,7 +57,7 @@ export function scoreChapter({ lex, text, vadBook, chapter, home = F0, prevMode 
     });
 
     // Melody: key words (fewer than 200 uses), quantized to eighths, density from arousal.
-    const chordAt = q => { const b = Math.min(nb - 1, Math.floor(q / bar)); return chordR(mode, prog[b], cad(b)).map(r => home * r); };
+    const chordAt = q => { const b = Math.min(nb - 1, Math.floor(q / bar)); return chordR(mode, prog[b], cad(b), amen(b)).map(r => home * r); };
     const nearCT = (f, q) => {
       let best = f, bd = 1e9;
       for (const c of chordAt(q)) for (let o = -3; o <= 3; o++) {
@@ -125,13 +131,16 @@ export function scoreChapter({ lex, text, vadBook, chapter, home = F0, prevMode 
     t0 += dur + beat;   // a breath between verses
   });
 
-  // The close: after the chapter's IV–I "Amen", the tonic chord rests and fades.
-  // Bass on the home note itself (110 Hz), strings on I, the melody's last tonic held.
-  const lastVs = verses[verses.length - 1];
+  // After the chapter's IV–I "Amen": a breath of 2 beats, then the next chapter.
+  // At the very end (final), the close: the tonic chord rests and fades,
+  // bass on the home note itself (110 Hz), strings on I, the melody's last tonic held.
+  const sung = verses.filter(vs => !vs.omitted), lastVs = sung[sung.length - 1];
+  const end = lastVs ? lastVs.at + lastVs.dur : 0;
   const I = chordR(lastMode, 'I').map(r => home * r);
-  const close = {
-    t: lastVs.at + lastVs.dur, dur: 6,
+  const close = final ? {
+    t: end, dur: 6,
     bass: reg(home, 65 * home / F0), pad: I.map(f => reg(f, 196)), melody: melPrev,
-  };
-  return { verses, close, dur: close.t + close.dur, home, lastMode, melPrev };
+  } : null;
+  const dur = final ? end + 6 : end + 2 * (lastVs ? lastVs.beat : 0);
+  return { verses, close, dur, home, lastMode, melPrev };
 }
