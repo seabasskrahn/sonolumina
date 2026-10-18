@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Sonolumina · the whole Bible comes home</title>
+<pre id="out">loading 66 books…</pre>
+<script type="module">
+  // Day 7 across the canon: every chapter of the Bible is scored by the same Law
+  // the app plays, and the Resolution rule is checked everywhere.
+  // Two passes: each chapter cold (as if opened on its own), and the whole Bible
+  // as one continuous walk (feeling and mode carried across every chapter join).
+  // Run headless: python3 tools/run_canon.py
+  import { F0 } from '../law/home.js';
+  import { MODES } from '../law/emotion.js';
+  import { scoreChapter } from '../law/chapter.js';
+  import { pivot, pc, AMEN_IV } from '../law/harmony.js';
+  import { sung } from '../law/canon.js';
+
+  const out = document.getElementById('out');
+  const checks = new Map();   // name -> { n, fails: [] }
+  const ok = (name, cond, where = '') => {
+    const c = checks.get(name) || { n: 0, fails: [] };
+    c.n++;
+    if (!cond) c.fails.push(where);
+    checks.set(name, c);
+  };
+  const near = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol;
+  const isHome = f => near(pc(f / F0), 1);
+  const inSet = (f, set) => set.some(r => near(pc(f / F0), pc(r)));
+
+  const canon = await (await fetch('../data/canon.json')).json();
+  const lex = (await (await fetch('../data/codebook/eng.json')).json()).lex;
+  const books = [];
+  for (const [name, file] of canon) {
+    const [bsb, vad] = await Promise.all([
+      fetch(`../data/bsb/${file}`).then(r => r.json()),
+      fetch(`../data/vad/${file}`).then(r => r.json()),
+    ]);
+    books.push({ name, bsb, vad });
+    out.textContent = `loaded ${books.length}/66 books…`;
+  }
+  const lastBook = books.length - 1;
+
+  // The text each verse sings (Psalm headings shown but never sung).
+  const textOf = (b, c) => books[b].bsb.c[c - 1].map((_, i) => sung(books[b].bsb, c, i + 1).text);
+
+  const totals = { chapters: 0, slots: 0, sung: 0, omitted: 0, melodyNotes: 0, modes: {} };
+
+  function checkChapter(where, b, c, ch, text, isFinal, prev) {
+    const sungSlots = text.filter(t => t && t.trim()).length;
+    const sungVs = ch.verses.filter(v => !v.omitted);
+    ok('every sung slot is scored, every empty slot omitted', sungVs.length === sungSlots
+       && ch.verses.filter(v => v.omitted).every(v => !text[v.verse - 1]?.trim() && v.dur === 0), where);
+    const lasts = ch.verses.filter(v => v.last);
+    ok('exactly one last verse, the last sung one', lasts.length === 1 && lasts[0] === sungVs[sungVs.length - 1], where);
+
+    for (const vs of sungVs) {
+      const at = `${where}:${vs.verse}`;
+      const bars = vs.bars, n = bars.length;
+      ok('every sung verse has at least 2 bars', n >= 2, at);
+      const [pen, fin] = [bars[n - 2]?.chord, bars[n - 1]?.chord];
+      ok('every verse ends V–I, the chapter IV–I', fin === 'I' && pen === (vs.last ? 'IV' : 'V'), at);
+      if (!vs.last) ok('every cadential V carries 15/8', bars[n - 2].tones.some(f => near(pc(f / F0), 15 / 8)), at);
+      else {
+        const t = bars[n - 2].tones;   // Hz; compare their pitch classes with the Amen's ratios
+        ok('every Amen is the major IV (4/3, 5/3, 2)', bars[n - 2].amen === true && t.length === 3
+           && t.every(f => inSet(f, AMEN_IV)) && AMEN_IV.every(r => t.some(f => near(pc(f / F0), pc(r)))), at);
+      }
+      const lastMel = vs.melody[vs.melody.length - 1];
+      ok('every verse ends its melody on the home note', lastMel && lastMel.res === 'tonic' && isHome(lastMel.freq), at);
+      ok('every verse ends its bass on the home note', isHome(bars[n - 1].bass), at);
+      const lo = 523 * vs.k.reg - 1e-6, hi = 1568 * vs.k.reg + 1e-6;
+      ok('every melody note in register', vs.melody.every(m => m.freq >= lo && m.freq <= hi), at);
+      // Mode, plus the leading tone of the cadential V, plus the borrowed Amen tones in a chapter's last verse.
+      const allowed = MODES[vs.mode].concat([15 / 8], vs.last ? [4 / 3, 5 / 3] : []);
+      ok('every chord tone in mode (15/8 and the Amen allowed)', bars.every(x => x.tones.every(f => inSet(f, allowed))), at);
+      ok('every melody note and partial in mode', vs.melody.every(m => inSet(m.freq, allowed) && m.partials.every(p => inSet(p.freq, allowed))), at);
+      ok('words timed inside their verse', vs.words.every(w => w.t >= vs.at - 1e-9 && w.t <= vs.at + vs.dur + 1e-9), at);
+      totals.melodyNotes += vs.melody.length;
+      totals.modes[vs.mode] = (totals.modes[vs.mode] || 0) + 1;
+    }
+    ok('verses in time order', ch.verses.every((v, i) => i === 0 || v.at >= ch.verses[i - 1].at), where);
+    if (isFinal) {
+      ok('Revelation 22 is final: the close rests on 110 Hz', ch.close && ch.close.bass === F0 && isHome(ch.close.melody), where);
+    } else {
+      ok('only Revelation 22 has the 6 s close', ch.close === null, where);
+    }
+    if (prev && sungVs.length) {
+      // At a chapter join, a mode change starts on the pivot chord when one exists and there is room.
+      const first = sungVs[0], pv = pivot(prev.lastMode, first.mode);
+      if (pv && first.bars.length > 2) ok('chapter joins pivot when the mode changes', first.bars[0].chord === pv, where);
+    }
+    totals.sung += sungVs.length;
+    totals.omitted += ch.verses.length - sungVs.length;
+    totals.slots += ch.verses.length;
+  }
+
+  // Pass 1: every chapter cold.
+  for (let b = 0; b < books.length; b++) {
+    for (let c = 1; c <= books[b].bsb.c.length; c++) {
+      const text = textOf(b, c), isFinal = b === lastBook && c === books[b].bsb.c.length;
+      const ch = scoreChapter({ lex, text, vadBook: books[b].vad, chapter: c, final: isFinal });
+      checkChapter(`cold ${books[b].name} ${c}`, b, c, ch, text, isFinal, null);
+      totals.chapters++;
+    }
+    out.textContent = `cold pass: ${books[b].name} done`;
+    await new Promise(r => setTimeout(r));
+  }
+  const cold = { ...totals, modes: { ...totals.modes } };
+
+  // Pass 2: the whole Bible as one walk, Genesis 1 to Revelation 22.
+  Object.assign(totals, { chapters: 0, slots: 0, sung: 0, omitted: 0, melodyNotes: 0, modes: {} });
+  let prev = null;
+  for (let b = 0; b < books.length; b++) {
+    for (let c = 1; c <= books[b].bsb.c.length; c++) {
+      const text = textOf(b, c), isFinal = b === lastBook && c === books[b].bsb.c.length;
+      const ch = scoreChapter({ lex, text, vadBook: books[b].vad, chapter: c, final: isFinal,
+        prevMode: prev?.lastMode ?? null, prevMel: prev?.melPrev ?? 0 });
+      checkChapter(`walk ${books[b].name} ${c}`, b, c, ch, text, isFinal, prev);
+      prev = ch;
+      totals.chapters++;
+    }
+    out.textContent = `walk: ${books[b].name} done`;
+    await new Promise(r => setTimeout(r));
+  }
+
+  // Named cases from the review focus.
+  const john = books.findIndex(x => x.name === 'John');
+  const jw = scoreChapter({ lex, text: textOf(john, 11), vadBook: books[john].vad, chapter: 11 }).verses[34];
+  ok('John 11:35 "Jesus wept." still resolves (2+ bars, V–I, tonic)', jw && !jw.omitted && jw.bars.length >= 2
+     && jw.bars.at(-1).chord === 'I' && isHome(jw.melody.at(-1).freq), 'John 11:35');
+  ok('the very last sung verse is Revelation 22:21', prev.verses.filter(v => !v.omitted).at(-1).verse === 21, 'Revelation 22');
+
+  ok('canon shape: 1,189 chapters, 31,102 slots, 16 omitted', cold.chapters === 1189 && cold.slots === 31102 && cold.omitted === 16,
+     JSON.stringify({ chapters: cold.chapters, slots: cold.slots, omitted: cold.omitted }));
+
+  const failures = [...checks].filter(([, c]) => c.fails.length)
+    .map(([name, c]) => ({ name, detail: `${c.fails.length} of ${c.n} failed, e.g. ${c.fails.slice(0, 5).join('; ')}` }));
+  const total = checks.size, pass = total - failures.length;
+  const share = Object.fromEntries(Object.entries(totals.modes).map(([m, n]) => [m, `${(100 * n / totals.sung).toFixed(1)}%`]));
+  window.__canon = {
+    done: true, pass, total, failures,
+    totals: { chapters: totals.chapters, 'sung verses': totals.sung, omitted: totals.omitted,
+              'melody notes': totals.melodyNotes, 'mode shares (walk)': JSON.stringify(share) },
+  };
+  out.textContent = [...checks].map(([name, c]) => `${c.fails.length ? 'FAIL' : 'PASS'}  ${name}  (${c.n} checked${c.fails.length ? `, ${c.fails.length} failed` : ''})`).join('\n')
+    + `\n\n${pass}/${total} checks passed`;
+</script>
+</html>

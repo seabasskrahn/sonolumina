@@ -1,6 +1,10 @@
-// The Form: playing a chapter. The Law (law/chapter.js) has already decided
-// every note; this file only schedules it on the audio clock and tells the
-// page what is current.
+// The Form: playing the Bible chapter after chapter. The Law (law/chapter.js) has
+// already decided every note of each chapter; this file only schedules it on the
+// audio clock and tells the page what is current.
+//
+// Chapters flow on: each one is scored when the one before is nearing its end,
+// carrying its mode and melody on (prevMode/prevMel), and starts where the
+// one before ended (its Amen and a breath). Only the last chapter of the Bible has the close.
 
 import { F0, HARMONICS } from '../law/home.js';
 import { scoreChapter } from '../law/chapter.js';
@@ -8,22 +12,45 @@ import { createVoices } from './voices.js';
 
 // The music dips about 8 dB while the voice reads, and swells in the gaps.
 const DUCK = 0.4;
+// Ask for the next chapter this many seconds before the current one ends.
+const AHEAD = 25;
 
-export function createPlayer({ engine, lex, vadBook, chapter, chapterText, final = false, onVerse, onWord, onClose, onEnd, narrating = () => false }) {
-  const score = scoreChapter({ lex, text: chapterText, vadBook, chapter, final });
-  const timeline = [];    // page events: { at, verse } or { at, verse, index }
-  let cursor = 0, next = 0, t0 = 0, voices = null, timer = 0, paused = false;
+// first: a loaded chapter { ref, text: [sung text per verse], vadBook, final, ... } (anything else is passed back).
+// load(ref) → Promise of the chapter after ref, or null at the end of the Bible.
+export function createPlayer({ engine, lex, first, load, onVerse, onWord, onChapter, onClose, onEnd, narrating = () => false }) {
+  const segs = [];        // { ch, score, t0, next }: chapters in play order
+  const timeline = [];    // page events, in time order
+  let cursor = 0, timer = 0, paused = false, voices = null, asked = false, ended = false;
 
   // The home note sounds quietly under everything: the pupil every tone is measured from.
-  function homeDrone(at, until) {
+  // Between chapters one drone fades out as the next fades in (3 s, equal and opposite).
+  function homeDrone(at, until, first) {
     const total = HARMONICS.reduce((s, h) => s + h.amp, 0);
     for (const h of HARMONICS) engine.tone({
-      freq: F0 * h.ratio, ratio: h.ratio, at, dur: until - at,
-      gain: 0.04 * h.amp / total, attack: 2.5, release: 3,
+      freq: F0 * h.ratio, ratio: h.ratio, at: first ? at : at - 1.5, dur: until - at + (first ? 1.5 : 3),
+      gain: 0.04 * h.amp / total, attack: first ? 2.5 : 3, release: 3,
     });
   }
 
-  function scheduleVerse(vs) {
+  function add(ch, t0, prev) {
+    const score = scoreChapter({ lex, text: ch.text, vadBook: ch.vadBook, chapter: ch.ref.chapter,
+      final: ch.final, prevMode: prev ? prev.lastMode : null, prevMel: prev ? prev.melPrev : 0 });
+    const seg = { ch, score, t0, next: 0 };
+    segs.push(seg);
+    const ev = [{ at: t0, chapter: seg }];
+    for (const vs of score.verses) {
+      if (vs.omitted) continue;
+      ev.push({ at: t0 + vs.at, seg, vs });
+      for (const w of vs.words) ev.push({ at: t0 + w.t, seg, verse: vs.verse, index: w.index });
+    }
+    if (score.close) ev.push({ at: t0 + score.close.t, close: true });
+    ev.sort((a, b) => a.at - b.at || (b.vs ? 1 : 0) - (a.vs ? 1 : 0));
+    timeline.push(...ev);
+    homeDrone(t0, t0 + score.dur, !prev);
+    return seg;
+  }
+
+  function scheduleVerse(t0, vs) {
     const T = t => t0 + t, { k, E } = vs;
     voices.brightness(1100 + k.bright * 0.6, T(vs.at));
     if (narrating()) {
@@ -43,8 +70,8 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, final
   }
 
   // Rest: the tonic chord, with the bass on the home note itself, held and fading.
-  function scheduleClose(c) {
-    const t = t0 + c.t, k = score.verses.filter(vs => !vs.omitted).pop().k;
+  function scheduleClose(seg) {
+    const c = seg.score.close, t = seg.t0 + c.t, k = seg.score.verses.filter(vs => !vs.omitted).pop().k;
     voices.loudness(k.loud, t);
     voices.cello(c.bass, t, c.dur * 0.7, 0.22);
     voices.strings(c.pad, t, c.dur - 1.6, k.strV);
@@ -54,20 +81,11 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, final
   function play() {
     engine.start();
     voices = voices || createVoices(engine);
-    t0 = engine.time + 0.4;
-    for (const vs of score.verses) {
-      if (vs.omitted) continue;
-      timeline.push({ at: t0 + vs.at, verse: vs.verse, vs });
-      for (const w of vs.words) timeline.push({ at: t0 + w.t, verse: vs.verse, index: w.index });
-    }
-    if (score.close) timeline.push({ at: t0 + score.close.t, close: true });
-    timeline.sort((a, b) => a.at - b.at || (b.vs ? 1 : 0) - (a.vs ? 1 : 0));
-    homeDrone(t0, t0 + score.dur);
+    add(first, engine.time + 0.4, null);
     // A timer, not animation frames, drives the music: it keeps going when the
     // screen is off (browsers slow timers to about once a second, so look ahead 3 s).
     timer = setInterval(tick, 50);
     tick();
-    return score.dur;
   }
 
   function pause() {
@@ -80,20 +98,42 @@ export function createPlayer({ engine, lex, vadBook, chapter, chapterText, final
     paused = false;
     engine.ctx.resume();
   }
+  function stop() {
+    clearInterval(timer);
+    ended = true;
+  }
 
   function tick() {
-    const now = engine.time;
+    const now = engine.time, last = segs[segs.length - 1];
+    const end = last.t0 + last.score.dur;
+    // The next chapter: fetched and scored ahead of time; it starts where this one ends.
+    if (!asked && !last.ch.final && !last.noNext && end - now < AHEAD) {
+      asked = true;
+      load(last.ch.ref).then(ch => {
+        asked = false;
+        if (ended) return;
+        if (!ch) { last.noNext = true; return; }
+        add(ch, Math.max(end, engine.time + 0.5), last.score);
+      }).catch(() => { asked = false; last.noNext = true; });   // not loaded: the music ends here
+    }
     // Schedule each verse about three seconds before it begins.
-    while (next < score.verses.length && t0 + score.verses[next].at - now < 3) { const vs = score.verses[next++]; if (!vs.omitted) scheduleVerse(vs); }
-    if (score.close && next === score.verses.length && t0 + score.close.t - now < 3) { scheduleClose(score.close); next++; }
+    for (const seg of segs) {
+      const vs = seg.score.verses;
+      while (seg.next < vs.length && seg.t0 + vs[seg.next].at - now < 3) {
+        const v = vs[seg.next++];
+        if (!v.omitted) scheduleVerse(seg.t0, v);
+      }
+      if (seg.score.close && seg.next === vs.length && seg.t0 + seg.score.close.t - now < 3) { scheduleClose(seg); seg.next++; }
+    }
     while (cursor < timeline.length && timeline[cursor].at <= now) {
       const ev = timeline[cursor++];
       if (ev.close) onClose?.();
-      else if (ev.vs) onVerse?.(ev.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k, ev.vs);
-      else onWord?.(ev.verse, ev.index);
+      else if (ev.chapter) onChapter?.(ev.chapter.ch);
+      else if (ev.vs) onVerse?.(ev.seg.ch, ev.vs.verse, ev.vs.words.map(w => w.word), ev.vs.E, ev.vs.k, ev.vs);
+      else onWord?.(ev.seg.ch, ev.verse, ev.index);
     }
-    if (now >= t0 + score.dur + 1) { clearInterval(timer); onEnd?.(); }
+    if (!asked && now >= end + 1 && segs[segs.length - 1] === last) { stop(); onEnd?.(); }
   }
 
-  return { play, pause, resume, score, get paused() { return paused; } };
+  return { play, pause, resume, stop, get paused() { return paused; }, get segments() { return segs; } };
 }

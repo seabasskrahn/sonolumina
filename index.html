@@ -45,18 +45,32 @@
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
   import { createNarrator } from './form/narrator.js';
-  import { parseRef, sung, isFinal } from './law/canon.js';
+  import { parseRef, sung, isFinal, next } from './law/canon.js';
 
   const el = id => document.getElementById(id);
   const json = u => fetch(u).then(r => r.json());
   const [canon, cb] = await Promise.all([json('./data/canon.json'), json('./data/codebook/eng.json')]);
-  // Any chapter opens from the address (?Psalms.23); Genesis 1 by default. Only that book is fetched.
-  const at = parseRef(canon, location.search.slice(1)) || { book: 0, chapter: 1 };
-  const [name, file] = canon[at.book];
-  const [bsb, vad] = await Promise.all([json('./data/bsb/' + file), json('./data/vad/' + file)]);
-  const parts = bsb.c[at.chapter - 1].map((_, i) => sung(bsb, at.chapter, i + 1));
-  const chapter = parts.map(x => x.text);   // what is sung: headings are shown, never sung
-  document.title = `${name} ${at.chapter} · Sonolumina`;
+  // A book's text and feeling are fetched once, when first needed.
+  const books = new Map();
+  const book = b => {
+    if (!books.has(b)) books.set(b, Promise.all([json('./data/bsb/' + canon[b][1]), json('./data/vad/' + canon[b][1])]));
+    return books.get(b);
+  };
+  // A chapter as shown and as sung: headings are shown, never sung.
+  const loadChapter = async ref => {
+    const [bsb, vad] = await book(ref.book);
+    const parts = bsb.c[ref.chapter - 1].map((_, i) => sung(bsb, ref.chapter, i + 1));
+    return { ref, name: canon[ref.book][0], parts, text: parts.map(x => x.text), vadBook: vad, final: isFinal(canon, ref) };
+  };
+  // Any chapter opens from the address (?Psalms.23); Genesis 1 by default.
+  const start = await loadChapter(parseRef(canon, location.search.slice(1)) || { book: 0, chapter: 1 });
+  let cur = start;
+  const here = ch => {
+    cur = ch;
+    document.title = `${ch.name} ${ch.ref.chapter} · Sonolumina`;
+    history.replaceState(null, '', '?' + canon[ch.ref.book][1].replace(/\.json$/, '') + '.' + ch.ref.chapter);
+  };
+  here(start);
   const engine = createEngine();
   // Light for the season: hue from valence (cool blue at sorrow, warm gold at joy).
   let hue = 45;
@@ -69,13 +83,13 @@
 
   let spans = [];
   const p = el('verse');
-  const showVerse = (v, words, E, k) => {
+  const showVerse = (ch, v, words, E, k) => {
     if (k) {
       hue = k.hue;
       el('state').textContent = `${k.mode} · ${Math.round(k.bpm)} BPM · ${feeling(E)}`;
     }
     p.innerHTML = '';
-    const head = parts[v - 1] && parts[v - 1].heading;
+    const head = ch.parts[v - 1] && ch.parts[v - 1].heading;
     if (head) { const h = document.createElement('span'); h.id = 'heading'; h.textContent = head; p.append(h); }
     spans = words.map((w, i) => {
       const s = document.createElement('span');
@@ -84,13 +98,13 @@
       return s;
     });
     const r = document.createElement('span');
-    r.id = 'ref'; r.textContent = `${name} ${at.chapter}:${v} · BSB`;
+    r.id = 'ref'; r.textContent = `${ch.name} ${ch.ref.chapter}:${v} · BSB`;
     // A verse the BSB leaves out (not in the oldest manuscripts) is named with the verse after it.
-    if (v > 1 && !chapter[v - 2].trim()) r.textContent += ` · ${at.chapter}:${v - 1} omitted (not in the oldest manuscripts)`;
+    if (v > 1 && !ch.text[v - 2].trim()) r.textContent += ` · ${ch.ref.chapter}:${v - 1} omitted (not in the oldest manuscripts)`;
     p.append(r);
   };
   // Before the first tap: Genesis 1 shows the darkness over the deep; any other chapter its first verse.
-  { const v0 = at.book === 0 && at.chapter === 1 ? 2 : 1; showVerse(v0, chapter[v0 - 1].split(/\s+/)); }
+  { const v0 = start.ref.book === 0 && start.ref.chapter === 1 ? 2 : 1; showVerse(start, v0, start.text[v0 - 1].split(/\s+/)); }
 
   const narrator = createNarrator();
   const voiceBtn = el('voice'), playBtn = el('play');
@@ -121,13 +135,15 @@
       playBtn.textContent = 'Pause';
       el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LABELS.DISH].join('<br>');
       player = createPlayer({
-        engine, lex: cb.lex, vadBook: vad, chapter: at.chapter, chapterText: chapter, final: isFinal(canon, at),
+        engine, lex: cb.lex, first: start,
+        load: ref => { const n = next(canon, ref); return n ? loadChapter(n) : Promise.resolve(null); },
         narrating: () => narrator.on,
-        onVerse: (v, words, E, k, vs) => {
-          showVerse(v, words, E, k);
+        onChapter: ch => here(ch),
+        onVerse: (ch, v, words, E, k, vs) => {
+          showVerse(ch, v, words, E, k);
           narrator.speak(words.join(' '), words.length / (vs.dur / 60));
         },
-        onWord: (v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
+        onWord: (ch, v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
         onClose: () => {
           // Rest. The whole Bible has come home: the close on 110 Hz.
           spans.forEach(x => x.className = '');
