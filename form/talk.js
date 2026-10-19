@@ -108,7 +108,7 @@ export function createTalk({ mount, toggle, context, onStart }) {
   };
   // Microphone frames are gathered to about 100 ms before sending.
   let acc = [], accN = 0;
-  const onFrame = f => { acc.push(f); accN += f.length; if (accN >= ctx.sampleRate / 10) { const all = new Float32Array(accN); let o = 0; for (const a of acc) { all.set(a, o); o += a.length; } acc = []; accN = 0; sendAudio(all); } };
+  const onFrame = f => { if (!ctx || !live) return; acc.push(f); accN += f.length; if (accN >= ctx.sampleRate / 10) { const all = new Float32Array(accN); let o = 0; for (const a of acc) { all.set(a, o); o += a.length; } acc = []; accN = 0; sendAudio(all); } };
 
   async function start(mode) {
     if (live) return;
@@ -160,7 +160,8 @@ export function createTalk({ mount, toggle, context, onStart }) {
     try { ws?.close(); } catch {}
     ws = null; stopVoice();
     mic?.getTracks().forEach(t => t.stop()); mic = null;
-    try { node?.disconnect(); src?.disconnect(); } catch {}
+    try { if (node?.port) node.port.onmessage = null; node?.disconnect(); src?.disconnect(); } catch {}
+    node = src = null; acc = []; accN = 0;
     ctx?.close().catch(() => {}); ctx = null;
     call.textContent = 'Start talking'; mute.disabled = true; mute.textContent = 'Mute'; muted = false; demo.disabled = false;
     say(msg);
