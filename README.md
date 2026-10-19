@@ -41,3 +41,6 @@ No frequency is named in Scripture. Sonolumina makes no medical or spiritual cla
 - `python3 -I tools/run_canon.py` runs `tests/canon.html`: the whole Bible, every chapter cold and as one walk (25 checks).
 - Open `tests/mix.html` to measure the balance of the four sections.
 - `python3 tools/smoke.py <url> <seconds> <shot.png> [js expression] [tap|notap]` drives headless Chrome at phone size.
+
+## Expression markup (draft)
+- `python3 tools/build_expression.py` validates `data/expression/<Book>.<Chapter>.json` (`{"verse": "tagged text"}`, Book = `data/bsb` file stem) against BSB text; `--package` writes `data/expression-pkg/expression.min.json` + `manifest.json`. Tag allowlist: `tools/expression_tags.json` (DRAFT pending the Scribe's spec). Tests: `python3 tools/test_build_expression.py`.

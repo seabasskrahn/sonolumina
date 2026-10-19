@@ -1,0 +1,6 @@
+{
+  "_status": "DRAFT allowlist pending the Scribe's expression-markup spec. Edit freely; tools/build_expression.py reads this file.",
+  "audio_tags": ["whispers", "reverent", "softly", "gently", "joyful", "sorrowful", "solemn", "urgent", "awed", "tender", "firm", "calm", "sighs", "pause", "short pause", "long pause"],
+  "pause_marks": ["...", "\u2026", "\u2014"],
+  "break_max_seconds": 3.0
+}
