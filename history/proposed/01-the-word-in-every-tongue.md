@@ -1,0 +1,81 @@
+# After the Word, thread 1: the Word in every tongue
+
+**Status: proposed. Nothing here is in the app.** Each entry waits for Seabass to approve it, change it or cut it (SPIRIT §11).
+
+**How this was made:** Claude researched it on 2026-10-18. Facts come from the sources listed under each entry. Where sources disagree, the entry says so rather than choosing. The verse each entry is tied to is **Claude's suggestion**, and none of these people is claimed to have quoted it unless a source says so. Verse text is BSB, copied from the app's own data.
+
+The entries start after the New Testament was written, in date order.
+
+---
+
+## 1. Ulfilas gives the Goths an alphabet and the Bible (c. 350)
+Ulfilas (c. 311–c. 382) was a bishop and missionary to the Goths. He is credited with creating the Gothic alphabet, 27 letters drawn mostly from Greek with some from Latin, so that the Bible could be written in Gothic. His was the earliest Bible in any Germanic language. The original is lost. The best surviving copy, the "Silver Bible" (Codex Argenteus), was written in silver and gold ink on purple parchment in Italy in the early 500s and is kept at Uppsala University Library.
+
+- **Uncertain:** Britannica says his life "cannot be reconstructed with certainty." It dates the translation to about 350, while other sources say only "before 381." Study of the text suggests a team of translators worked with him.
+- **Tied to:** "And how can they believe in the One of whom they have not heard? And how can they hear without someone to preach?" (Romans 10:14b)
+- **Sources:** [Britannica, Ulfilas](https://www.britannica.com/biography/Ulfilas) · [Britannica, Gothic alphabet](https://www.britannica.com/topic/Gothic-alphabet) · [Britannica, Gothic Bible](https://www.britannica.com/topic/Gothic-Bible) · [UNESCO Memory of the World, Codex Argenteus](https://media.unesco.org/sites/default/files/webform/mow001/sweden_codex.pdf)
+
+## 2. Jerome turns to the Hebrew (382–c. 405)
+In 382 Pope Damasus I asked Jerome to revise the Latin Gospels against the best Greek texts. Jerome went further and translated the Old Testament from the Hebrew itself, not from the Greek. His Psalms from the Hebrew date to about 390–398. The work was finished around 405. His Latin Bible, the Vulgate, remained the standard Bible of the West for over a thousand years.
+
+- **Tied to:** "Your word is a lamp to my feet and a light to my path." (Psalm 119:105)
+- **Sources:** [Wikipedia, Vulgate](https://en.wikipedia.org/wiki/Vulgate) · [Christianity Today, "405 Jerome completes the Vulgate"](https://www.christianitytoday.com/history/issues/issue-28/405-jerome-completes-vulgate.html) · [Jewish Encyclopedia, Vulgate](https://jewishencyclopedia.com/articles/14739-vulgate)
+
+## 3. Mesrop Mashtots writes Armenian down (405)
+Armenian had no alphabet good enough to carry the Scriptures. Mesrop Mashtots, a monk, devised one in 405, helped by Sahak (Isaac) the Great, head of the Armenian Church. A school of translators then made the first Armenian Bible from the Greek (c. 410). Mashtots himself translated the New Testament and Proverbs, and later revised the whole text. His alphabet is still used today.
+
+- **Uncertain:** Britannica gives the alphabet as 36 letters in one article and 38 in another. His death is given as 440 or 441.
+- **Tied to:** "How is it then that each of us hears them in his own native language?" (Acts 2:8)
+- **Sources:** [Britannica, St. Mesrop Mashtots](https://www.britannica.com/print/article/377039) · [Wikipedia, Bible translations into Armenian](https://en.wikipedia.org/wiki/Bible_translations_into_Armenian)
+
+## 4. Cyril and Methodius bring the Word to the Slavs (863)
+In 862 Prince Rostislav of Great Moravia asked the Byzantine emperor for missionaries. The brothers Cyril and Methodius were sent, and from 863 they worked among the Slavs. They devised the Glagolitic script, which later developed into Cyrillic, and translated Scripture and the liturgy into what became Old Church Slavonic. German clergy opposed worship in Slavonic. In 868 Pope Adrian II approved it.
+
+- **Uncertain:** exactly which books the brothers themselves translated is not known. The Gospels and the Psalms were probably first.
+- **Tied to:** "Unless you speak intelligible words with your tongue, how will anyone know what you are saying?" (1 Corinthians 14:9)
+- **Sources:** [Britannica, Saints Cyril and Methodius](https://www.britannica.com/print/article/1345803) · [Wikipedia, Cyril and Methodius](https://en.wikipedia.org/wiki/Cyril_and_Methodius)
+
+## 5. The first whole Bible in English (1382–c. 1395)
+Under John Wycliffe of Oxford, a group of translators, mostly priests, made the first complete Bible in English, translating from the Latin Vulgate. An early word-for-word version (about 1382) was followed by a plainer, more readable one, finished several years after Wycliffe's death in 1384. In 1407–1409 the Church in England forbade new translations without a bishop's approval, yet over 250 manuscripts survive.
+
+- **Uncertain:** which translators did which parts is disputed, and the dates of the revision are given as 1388 or 1395.
+- **Tied to:** "Then you will know the truth, and the truth will set you free." (John 8:32)
+- **Sources:** [Wikipedia, Wycliffe's Bible](https://en.wikipedia.org/wiki/Wycliffe%27s_Bible) · [Lincoln College, Oxford: rare Wycliffite Bible digitised](https://lincoln.ox.ac.uk/news/lincolns-rare-wycliffite-bible-digitised)
+
+## 6. Gutenberg prints the Bible (c. 1455)
+In Mainz, Johannes Gutenberg's workshop printed a Latin Bible in two columns of 42 lines. It is the first complete book still in existence printed in the West with movable type. About 180 copies were made in 1454–55. From then on a Bible no longer needed years of hand-copying.
+
+- **Honest note:** Gutenberg did not invent movable type. Korea's *Jikji* (1377) is older. His casting method and metal made printing practical in Europe.
+- **Tied to:** "so My word that proceeds from My mouth will not return to Me empty, but it will accomplish what I please, and it will prosper where I send it." (Isaiah 55:11)
+- **Sources:** [Britannica, Gutenberg Bible](https://www.britannica.com/topic/Gutenberg-Bible) · [Cambridge University Library, Biblia Latina](https://exhibitions.lib.cam.ac.uk/linesofthought/?p=604)
+
+## 7. Luther's New Testament for the German people (1522)
+While hidden at Wartburg Castle, Martin Luther translated the New Testament from Greek into German in about eleven weeks, using Erasmus's Greek text. After revision with Melanchthon it was printed in September 1522, and a second edition was needed by December. The whole Bible followed in 1534, made with Bugenhagen, Jonas, Cruciger, Melanchthon and others. It helped shape the standard German language.
+
+- **Tied to:** "So they read from the Book of the Law of God, explaining it and giving insight, so that the people could understand what was being read." (Nehemiah 8:8)
+- **Sources:** [Wikipedia, Luther Bible](https://en.wikipedia.org/wiki/Luther_Bible) · [1517.org, Luther's September Testament](https://www.1517.org/articles/luthers-september-testament)
+
+## 8. Tyndale: the Word from Greek into English, at the cost of his life (1526–1536)
+William Tyndale translated the New Testament straight from Greek into English, the first to do so. It was printed abroad and smuggled into England in 1526, where it was banned at once. He kept translating while in hiding. He was condemned for heresy and executed at Vilvoorde, near Brussels, in 1536, strangled and then burned. Much of his wording passed into later English Bibles.
+
+- **Uncertain:** Britannica gives 18,000 copies printed by his death in one article and "several thousand" in another. The exact day of his death is uncertain, around early October 1536.
+- **Tied to:** "The Law of the LORD is perfect, reviving the soul; the testimony of the LORD is trustworthy, making wise the simple." (Psalm 19:7)
+- **Sources:** [Britannica, William Tyndale](https://www.britannica.com/print/article/611569) · [Christian History Institute, Tyndale timeline](https://christianhistoryinstitute.org/magazine/article/tyndale-timeline)
+
+## 9. William Carey and the Serampore translators (1793–1834)
+William Carey, an English shoemaker turned missionary, went to India in 1793. Working with Indian scholars and his colleagues at Serampore, he translated the Bible into Bengali, Oriya, Marathi, Hindi, Assamese and Sanskrit, and parts of it into 29 other languages and dialects. The Bengali New Testament came out in 1801.
+
+- **Honest note:** Carey himself rejected the claim that he alone translated the Bible into forty languages. Native speakers did much of the work.
+- **Tied to:** "and you will be My witnesses in Jerusalem, and in all Judea and Samaria, and to the ends of the earth." (Acts 1:8b)
+- **Sources:** [Britannica, William Carey](https://www.britannica.com/biography/William-Carey) · [Christian Classics Ethereal Library, George Smith, *The Life of William Carey*, ch. 12](https://www.ccel.org/ccel/smith_geo/carey.xii.html)
+
+## 10. Today: the full Bible in 795 languages (as of 1 January 2026)
+The United Bible Societies count 795 languages with a full Bible, reaching about 6.2 billion people, out of 7,393 languages in total. In 2025 alone, translations were published in 100 languages spoken by about 566 million people. For 66 of those languages it was the first Scripture they had ever had. More than 1.5 billion people still have no full Bible in their own language, and the work goes on.
+
+- **Honest note:** organisations count differently. These are UBS figures, and Wycliffe and ProgressBible publish their own.
+- **Tied to:** "Therefore go and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit," (Matthew 28:19)
+- **Sources:** [United Bible Societies, 2025 Translation Statistics Report (PDF)](https://www.die-bibel.ch/wp-content/uploads/2026/05/EN-Translation-Statistics-Report-2025.pdf) · [UBS news, 15 June 2026](https://unitedbiblesocieties.org/100-languages-receive-bible-translations-in-2025-reaching-566-million-people-worldwide/) · [Wycliffe Global Alliance, 2025 Scripture access statistics](https://wycliffe.net/2025/08/25/2025-scripture-access-statistics/)
+
+---
+
+**Left out on purpose:** the Septuagint (3rd–2nd century BC). It is a real and important translation, but it came before the New Testament, and §11 begins after the Word.
