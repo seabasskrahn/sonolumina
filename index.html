@@ -297,7 +297,7 @@
   #sheet h3 { font: normal 1.15rem Georgia, 'Times New Roman', serif; min-height: 48px; margin: 0 0 .4rem; }
   #sheet h3 #sheetT::before { display: block; font: .68rem system-ui, sans-serif; letter-spacing: .24em; text-transform: uppercase; color: var(--dim); margin-bottom: 2px; }
   #sheet[data-kind=speed] h3 #sheetT::before { content: 'Speed'; }
-  #sheet[data-kind=voice] h3 #sheetT::before { content: 'Voice'; }
+  #sheet[data-kind=voice] h3 #sheetT::before { content: 'Reading'; }
   #sheet .ib, #settings .ib { width: 44px; height: 44px; font-size: 1rem; background: #15130f; border: 1px solid var(--line); flex-shrink: 0; }
   #sheet :focus-visible, #settings :focus-visible { outline: none; box-shadow: var(--focus); }
   #sheet h4, #settings section > h4, #settings #stVoice h4 { font: 600 .66rem system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); opacity: 1; margin: 16px 0 8px; }
@@ -365,8 +365,8 @@
   #sheet .keyf input::placeholder, #settings .keyf input::placeholder { font-family: system-ui, sans-serif; letter-spacing: 0; color: var(--faint); }
   #sheet .keyf input:focus-visible, #settings .keyf input:focus-visible { box-shadow: none; }
   #sheet .keyf code, #settings .keyf code { font: .88rem ui-monospace, monospace; letter-spacing: .04em; color: #e9e2cf; }
-  #sheet .keyf .ks, #settings .keyf .ks { flex: 1; white-space: nowrap; margin-left: 6px; font: .72rem system-ui, sans-serif; color: var(--dim); }
-  #sheet .keyf .lnk, #settings .keyf .lnk { min-height: 44px; min-width: 52px; padding: 0 10px; background: none; border: 0; border-radius: 10px; color: var(--glow); font: .8rem system-ui, sans-serif; }
+  #sheet .keyf .ks, #settings .keyf .ks { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 6px; font: .72rem system-ui, sans-serif; color: var(--dim); }
+  #sheet .keyf .lnk, #settings .keyf .lnk { white-space: nowrap; flex-shrink: 0; min-height: 44px; min-width: 52px; padding: 0 10px; background: none; border: 0; border-radius: 10px; color: var(--glow); font: .8rem system-ui, sans-serif; }
   #sheet .keynote, #settings .keynote { display: flex; gap: 10px; margin-top: 8px; padding: 10px 12px; border-left: 2px solid var(--tied); font: .76rem/1.45 system-ui, sans-serif; color: var(--dim); }
   #sheet .keynote b, #settings .keynote b { color: #e9e2cf; font-weight: 600; }
   #sheet .keynote svg, #settings .keynote svg { flex: none; width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 1.6; margin-top: 1px; }
@@ -381,8 +381,7 @@
   #settings .set .l small { opacity: 1; color: var(--dim); font-size: .74rem; line-height: 1.35; }
   #settings .set input[type=number] { min-height: 44px; background: #17150f; border: 1px solid var(--line); border-radius: 12px; text-align: center; }
   #settings .set select { min-height: 44px; }
-  /* player bar: the Speed / Voice / Sleep tiles lit like the speed presets, at least 44px tall */
-  #bar .tb button { min-height: 44px; }
+  /* player bar: the Speed / Voice / Sleep tiles lit like the speed presets (colours only: the bar's size, and so the Listen layout, stay as on main) */
   #bar .tb button.on { background: #3a3020; color: #fff3c4; box-shadow: inset 0 0 0 1px #6a5a35, 0 0 12px rgba(255,220,140,.2); }
   #bar .tb button.on b { color: #fff3c4; }
   /* Build 2026101818 pieces in the same look (CSS only): struck-through chips, messages, the ☰ menu, toasts, the sleep sheet */
@@ -393,7 +392,7 @@
   #sheet .keyf .lnk.forget, #settings .keyf .lnk.forget { color: #a8a291; font-size: .74rem; }
   #sheet .keyf .lnk:disabled, #settings .keyf .lnk:disabled { opacity: .35; }
   #sheet[data-kind=sleep] h3 #sheetT::before { content: 'Sleep'; }
-  #sheet[data-kind=queue] h3 #sheetT::before { content: 'Up next'; }
+  #sheet[data-kind=queue] h3 #sheetT::before { content: 'Queue'; }
   #menu { background: #0f0e0b; border-color: #2a261e; border-radius: 12px; padding: 6px; box-shadow: 0 20px 60px rgba(0,0,0,.8); }
   #menu h5 { font: 600 .66rem system-ui, sans-serif; letter-spacing: .18em; color: #a8a291; margin: 12px 10px 4px; }
   #menu button { min-height: 44px; border-radius: 10px; }
@@ -1169,7 +1168,7 @@
         capFor: v => v > MAX_RATE ? `voice rests · tones ${+v.toFixed(2)}×` : '' });
       paintChips();
     } else if (kind === 'voice') {
-      T.textContent = 'Reading voice'; sb.innerHTML = voiceBlock(); wireVoice(sb);
+      T.textContent = 'Voice'; sb.innerHTML = voiceBlock(); wireVoice(sb);
     } else if (kind === 'sleep') {
       T.textContent = 'Sleep timer';
       const curS = sleepEoc ? 'eoc' : sleepEnd ? 'on' : '0';
