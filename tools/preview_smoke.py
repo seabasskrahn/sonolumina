@@ -55,6 +55,7 @@ async def main():
             return r.get('result', {}).get('value') if r else None
         for st in steps:
             if 'go' in st: await cmd('Page.navigate', url=base + st['go']); await asyncio.sleep(st.get('settle', 2.5))
+            elif 'addscript' in st: await cmd('Page.addScriptToEvaluateOnNewDocument', source=open(st['addscript']).read())
             elif 'reload' in st: await cmd('Page.reload'); await asyncio.sleep(2.5)
             elif 'wait' in st: await asyncio.sleep(st['wait'])
             elif 'tapxy' in st:

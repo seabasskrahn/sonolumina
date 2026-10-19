@@ -109,11 +109,13 @@ export function createEleven(S, { onNotice = () => {}, fetchImpl = (...a) => fet
   // Tagged text goes only to the v3 model (any other model, or the phone voice, would read the tags aloud).
   const pick = (text, entry) => (S.elExpressive && validMarkup(entry, text)) ? [entry.t, 'eleven_v3'] : [stripTags(text), S.elModel || 'eleven_multilingual_v2'];
 
-  function prefetch(text, entry) { if (ready() && text) { const [t, m] = pick(text, entry); get(t, m).catch(() => {}); } }
+  function prefetch(text, entry) { if (ready() && text) { const [t, m] = pick(text, entry); get(t, m).catch(e => { if (ready()) fail(e.message || 'error'); }); } }   // a failed fetch ahead also switches to the phone voice
 
   function rateFor(item) {
-    const fit = item.dur && audio.duration ? Math.min(1.15, Math.max(0.9, audio.duration / item.dur)) : 1;
-    return Math.min(16, Math.max(0.25, speed * fit));
+    // Fit the recording to the verse's length in the music (dur = 1× score seconds), so it ends with the verse,
+    // then the speed. preservesPitch keeps the voice's pitch at every rate.
+    const fit = item.dur && audio.duration ? Math.min(1.6, Math.max(0.75, audio.duration / item.dur)) : 1;
+    return Math.min(8, Math.max(0.25, speed * fit));
   }
   async function playNext() {
     if (playing || paused || !queue.length) return;
@@ -142,7 +144,7 @@ export function createEleven(S, { onNotice = () => {}, fetchImpl = (...a) => fet
   function speak(text, { dur, sp, entry, fallback }) {
     speed = sp;
     if (!ready()) return false;
-    if (queue.length) { queue = []; stopNow(); }
+    if (queue.length || playing) stopNow();   // locked to the music: the new verse starts on time
     const [t, m] = pick(text, entry);
     const blob = get(t, m);
     queue.push({ blob, dur, fallback });

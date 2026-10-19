@@ -253,7 +253,7 @@
   import { createEngine } from './form/engine.js';
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
-  import { createNarrator, MAX_RATE } from './form/narrator.js';
+  import { createNarrator, MAX_RATE, DEVICE_TOPS } from './form/narrator.js';
   import { createEleven, createReader, elevenKey, MODELS_FALLBACK, stripTags } from './form/eleven.js';
   import { parseRef, sung, isFinal, next, prev, chapterIndex, refAt } from './law/canon.js';
   import { links, signature, swells, LINK_SOURCE } from './law/links.js';
@@ -514,7 +514,12 @@
   narrator.voiceName = S.voiceName;
   narrator.pitch = S.pitch;
   const voiceRests = () => (player ? player.speed : S.speed) > MAX_RATE;   // above the speech max: words and tones only
-  const speaking = () => narrator.on && !voiceRests();
+  const speaking = () => reader.on && !voiceRests();
+  // The phone voice past its top rate: held at the top and kept in step (each verse starts on time; an
+  // unfinished verse is cut off). Never with ElevenLabs, whose audio plays at any rate.
+  const inStep = () => !!(now && speaking() && reader.using !== 'eleven' && narrator.held(wpmOf(now.words, now.vs, player ? player.speed : S.speed), player ? player.speed : S.speed));
+  const stepNote = () => `Phone voice tops out at ${narrator.top}×: it keeps in step by starting each verse on time (ends of long verses are cut). ElevenLabs reads every word at any speed.`;
+  narrator.top = S.deviceTop;
   const setVoice = on => {
     S.voiceOn = !!on; save();
     reader.on = S.voiceOn;
@@ -700,12 +705,17 @@
   el('rep').onclick = () => { S.repeat = REP[(REP.indexOf(S.repeat) + 1) % 3]; save(); paintBar(); toast(`Repeat: ${S.repeat}`); };
 
   // ---------- speed ----------
+  let wasHeld = false;
   function setSpeed(x) {
     x = +(+x).toFixed(2);
     if (!(x > 0)) return;
     const was = S.speed; S.speed = x; save();
     if (player) { player.setSpeed(x); speakRest(); }
+    const held = inStep();
     if ((was > MAX_RATE) !== (x > MAX_RATE)) toast(x > MAX_RATE ? `The voice rests above ${MAX_RATE}×: words and tones only` : 'The voice reads again');
+    else if (held && !wasHeld) toast(stepNote());
+    wasHeld = held;
+    const n = el('spdVoiceNote'); if (n) n.textContent = held ? stepNote() : '';
     if (now) el('state').textContent && showState();
     paintBar(); dial?.draw(x);
     if (sheetKind === 'speed') paintChips();
@@ -726,7 +736,7 @@
       state === 'ready' ? (ch.history ? '' : `verse ${v} of ${n}`) : state === 'paused' ? 'paused' : ''].filter(Boolean).join(' · ');
     el('tbSpdV').textContent = fmtSpeed(sp);
     el('tbSpd').classList.toggle('on', sp !== 1);
-    el('tbVoiceV').textContent = !reader.available ? 'none' : !S.voiceOn ? 'off' : voiceRests() ? 'rests' : reader.using === 'eleven' ? '11L' : 'on';
+    el('tbVoiceV').textContent = !reader.available ? 'none' : !S.voiceOn ? 'off' : voiceRests() ? 'rests' : reader.using === 'eleven' ? '11L' : inStep() ? 'in step' : 'on';
     // Claude's Voice button, as built: "Voice on" / "Voice off" ("No voice" when the phone has none).
     el('voice').textContent = !reader.available ? 'No voice' : S.voiceOn ? 'Voice on' : 'Voice off';
     el('voice').disabled = !reader.available; el('voice').setAttribute('aria-pressed', S.voiceOn);
@@ -773,7 +783,7 @@
       ${eng === 'eleven' ? `<div class="card" style="margin-top:.6rem">
         <div class="dim" id="elSt" style="opacity:.85">${elStatus()}</div>
         <h4>ElevenLabs API key</h4>
-        ${key ? `<div class="row"><span>Key saved on this phone (ends …${escH(key.slice(-4))})</span><button class="pill" type="button" id="elDel">Remove</button></div>`
+        ${key ? `<div class="row"><span>Key saved on this phone</span><button class="pill" type="button" id="elDel">Remove</button></div>`
           : `<div style="display:flex;gap:.4rem"><input type="password" id="elKey" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pill gold" type="button" id="elSave">Save</button></div>`}
         <div class="dim" style="margin-top:.35rem">The key stays on this phone only (this browser's own storage). It is never part of the app, never sent anywhere but ElevenLabs, and reading uses your ElevenLabs credits. Each verse is kept on the phone after its first reading, so replays are free.</div>
         ${key ? `<h4>Voice</h4><div style="display:flex;gap:.4rem"><select id="elVoice">${elVoices ? elVoices.map(v => `<option value="${escH(v.id)}" ${v.id === S.elVoice ? 'selected' : ''}>${escH(v.name)}${v.category ? ' · ' + escH(v.category) : ''}</option>`).join('') : `<option value="${escH(S.elVoice)}">${S.elVoice ? escH(S.elVoiceName || S.elVoice) : 'loading your voices…'}</option>`}</select><button class="pill" type="button" id="elPrev" title="Play ElevenLabs' preview of this voice (no credits)">▶ Preview</button></div>
@@ -789,7 +799,9 @@
       <div class="dim" style="margin-top:.35rem">From your phone, English first, the most natural (★: Apple Enhanced/Premium, Siri, Microsoft Natural/Online, Google, Neural) at the top. If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
       <h4>Pitch <span id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">
       <p><button class="pill gold" type="button" id="vTest">Test voice</button></p>
-      <div class="dim">The rate follows the Speed control; above ${MAX_RATE}× the voice rests and only the words and tones go on.</div>`;
+      <h4>Phone voice top rate</h4><div class="seg" id="vTop">${DEVICE_TOPS.map(t => `<button type="button" data-top="${t}" class="${t === narrator.top ? 'on' : ''}">${t}×</button>`).join('')}</div>
+      <div class="dim" style="margin-top:.35rem">How fast your phone's own voice really goes (many stop near 1.4×). Past it the voice keeps in step by starting each verse on time. Raise this if your voice keeps speeding up; press Test to hear it at the top rate.</div>
+      <div class="dim">The rate follows the Speed control from 0.5× to ${MAX_RATE}×; above ${MAX_RATE}× the voice rests and only the words and tones go on.</div>`;
   }
   async function loadEleven(root) {
     if (!elevenKey.get() || S.voiceEngine !== 'eleven') return;
@@ -807,7 +819,8 @@
     q('#vSel').onchange = e => { S.voiceName = e.target.value; save(); narrator.voiceName = S.voiceName; toast('Voice saved'); };
     q('#vPitch').oninput = e => { narrator.pitch = +e.target.value; S.pitch = narrator.pitch; q('#vPv').textContent = narrator.pitch.toFixed(2); };
     q('#vPitch').onchange = () => save();
-    q('#vTest').onclick = () => { reader.stop(); narrator.test(); };
+    q('#vTest').onclick = () => { reader.stop(); narrator.test(undefined, Math.min(narrator.top, Math.max(1, S.speed))); };
+    root.querySelectorAll('[data-top]').forEach(b => b.onclick = () => { S.deviceTop = narrator.top = +b.dataset.top; save(); root.querySelectorAll('[data-top]').forEach(x => x.classList.toggle('on', x === b)); speakRest(); paintBar(); toast(`Phone voice top rate ${narrator.top}×`); });
     root.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => { S.voiceEngine = b.dataset.eng; save(); eleven.reset(); reader.stop(); redrawVoice(root); loadEleven(root); paintBar(); });
     q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) return; elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
     q('#elDel') && (q('#elDel').onclick = () => { if (!confirm('Remove the ElevenLabs key from this phone?')) return; elevenKey.set(''); reader.stop(); elVoices = null; toast('Key removed'); redrawVoice(root); });
@@ -832,7 +845,7 @@
     if (kind === 'speed') {
       T.textContent = 'Playback speed';
       sb.innerHTML = chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp') + '<h4>Dial</h4><div id="dialHost"></div>' +
-        `<div class="dim" style="margin-top:6px">Changes apply straight away: the music, the words and the reading voice keep one clock. Above ${MAX_RATE}× the voice rests (words and tones only).</div>`;
+        `<div class="dim" style="margin-top:6px">Changes apply straight away: the music, the words and the reading voice keep one clock. From 0.5× to ${MAX_RATE}× the voice speeds up with them; above ${MAX_RATE}× it rests (words and tones only).</div><div class="dim" id="spdVoiceNote" style="margin-top:4px;color:#d9b65a">${inStep() ? stepNote() : ''}</div>`;
       sb.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => setSpeed(+b.dataset.sp));
       dial = mountDial(el('dialHost'), { get: () => S.speed, set: setSpeed, getMax: () => S.dialMax, setMax: m => { S.dialMax = m; save(); },
         capFor: v => v > MAX_RATE ? `voice rests · tones ${+v.toFixed(2)}×` : '' });
