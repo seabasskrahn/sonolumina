@@ -1,0 +1,32 @@
+{
+ "_source": "Scribe's GUIDE.md incl. 'Decisions for the validator' (Oct 18 2026), closed set. Add a tag here only after it is listed in the guide. Matching is exact and case-sensitive.",
+ "tone_tags": [
+  "reverent",
+  "solemn",
+  "softly",
+  "gently",
+  "warmly",
+  "calm",
+  "hushed",
+  "joyful",
+  "sorrowful",
+  "stern",
+  "fearful",
+  "ominous",
+  "slyly"
+ ],
+ "pause_tags": [
+  "short pause",
+  "long pause"
+ ],
+ "max_tone_tags_per_verse": 2,
+ "max_pause_tags_per_verse": 2,
+ "no_split_names": [
+  "LORD God"
+ ],
+ "quote_open_marks": [
+  "“",
+  "‘"
+ ],
+ "quote_head_words": 3
+}
