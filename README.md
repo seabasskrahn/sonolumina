@@ -42,5 +42,7 @@ No frequency is named in Scripture. Sonolumina makes no medical or spiritual cla
 - Open `tests/mix.html` to measure the balance of the four sections.
 - `python3 tools/smoke.py <url> <seconds> <shot.png> [js expression] [tap|notap]` drives headless Chrome at phone size.
 
-## Expression markup (draft)
-- `python3 tools/build_expression.py` validates `data/expression/<Book>.<Chapter>.json` (`{"verse": "tagged text"}`, Book = `data/bsb` file stem) against BSB text; `--package` writes `data/expression-pkg/expression.min.json` + `manifest.json`. Tag allowlist: `tools/expression_tags.json` (DRAFT pending the Scribe's spec). Tests: `python3 tools/test_build_expression.py`.
+## Expression markup
+- One file per chapter, `data/expression/<Book>.<chapter>.json` (e.g. `Genesis.1.json`; Book = `data/bsb` file stem), shaped `{"1": "tagged text", ...}` with every verse present and blank BSB verses (e.g. Matt 17:21) as `""`.
+- Tags, from the Scribe's GUIDE.md: tone `[reverent] [solemn] [softly] [gently] [warmly] [calm] [hushed] [joyful] [sorrowful] [stern] [fearful] [ominous] [slyly]` (max 2 per verse), pauses `[short pause] [long pause]` (max 2 per verse, not splitting a word or "LORD God", not inside a quotation's first 3 words). With tags removed the text must equal BSB apart from whitespace. Allowlist: `tools/expression_tags.json`.
+- `python3 tools/build_expression.py` checks them (exit 1 on any error). `--package` also writes `data/expression-pkg/`: per-chapter files (blank verses dropped), `expression.min.json` bundle, and `manifest.json` (counts, sha256). Tests: `python3 tools/test_build_expression.py`.

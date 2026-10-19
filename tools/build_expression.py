@@ -4,19 +4,22 @@
 Input:  data/expression/<Book>.<Chapter>.json   {"<verse>": "tagged text", ...}
         <Book> = the data/bsb file stem from data/canon.json (e.g. Genesis, 1John,
         SongofSolomon); the canon display name with spaces removed is also accepted.
-Allowed markup (tools/expression_tags.json, DRAFT pending the Scribe's spec):
-  [tag]                 ElevenLabs-style audio tag from "audio_tags"
-  ... / … / —           pause marks from "pause_marks" (only checked as markup; a
-                        mark that is literally in the BSB text is still fine)
-  <break time="1.5s"/>  SSML-ish break, 0 < X <= break_max_seconds
-Check: after removing markup, the words must equal the BSB verse (whitespace-normalized).
+Rules (tools/expression_tags.json, from the Scribe's GUIDE.md and its
+"Decisions for the validator"):
+  * exact, case-sensitive [tone] tags (max 2/verse) and [short pause]/[long pause]
+    (max 2/verse); one space after a tag (warning otherwise); a pause may not split
+    a word or a name like "LORD God", nor sit inside a quotation's first 3 words.
+  * with every [tag] removed the text equals the BSB verse apart from whitespace.
+  * every verse of the chapter must have a key; blank BSB verses (e.g. Matt 17:21)
+    must be "" exactly, and "" on a non-blank verse is an error. Blanks are skipped
+    in the package.
+Exit 1 on any error; warnings alone exit 0.
 
 Usage: build_expression.py [--check] [--package] [--root DIR] [--src DIR] [--out DIR]
 """
 import argparse, hashlib, json, os, re, sys
 
 TAG_RE = re.compile(r'\[([^\[\]]*)\]')
-BREAK_RE = re.compile(r'<break\s+time="(\d+(?:\.\d+)?)(s|ms)"\s*/>')
 FNAME_RE = re.compile(r'^(.+)\.(\d+)\.json$')
 
 def load_canon(root):
@@ -30,30 +33,45 @@ def load_canon(root):
 def norm(s):
     return ' '.join(s.split())
 
-def strip_markup(text, cfg, where, errs):
-    allowed = {t.lower() for t in cfg['audio_tags']}
-    def tag(mo):
-        t = mo.group(1).strip().lower()
-        if t not in allowed:
-            errs.append(f'{where}: unknown tag [{mo.group(1)}]')
-        return ' '
-    out = TAG_RE.sub(tag, text)
-    def brk(mo):
-        sec = float(mo.group(1)) / (1000 if mo.group(2) == 'ms' else 1)
-        if not 0 < sec <= cfg['break_max_seconds']:
-            errs.append(f'{where}: break time {mo.group(0)} out of range (0, {cfg["break_max_seconds"]}s]')
-        return ' '
-    out = BREAK_RE.sub(brk, out)
-    for ch, what in (('[', 'unbalanced ['), (']', 'unbalanced ]'), ('<', 'malformed <...> markup'), ('>', 'malformed <...> markup')):
+def strip_markup(text, cfg, where, errs, warns):
+    tone, pause = set(cfg['tone_tags']), set(cfg['pause_tags'])
+    n_tone = 0
+    for mo in TAG_RE.finditer(text):
+        t = mo.group(1)
+        if t in tone: n_tone += 1
+        elif t not in pause:
+            errs.append(f'{where}: tag not allowed [{t}]'); continue
+        nxt = text[mo.end():mo.end() + 2]
+        if mo.end() < len(text) and not (nxt[:1] == ' ' and nxt[1:2] not in ('', ' ')):
+            warns.append(f'{where}: [{t}] should be followed by exactly one space')
+    pauses = [mo for mo in TAG_RE.finditer(text) if mo.group(1) in pause]
+    if len(pauses) > cfg['max_pause_tags_per_verse']:
+        errs.append(f'{where}: {len(pauses)} pause tags (max {cfg["max_pause_tags_per_verse"]})')
+    for mo in pauses:
+        before, after = text[:mo.start()], text[mo.end():]
+        if before[-1:].isalnum() and after[:1].isalnum():
+            errs.append(f'{where}: [{mo.group(1)}] splits a word')
+        b_words = TAG_RE.sub(' ', before).split(); a_words = TAG_RE.sub(' ', after).split()
+        for name in cfg.get('no_split_names', []):
+            nw = name.split()
+            for k in range(1, len(nw)):
+                if b_words[-k:] == nw[:k] and [w.strip('.,;:!?”’') for w in a_words[:len(nw) - k]] == nw[k:]:
+                    errs.append(f'{where}: [{mo.group(1)}] splits the name "{name}"')
+        # inside the first N words of a quotation?
+        opens = cfg.get('quote_open_marks', [])
+        for i in range(len(b_words) - 1, max(0, len(b_words) - cfg.get('quote_head_words', 3)) - 1, -1):
+            if b_words[i][:1] in opens:
+                if not any(q in ' '.join(b_words[i:]) for q in ('”', '’')):
+                    errs.append(f'{where}: [{mo.group(1)}] inside the first {cfg.get("quote_head_words", 3)} words of a quotation')
+                break
+    if n_tone > cfg['max_tone_tags_per_verse']:
+        errs.append(f'{where}: {n_tone} tone tags (max {cfg["max_tone_tags_per_verse"]})')
+    out = TAG_RE.sub(' ', text)
+    for ch, what in (('[', 'unbalanced ['), (']', 'unbalanced ]')):
         if ch in out:
             errs.append(f'{where}: {what}')
             out = out.replace(ch, ' ')
     return out
-
-def drop_marks(s, marks):
-    for m in sorted(marks, key=len, reverse=True):
-        s = s.replace(m, ' ')
-    return norm(s)
 
 def first_diff(got, want):
     g, w = got.split(), want.split()
@@ -64,7 +82,7 @@ def first_diff(got, want):
             return i + 1, a, b
     return None
 
-def check_file(path, canon, bsb_cache, cfg, root, errs):
+def check_file(path, canon, bsb_cache, cfg, root, errs, warns):
     fn = os.path.basename(path)
     mo = FNAME_RE.match(fn)
     if not mo or mo.group(1) not in canon:
@@ -83,6 +101,9 @@ def check_file(path, canon, bsb_cache, cfg, root, errs):
         bsb_cache[bfile] = json.load(open(os.path.join(root, 'data', 'bsb', bfile), encoding='utf-8'))
     verses = bsb_cache[bfile]['c'][ch - 1]
     n0 = len(errs); clean = {}
+    missing = [str(i) for i in range(1, len(verses) + 1) if str(i) not in data]
+    if missing:
+        errs.append(f'{name} {ch}: missing verse key(s) {",".join(missing[:10])}{"..." if len(missing) > 10 else ""} (file must have all {len(verses)}; blank BSB verses as "")')
     for k, v in data.items():
         where = f'{name} {ch}:{k}'
         if not re.fullmatch(r'[1-9]\d*', k):
@@ -94,10 +115,13 @@ def check_file(path, canon, bsb_cache, cfg, root, errs):
             errs.append(f'{where}: value must be a string'); continue
         want = norm(verses[vn - 1])
         if not want:
-            errs.append(f'{where}: BSB verse is blank in data/bsb (no text to mark up)'); continue
-        got = strip_markup(v, cfg, where, errs)
-        marks = cfg['pause_marks']
-        if norm(got) != want and drop_marks(got, marks) != drop_marks(want, marks):
+            if v != '':
+                errs.append(f'{where}: BSB verse is blank; value must be "" (no tags or text)')
+            continue  # blank verse: valid, but skipped in the package
+        if v == '':
+            errs.append(f'{where}: empty value but BSB verse has text'); continue
+        got = strip_markup(v, cfg, where, errs, warns)
+        if norm(got) != want:
             d = first_diff(norm(got), want)
             errs.append(f'{where}: text mismatch at word {d[0]}: got {d[1]!r}, BSB has {d[2]!r}')
             continue
@@ -118,25 +142,28 @@ def main(argv=None):
     cfg = json.load(open(a.tags, encoding='utf-8'))
     canon = load_canon(a.root)
     files = sorted(f for f in os.listdir(src) if f.endswith('.json')) if os.path.isdir(src) else []
-    errs, ok, cache = [], {}, {}
+    errs, warns, ok, cache = [], [], {}, {}
     for f in files:
-        r = check_file(os.path.join(src, f), canon, cache, cfg, a.root, errs)
+        r = check_file(os.path.join(src, f), canon, cache, cfg, a.root, errs, warns)
         if r: ok[r[0]] = r[1]
     nv = sum(len(v) for v in ok.values())
+    for w in warns: print('WARNING', w)
     for e in errs: print('ERROR', e)
-    print(f'{len(files)} file(s), {len(ok)} clean, {nv} verse(s) valid, {len(errs)} error(s)')
+    print(f'{len(files)} file(s), {len(ok)} clean, {nv} verse(s) valid, {len(warns)} warning(s), {len(errs)} error(s)')
     if errs: return 1
     if a.package:
         out = a.out or os.path.join(a.root, 'data', 'expression-pkg')
         os.makedirs(out, exist_ok=True)
         blob = json.dumps(ok, ensure_ascii=False, separators=(',', ':'), sort_keys=True).encode('utf-8')
         open(os.path.join(out, 'expression.min.json'), 'wb').write(blob)
-        man = {'status': 'draft tag allowlist', 'bundle': 'expression.min.json',
+        for k, v in ok.items():  # one file per chapter, same name and shape as the source
+            open(os.path.join(out, k + '.json'), 'w', encoding='utf-8').write(json.dumps(v, ensure_ascii=False, separators=(',', ':')))
+        man = {'tags': 'tools/expression_tags.json (Scribe GUIDE.md)', 'bundle': 'expression.min.json',
                'sha256': hashlib.sha256(blob).hexdigest(), 'bytes': len(blob),
-               'chapters': {k: {'verses': len(v), 'sha256': hashlib.sha256(json.dumps(v, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()} for k, v in sorted(ok.items())},
+               'chapters': {k: {'file': k + '.json', 'verses': len(v), 'sha256': hashlib.sha256(json.dumps(v, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()} for k, v in sorted(ok.items())},
                'totals': {'chapters': len(ok), 'verses': nv}}
         open(os.path.join(out, 'manifest.json'), 'w', encoding='utf-8').write(json.dumps(man, indent=1) + '\n')
-        print(f'packaged -> {os.path.relpath(out, a.root)}/expression.min.json ({len(blob)} bytes) + manifest.json')
+        print(f'packaged -> {os.path.relpath(out, a.root)}/expression.min.json ({len(blob)} bytes) + per-chapter files + manifest.json')
     return 0
 
 if __name__ == '__main__':
