@@ -170,7 +170,7 @@
 
   // After the Word (SPIRIT §11): history is silent; only its tied verse sounds, by the same Law.
   const history = await (await fetch('../data/history.json')).json();
-  check('history: entries in date order, each with a tied verse, sources and "not Scripture" label', history.entries.length >= 1 && history.entries.every((e, i) => e.ref && e.sources.length && (i === 0 || e.year >= history.entries[i - 1].year)) && /not Scripture/.test(history.label));
+  check('history: entries in date order within each thread, each with a tied verse, sources and "not Scripture" label', history.entries.length >= 1 && history.threads.length >= 1 && history.entries.every((e, i) => e.ref && e.sources.length && history.threads[e.thread] && (i === 0 || e.thread > history.entries[i - 1].thread || (e.thread === history.entries[i - 1].thread && e.year >= history.entries[i - 1].year))) && /not Scripture/.test(history.label));
   const romans = await (await fetch('../data/bsb/Romans.json')).json();
   const at = afterText(romans, 10, 14);
   check('afterText: only the tied verse is sung, the rest is silent', at.length === romans.c[9].length && at.filter(t => t).length === 1 && at[13] === sung(romans, 10, 14).text);

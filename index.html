@@ -42,7 +42,8 @@
   #picker a, #picker button { padding: .4rem .3rem; border-radius: 6px; background: #17150f; color: #e9e2cf; text-align: center;
     text-decoration: none; border: 0; font: inherit; }
   #picker .on { background: #3a3020; }
-  #picker .after { grid-column: 1 / -1; }
+  #picker .after, #picker .thread { grid-column: 1 / -1; }
+  #picker .thread { font-size: .7rem; opacity: .6; padding-top: .3rem; }
   /* Day 4: lights for seasons */
   #seasons { width: min(100%, 32rem); }
   #strip { display: block; width: 100%; height: 26px; border-radius: 4px; cursor: pointer; }
@@ -261,9 +262,10 @@
     const af = document.createElement('button'); af.type = 'button'; af.className = 'after' + (bk === 'after' ? ' on' : '');
     af.textContent = 'After the Word · history, not Scripture'; af.onclick = () => pick('after'); g.append(af);
     const cs = document.createElement('div'); cs.className = 'grid chs'; P.append(cs);
-    const items = bk === 'after' ? H.map((e, i) => [`After.${i + 1}`, String(e.year)])
+    const items = bk === 'after' ? H.map((e, i) => [`After.${i + 1}`, String(e.year), i === 0 || e.thread !== H[i - 1].thread ? hist.threads[e.thread] : ''])
       : canon[bk][2].map((_, c) => [`${fileOf(bk)}.${c + 1}`, String(c + 1)]);
-    for (const [addr, label] of items) {
+    for (const [addr, label, thread] of items) {
+      if (thread) { const t = document.createElement('div'); t.className = 'thread'; t.textContent = thread; cs.append(t); }
       const a = document.createElement('a'); a.href = '?' + addr; a.textContent = label;
       if (addr === addrOf(cur)) a.className = 'on';
       cs.append(a);

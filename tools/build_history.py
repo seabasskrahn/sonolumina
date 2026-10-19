@@ -4,10 +4,10 @@
 Reads every history/approved/*.md (written by Claude, approved by Seabass) and checks it:
   - each entry has a title with its date in brackets, a body, a tied verse and at least one source
   - the tied verse names a real verse, and the quoted words appear exactly in the BSB text of it
-  - the entries are in date order
-Nothing in history/proposed/ is ever read.
+  - within each thread (one file), the entries are in date order
+Threads play one after another in file order (01-, 02-, ...). Nothing in history/proposed/ is ever read.
 
-Writes data/history.json = {"label", "entries": [{n, title, date, year, body, notes, ref: [bookIdx, c, v],
+Writes data/history.json = {"label", "threads": [title], "entries": [{thread, n, title, date, year, body, notes, ref: [bookIdx, c, v],
   cite, sources: [[text, url]]}]}. The sung text is not copied: the app reads the verse from data/bsb.
 
 Usage: python3 -I tools/build_history.py [repo root]
@@ -24,9 +24,13 @@ def book_of(name):
     if k == 'psalm': return book_of('Psalms')
     raise SystemExit(f'unknown book: {name}')
 
-entries = []
+entries, threads = [], []
 for path in sorted(glob.glob(os.path.join(ROOT, 'history/approved/*.md'))):
     text = open(path, encoding='utf-8').read()
+    t = re.match(r'# After the Word, thread \d+: (.+)', text)
+    assert t, f'{path}: no thread title'
+    threads.append(t[1].strip())
+    first = len(entries)
     for block in re.split(r'^## ', text, flags=re.M)[1:]:
         head, _, rest = block.partition('\n')
         m = re.match(r'(\d+)\. (.+) \(([^()]+)\)\s*$', head)
@@ -48,9 +52,10 @@ for path in sorted(glob.glob(os.path.join(ROOT, 'history/approved/*.md'))):
         sources = re.findall(r'\[([^\]]+)\]\((https?://[^)\s]+)\)', bullets.get('Sources', ''))
         assert sources, f'entry {n}: no sources'
         notes = [f'{k}: {re.sub(r"[*]", "", v)}' for k, v in bullets.items() if k in ('Uncertain', 'Honest note')]
-        entries.append({'n': n, 'title': title, 'date': date, 'year': years[0], 'body': body, 'notes': notes,
+        entries.append({'thread': len(threads) - 1, 'n': n, 'title': title, 'date': date, 'year': years[0], 'body': body, 'notes': notes,
                         'ref': [b, c, v], 'cite': f'{canon[b][0]} {c}:{v}', 'sources': sources})
-assert entries and all(entries[i]['year'] >= entries[i - 1]['year'] for i in range(1, len(entries))), 'not in date order'
-out = {'label': 'History, not Scripture. Researched by Claude, approved by Seabass (SPIRIT §11).', 'entries': entries}
+    mine = entries[first:]
+    assert mine and all(mine[i]['year'] >= mine[i - 1]['year'] for i in range(1, len(mine))), f'{path}: not in date order'
+out = {'label': 'History, not Scripture. Researched by Claude, approved by Seabass (SPIRIT §11).', 'threads': threads, 'entries': entries}
 json.dump(out, open(os.path.join(ROOT, 'data/history.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-print(f'{len(entries)} entries:', ', '.join(f"{e['year']} {e['cite']}" for e in entries))
+print(f'{len(threads)} threads, {len(entries)} entries:', ', '.join(f"{e['year']} {e['cite']}" for e in entries))
