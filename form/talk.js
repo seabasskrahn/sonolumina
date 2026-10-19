@@ -6,7 +6,7 @@
 import { setupMessage, chapterContext, downsample, floatToPcm16, pcm16ToFloat, bytesToBase64, base64ToBytes, rateOf, explainClose, micOpen, headphonesLikely, TALK_SOURCE } from '../law/talk.js';
 
 const KEY = 'sonolumina.geminiKey', MODEL = 'sonolumina.talkModel';
-// Model IDs as listed at https://ai.google.dev/gemini-api/docs/models (checked 2026-10-18).
+// Model IDs as listed at https://ai.google.dev/gemini-api/docs/models (checked 2026-10-18; re-checked 2026-10-19: gemini-3.8-live is the default Live model).
 export const MODELS = ['gemini-3.8-live', 'gemini-3.1-flash-live-preview', 'gemini-2.5-flash-native-audio-preview-12-2025'];
 const URL_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
 export const CONNECT_MS = 10000;

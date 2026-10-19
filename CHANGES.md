@@ -1,3 +1,34 @@
+# Build 2026101818: audit fixes and the ☰ menu
+
+Kept as built: Claude's Law and harmonics, the Begin / Voice on buttons, Talk, the tab bar, every feature of 2026101817.
+The voice stays locked to the music from 0.5× to 3× (form/narrator.js and form/player.js are unchanged).
+
+## Fixed (from a hands-on audit at phone size)
+1. Genesis 1 opened showing 1:2 ("darkness over the deep") while the player bar said 1:1, so the screen and Begin
+   disagreed. Listen now previews the verse Begin will start from (resumed or link verse, else verse 1); the bar,
+   the verse and playback use one start verse.
+2. Back: every screen (tab) and every chapter you choose is one history step; a sheet, the picker or the menu is one
+   more on top. Back closes what is open first, then steps back through screens and chapters, and on the first screen
+   stays in the app. The screen and the player always match the address (popstate restores the step's tab and
+   chapter; a chapter that was playing goes on playing the one Back returned to). Chapters that play on by themselves
+   replace the address instead of adding steps. Closing a sheet from its own ✕ no longer races a following step.
+3. At 390–400 px Begin, Voice on and Talk were half under the player bar: the page now keeps room for the bar's real
+   height, and on short phones the light is drawn smaller so the three buttons are in view on first load.
+4. Speed − at 0.5× jumped to 1× (the dial started at 1×): the dial now runs from 0.5× and holds there.
+5. The speed maximum is enforced everywhere (chips, dial, speed read); chips above it are struck through and the
+   maximum is shown. A typed maximum outside 1–20× (e.g. −5) is refused with a message instead of silently becoming 1.
+6. ElevenLabs: Forget key is shown (disabled) when no key is saved; saving an empty field says so.
+7. Quick repeated verse taps each count; the sleep sheet closes after choosing; toasts sit above the player bar (at the
+   top while a sheet is open, clear of the pitch slider); the book picker opens a book's chapters right under its row,
+   scrolled into view; Repeat has aria-label and aria-pressed, sliders have labels; Origins strips curly quotes
+   ("garden’" → garden). Gemini Live default re-checked against ai.google.dev/gemini-api/docs/models on 2026-10-19:
+   gemini-3.8-live is listed as the default Live model, so it is unchanged.
+
+## Added
+- ☰ menu at the top left listing every screen and mode: Listen, Read, Recall, Notes, Search, Origins, Agent, Talk,
+  Speed, Voice, Sleep timer, Up next, Speed read, Settings. The tab bar stays; Back closes the menu.
+- tools/regress.py: phone-size (390×844, touch) regression checks for the above.
+
 # Build 2026101817: the new player UI on Claude's Sonolumina, merged with Talk
 
 Kept as built: Claude's Law (law/, untouched), the harmonics light (dish, default "full"), the

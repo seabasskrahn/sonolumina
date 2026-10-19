@@ -197,6 +197,9 @@ export function createStudy(X) {
   }
 
   // ---------- Origins ----------
+  // Build 2026101818: a word as shown and looked up: punctuation and quotes (straight or curly) are stripped from its
+  // ends ("garden’" → "garden"); an apostrophe inside a word is kept, as a straight one ("God’s" → "God's").
+  const bare = w => String(w || '').replace(/[‘’]/g, "'").replace(/[“”]/g, '').replace(/[^\p{L}\p{N}'-]/gu, '').replace(/^['-]+|['-]+$/g, '');
   function renderOrigins() {
     const T = el('tab-origins'), n = X.nowVerse();
     let now = '<div class="dim">Press Begin and the verse now sounding is explained here.</div>';
@@ -208,7 +211,7 @@ export function createStudy(X) {
         <b>Mode</b><span>${k.mode} = M[⌊5·${E.v.toFixed(2)}⌋]</span>
         <b>Tempo</b><span>54 + 30·${E.a.toFixed(2)} = ${k.bpm.toFixed(1)} BPM${sp !== 1 ? ` × ${sp} speed = ${(k.bpm * sp).toFixed(1)}` : ''}</span>
         <b>Loudness</b><span>0.75 + 0.5·${E.d.toFixed(2)} = ${k.loud.toFixed(2)}</span></div>
-        ${mel.length ? `<div class="orig-t" style="margin-top:.6rem">Melody words (key words, fewer than 200 uses)</div><div class="kv">${mel.map(m => `<b>${esc(n.words[m.word].replace(/[^\p{L}\p{N}’'-]/gu, ''))}</b><span>${m.freq.toFixed(1)} Hz · ${(m.freq / F0).toFixed(3)} × 110${m.res && m.res !== 'resolved' ? ' · ' + m.res : ''}</span>`).join('')}</div>` : ''}`;
+        ${mel.length ? `<div class="orig-t" style="margin-top:.6rem">Melody words (key words, fewer than 200 uses)</div><div class="kv">${mel.map(m => `<b>${esc(bare(n.words[m.word]))}</b><span>${m.freq.toFixed(1)} Hz · ${(m.freq / F0).toFixed(3)} × 110${m.res && m.res !== 'resolved' ? ' · ' + m.res : ''}</span>`).join('')}</div>` : ''}`;
     }
     T.innerHTML = `<h2>Origins</h2><div class="dim" style="text-align:center">Where every sound comes from, and which parts are human choices.</div>
       <div class="card"><div class="orig-t">Now sounding</div>${now}</div>
@@ -226,7 +229,7 @@ export function createStudy(X) {
       ].map(([t, d]) => `<div class="card"><div class="orig-t">${esc(t)}</div><div class="dim" style="opacity:.75">${esc(d)}</div></div>`).join('')}`;
     el('oForm').onsubmit = e => {
       e.preventDefault();
-      const w = el('oQ').value.trim().split(/\s+/)[0] || '', t = w && tone(X.lex, w);
+      const w = bare(el('oQ').value.trim().split(/\s+/)[0] || ''), t = w && tone(X.lex, w);
       el('oRes').innerHTML = !w ? '' : !t ? `<div class="dim">"${esc(w)}" (stem "${esc(stem(w))}") is not in the codebook.</div>`
         : `<div class="kv"><b>Stem</b><span>${esc(t.stem)}</span><b>Step</b><span>${STEP_NAMES[t.step]} (just ratio ${JUST[t.step].toFixed(4)})</span>
           <b>Octave</b><span>${t.octave >= 0 ? '+' : ''}${t.octave}</span><b>Tone</b><span>110 × ${t.ratio.toFixed(4)} = ${t.freq.toFixed(2)} Hz</span>

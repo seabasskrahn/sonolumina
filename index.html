@@ -59,14 +59,24 @@
   #ending { font: .85rem system-ui, sans-serif; opacity: .75; text-align: center; max-width: 30rem; }
   [hidden] { display: none !important; }
   /* ---- Build 2026101817: tabs, player bar, sheets, settings, study ---- */
-  body { display: block; padding: 0 0 calc(196px + env(safe-area-inset-bottom)); }
+  body { display: block; padding: 0 0 calc(var(--chrome, 200px) + 16px + env(safe-area-inset-bottom)); }
   .ui, .ui button, .ui input, .ui select, .ui textarea { font-family: system-ui, sans-serif; }
   button { cursor: pointer; }
   #top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: .6rem;
     padding: .7rem 1rem .5rem; background: linear-gradient(#000 70%, #0000); }
-  #top h1 { flex: 1; text-align: center; padding-left: 2.4rem; }
+  #top h1 { flex: 1; text-align: center; }
   #badge { min-width: 1px; font: 600 .55rem system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9b65a;
-    border: 1px solid #6a5a35; border-radius: 1rem; padding: .15rem .5rem; position: absolute; left: 1rem; }
+    border: 1px solid #6a5a35; border-radius: 1rem; padding: .15rem .5rem; position: absolute; left: 3.6rem; }
+  /* Build 2026101818: the menu (☰): every screen and mode in one list; the tab bar stays. */
+  #menu { position: fixed; top: 3.3rem; left: .6rem; z-index: 22; width: min(18rem, calc(100vw - 1.2rem)); max-height: calc(100vh - 4rem); overflow: auto;
+    background: #12110d; border: 1px solid #3a352a; border-radius: 12px; padding: .35rem; box-sizing: border-box; box-shadow: 0 10px 30px #000c; }
+  #menu h5 { font: 600 .62rem system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #d9b65a; margin: .55rem .6rem .25rem; }
+  #menu button { display: flex; width: 100%; align-items: center; gap: .7rem; background: none; border: 0; color: #e9e2cf; text-align: left;
+    font: .92rem system-ui, sans-serif; padding: .6rem .6rem; border-radius: 8px; }
+  #menu button b { width: 1.4rem; text-align: center; font-weight: normal; opacity: .8; }
+  #menu button.on { background: #2a2418; color: #fff3c4; }
+  #menu button:active, #menu button:focus-visible { background: #24201a; }
+  #menuScrim { position: fixed; inset: 0; z-index: 19; background: #0006; }
   .ib { background: none; border: 0; color: #e9e2cf; font-size: 1.25rem; width: 2.4rem; height: 2.4rem; border-radius: 50%; }
   .ib:active { background: #24201a; }
   .tab { display: none; }
@@ -165,9 +175,12 @@
   .res .r span { display: flex; gap: .3rem; }
   .res .r button { font: .7rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 1rem; padding: .15rem .55rem; }
   .flash { animation: fl 1.6s; } @keyframes fl { from { background: #6a5a35; } }
-  #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 210px; z-index: 40; background: #24201a; border: 1px solid #6a5a35;
+  #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--chrome, 200px) + 10px); z-index: 40; background: #24201a; border: 1px solid #6a5a35;
     padding: .5rem .9rem; border-radius: 2rem; font: .8rem system-ui, sans-serif; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 86vw; text-align: center; }
   #toast.on { opacity: 1; }
+  #toast.top { bottom: auto; top: calc(.8rem + env(safe-area-inset-top)); }
+  .chips button.over { opacity: .35; text-decoration: line-through; }
+  .msg { font: .78rem system-ui, sans-serif; color: #e9a; margin-top: .35rem; min-height: 1em; }
   .orig-t { font: 600 .8rem system-ui, sans-serif; margin: .2rem 0; }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: .2rem .7rem; font: .8rem system-ui, sans-serif; }
   .kv b { opacity: .6; font-weight: 600; }
@@ -190,7 +203,9 @@
 </style>
 </head>
 <body>
-  <header id="top" class="ui"><span id="badge" aria-hidden="true" style="visibility:hidden"></span><h1>Sonolumina</h1><button class="ib" id="gear" type="button" aria-label="Settings">⚙</button></header>
+  <header id="top" class="ui"><button class="ib" id="menuBtn" type="button" aria-label="Menu: all screens, modes and settings" aria-haspopup="true" aria-expanded="false" aria-controls="menu">☰</button><span id="badge" aria-hidden="true" style="visibility:hidden"></span><h1>Sonolumina</h1><button class="ib" id="gear" type="button" aria-label="Settings">⚙</button></header>
+  <div id="menuScrim" hidden></div>
+  <nav id="menu" class="ui" hidden role="menu" aria-label="All screens, modes and settings"></nav>
   <main>
   <section id="tab-listen" class="tab on">
   <nav id="nav"><a id="prev">‹</a><button id="where" type="button" aria-expanded="false"></button><a id="next">›</a></nav>
@@ -232,7 +247,7 @@
     <div class="row1"><span id="barRef">—</span><span id="barSub"></span></div>
     <div class="prog"><i id="barProg"></i></div>
     <div class="tr">
-      <button id="rep" type="button" title="Repeat: off" aria-label="Repeat">🔁</button>
+      <button id="rep" type="button" title="Repeat: off" aria-label="Repeat: off" aria-pressed="false">🔁</button>
       <button id="pch" type="button" title="Previous chapter" aria-label="Previous chapter">⏮</button>
       <button id="pv" type="button" title="Back one verse" aria-label="Back one verse">↺</button>
       <button id="nv" type="button" title="Forward one verse" aria-label="Forward one verse">↻</button>
@@ -286,9 +301,15 @@
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026101817';
+  const BUILD = '2026101818';
   const toastEl = document.getElementById('toast'); let toastT = 0;
-  const toast = msg => { toastEl.textContent = msg; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2200); };
+  // Toasts sit just above the player bar; while a sheet, Settings or the menu is open they move to the top, clear of its controls.
+  const toast = msg => {
+    toastEl.textContent = msg;
+    toastEl.classList.toggle('top', !el('sheet').hidden || !el('settings').hidden || !el('menu').hidden);
+    toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2200);
+  };
+  window.__toast = () => ({ text: toastEl.textContent, on: toastEl.classList.contains('on') });   // for smoke tests
   const keyOf = (ch, v) => ch.history ? '' : `${ch.ref.book}.${ch.ref.chapter}.${v}`;
   const fmtSpeed = x => (+(+x).toFixed(2)) + '×';
 
@@ -360,10 +381,22 @@
   let cur = start;
   const addrOf = ch => ch.history ? `After.${ch.ref.after + 1}` : `${fileOf(ch.ref.book)}.${ch.ref.chapter}`;
   const titleOf = ch => ch.history ? `After the Word ${ch.ref.after + 1}` : `${ch.name} ${ch.ref.chapter}`;
-  const here = ch => {
+  const urlOf = ch => '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : '') + (opts.includes('talktest') ? '&talktest' : '');
+  // Build 2026101818: the history (Back). Every screen the user opens (a tab, or a chapter they chose) is one history
+  // step whose state names its tab and whose address names its chapter; an open sheet or menu is one more step on top.
+  // Closing a sheet from its own ✕ goes back one step; until that step has landed, any new step waits (histRun), so the
+  // two never cross. Chapters that play on by themselves replace the address of the step they are on.
+  let backPending = 0, booted = false;
+  const histQ = [];
+  const histRun = fn => { if (backPending) histQ.push(fn); else fn(); };
+  const replaceScreen = () => histRun(() => history.replaceState({ ...(history.state || {}), sono: 1, tab: S.tab }, '', urlOf(cur)));
+  const pushScreen = () => histRun(() => history.pushState({ sono: 1, tab: S.tab }, '', urlOf(cur)));
+  // mode: 'push' when the user chose this chapter (Back returns to the one before), 'replace' when it played on by itself.
+  const here = (ch, mode = 'replace') => {
     cur = ch;
     document.title = `${titleOf(ch)} · Sonolumina`;
-    history.replaceState(history.state, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : '') + (opts.includes('talktest') ? '&talktest' : ''));
+    if (mode === 'push' && booted) histRun(() => { if (location.search !== urlOf(cur)) history.pushState({ sono: 1, tab: S.tab }, '', urlOf(cur)); else history.replaceState({ ...(history.state || {}), sono: 1, tab: S.tab }, '', urlOf(cur)); });
+    else replaceScreen();
     store(LAST, addrOf(ch));
     navTo(ch);
   };
@@ -435,11 +468,14 @@
       }
     });
   };
-  // Before the first tap: Genesis 1 shows the darkness over the deep; a link's verse when one was followed;
-  // a history entry its verse; any other chapter its first verse.
+  // Before the first tap: the verse Begin will start from (a link's or the resumed verse, else verse 1; build 2026101818:
+  // Genesis 1 no longer previews verse 2, which showed 1:2 while Begin and the player bar were on 1:1);
+  // a history entry its verse.
+  const startVerse = ch => ch.history ? 1 : ch.at || 1;
   const preview = ch => {
-    const v0 = ch.history ? ch.history.ref[2] : ch.at || (ch.ref.book === 0 && ch.ref.chapter === 1 ? 2 : 1);
+    const v0 = ch.history ? ch.history.ref[2] : startVerse(ch);
     showVerse(ch, v0, (ch.text[v0 - 1] || '').split(/\s+/).filter(Boolean));
+    fitListen();
   };
 
   // Day 6: walking the garden. Previous and next, the picker, and back from a link.
@@ -463,19 +499,24 @@
     }
     drawStrip();
   }
-  const pick = bk => {
+  // Build 2026101818: the chosen book's chapters open right under its row (not below all 66 books), and are scrolled into view.
+  const pick = (bk, scroll = false) => {
     const P = nav.picker;
     P.innerHTML = '';
     const g = document.createElement('div'); g.className = 'grid'; P.append(g);
+    const cs = document.createElement('div'); cs.className = 'grid chs after'; cs.id = 'pickChs';
+    const rowEnd = bk === 'after' ? -1 : Math.min(canon.length - 1, Math.floor(bk / 3) * 3 + 2);   // the last book in the chosen book's row
     canon.forEach(([name], b) => {
       const x = document.createElement('button'); x.type = 'button'; x.textContent = name;
-      if (b === bk) x.className = 'on';
-      x.onclick = () => pick(b);
+      if (b === bk) { x.className = 'on'; x.setAttribute('aria-pressed', 'true'); }
+      x.onclick = () => pick(b, true);
       g.append(x);
+      if (b === rowEnd) g.append(cs);
     });
     const af = document.createElement('button'); af.type = 'button'; af.className = 'after' + (bk === 'after' ? ' on' : '');
-    af.textContent = 'After the Word · history, not Scripture'; af.onclick = () => pick('after'); g.append(af);
-    const cs = document.createElement('div'); cs.className = 'grid chs'; P.append(cs);
+    af.textContent = 'After the Word · history, not Scripture'; af.onclick = () => pick('after', true); g.append(af);
+    if (!cs.isConnected) g.append(cs);
+    if (scroll) requestAnimationFrame(() => cs.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
     const items = bk === 'after' ? H.map((e, i) => [`After.${i + 1}`, String(e.year), i === 0 || e.thread !== H[i - 1].thread ? hist.threads[e.thread] : ''])
       : canon[bk][2].map((_, c) => [`${fileOf(bk)}.${c + 1}`, String(c + 1)]);
     for (const [addr, label, thread] of items) {
@@ -489,7 +530,7 @@
     const open = nav.picker.hidden;
     nav.picker.hidden = !open; nav.where.setAttribute('aria-expanded', open);
     if (open) overlayOpened(); else overlayClosed();
-    if (open) pick(cur.history ? 'after' : cur.ref.book);
+    if (open) pick(cur.history ? 'after' : cur.ref.book, true);
   };
   const setBack = () => {
     const r = from && parseRef(canon, from), b = el('back');
@@ -620,12 +661,12 @@
   const playBtn = el('play');
 
   // Start playing chapter ch from verse v (in a tap, so the phone lets the sound start).
-  function begin(ch = start, v = 1) {
+  function begin(ch = start, v = 1, mode = 'push') {
     if (talkLive) { toast('End the Talk call to read on'); return; }
     engine.start();
     if (player) player.stop(true);
     reader.stop();
-    start = ch; here(ch);
+    start = ch; here(ch, mode);
     state = 'playing';
     playBtn.textContent = 'Pause';
     el('ending').hidden = true;
@@ -635,11 +676,12 @@
       engine, lex: cb.lex, first: ch, load: loadNext, speed: S.speed, startVerse: v,
       narrating: speaking, repeatVerse: () => S.repeat === 'verse',
       onChapter: c => {
-        if (sleepEoc && c !== sleepFrom) { sleepEoc = false; here(c); preview(c); sleepPause('Sleep: stopped at the end of the chapter'); return; }
-        here(c); exprWarm(c); study.render(S.tab);
+        if (sleepEoc && c !== sleepFrom) { sleepEoc = false; here(c, 'replace'); preview(c); sleepPause('Sleep: stopped at the end of the chapter'); return; }
+        here(c, 'replace'); exprWarm(c); study.render(S.tab);
       },
       onVerse: (c, vn, words, E, k, vs) => {
         now = { ch: c, v: vn, words, vs, E, k }; wordAt = -1;
+        if (seekGoal && (seekGoal.v === vn || seekGoal.seg !== p.current?.seg)) seekGoal = null;
         showVerse(c, vn, words, E, k);
         if (!c.history) store(LAST, `${addrOf(c)}.${vn}`);
         if (speaking()) {
@@ -666,7 +708,7 @@
       onEnd: async () => {
         if (player !== p) return;
         state = 'ready'; wake(false); now = null;
-        if (S.repeat === 'chapter') { begin(cur, 1); return; }
+        if (S.repeat === 'chapter') { begin(cur, 1, 'replace'); return; }
         if (!cur.history && cur.final) {
           el('ending').hidden = false;
           start = await loadAfter(0); here(start);
@@ -691,7 +733,7 @@
   const pauseAll = () => { if (state !== 'playing') return; state = 'paused'; playBtn.textContent = 'Resume'; player.pause(); reader.pause(); wake(false); paintBar(); };
   const resumeAll = () => { if (state !== 'paused') return; if (talkLive) { toast('End the Talk call to read on'); return; } state = 'playing'; playBtn.textContent = 'Pause'; player.resume(); reader.resume(); wake(true); paintBar(); };
   const toggle = () => {
-    if (state === 'ready') begin(start, start.history ? 1 : (start.at || 1));
+    if (state === 'ready') begin(start, startVerse(start), 'replace');
     else if (state === 'playing') pauseAll();
     else resumeAll();
   };
@@ -708,9 +750,13 @@
   };
 
   // ---------- verse and chapter steps ----------
+  // Build 2026101818: a seek lands about 0.1 s later; until it does, a second tap counts from where the first was going,
+  // so quick repeated taps each move one verse (they used to register once).
+  let seekGoal = null;
   function seekTo(v) {
     if (state === 'paused') resumeAll();
     reader.stop();
+    seekGoal = { seg: player.current.seg, v };
     player.seek(player.current.seg, v);
   }
   async function stepVerse(d) {
@@ -722,7 +768,7 @@
       start.at = v; preview(start); store(LAST, `${addrOf(cur)}.${v}`); paintBar(); return;
     }
     const c = player.current, ch = c.seg.ch, n = ch.text.length;
-    let v = c.vs.verse + d;
+    let v = (seekGoal && seekGoal.seg === c.seg ? seekGoal.v : c.vs.verse) + d;
     while (v >= 1 && v <= n && !(ch.text[v - 1] || '').trim()) v += d;
     if (v < 1) return stepChapter(-1, true);
     if (v > n) return stepChapter(1);
@@ -745,9 +791,23 @@
 
   // ---------- speed ----------
   let wasHeld = false;
+  // Build 2026101818: speed is held from 0.5x to the dial maximum (Settings or under the dial): − at 0.5x stays at 0.5x,
+  // and nothing (chips, dial, speed-read) goes past the maximum.
+  const SPEED_MIN = 0.5, MAX_LIMIT = 20;
+  const clampSpeed = x => Math.min(Math.max(1, S.dialMax), Math.max(SPEED_MIN, x));
+  // A typed maximum: a number from 1 to MAX_LIMIT, rounded to 0.25; anything else gets a message (a string) and is not used.
+  const checkMax = raw => {
+    const t = String(raw ?? '').trim(), v = +t;
+    if (!t || !Number.isFinite(v)) return `The maximum must be a number from 1× to ${MAX_LIMIT}×`;
+    if (v < 1 || v > MAX_LIMIT) return `The maximum must be from 1× to ${MAX_LIMIT}× (you entered ${t})`;
+    return Math.round(v * 4) / 4;
+  };
+  window.__checkMax = checkMax;
   function setSpeed(x) {
     x = +(+x).toFixed(2);
     if (!(x > 0)) return;
+    if (x > S.dialMax) toast(`Your maximum is ${fmtSpeed(S.dialMax)}: raise it under the dial or in Settings to go faster`);
+    x = +clampSpeed(x).toFixed(2);
     const was = S.speed; S.speed = x; save();
     if (player) { player.setSpeed(x); speakRest(); }
     const held = inStep();
@@ -780,6 +840,7 @@
     el('voice').textContent = !reader.available ? 'No voice' : S.voiceOn ? 'Voice on' : 'Voice off';
     el('voice').disabled = !reader.available; el('voice').setAttribute('aria-pressed', S.voiceOn);
     el('rep').classList.toggle('on', S.repeat !== 'off'); el('rep').title = `Repeat: ${S.repeat}`;
+    el('rep').setAttribute('aria-label', `Repeat: ${S.repeat}`); el('rep').setAttribute('aria-pressed', S.repeat !== 'off');
     el('rep').textContent = S.repeat === 'verse' ? '🔂' : '🔁';
     el('tbSlp').classList.toggle('on', !!(sleepEnd || sleepEoc));
     el('tbSlpV').textContent = sleepEoc ? '⏹' : sleepEnd ? Math.max(0, Math.ceil((sleepEnd - Date.now()) / 60e3)) + 'm' : '⏾';
@@ -789,7 +850,12 @@
   // ---------- sleep ----------
   function sleepPause(msg) { sleepEnd = 0; sleepEoc = false; pauseAll(); toast(msg); paintBar(); }
   setInterval(() => { if (sleepEnd && Date.now() >= sleepEnd) sleepPause('Sleep timer: paused'); else if (sleepEnd) paintBar(); }, 5000);
-  const setSleep = m => { sleepEnd = m > 0 ? Date.now() + m * 60e3 : 0; sleepEoc = m === 'eoc'; sleepFrom = now ? now.ch : cur; paintBar(); openSheet('sleep'); };
+  // Build 2026101818: choosing a sleep time closes the sheet and says what was set.
+  const setSleep = m => {
+    sleepEnd = m > 0 ? Date.now() + m * 60e3 : 0; sleepEoc = m === 'eoc'; sleepFrom = now ? now.ch : cur; paintBar();
+    closeSheet();
+    toast(sleepEoc ? 'Sleep: pauses at the end of this chapter' : sleepEnd ? `Sleep: pauses in ${m} min` : 'Sleep timer off');
+  };
 
   // ---------- sheets ----------
   let sheetKind = '', dial = null;
@@ -797,7 +863,15 @@
   const closeSheet = (fromBack) => { if (sheet.hidden) return; sheet.hidden = scrim.hidden = true; sheetKind = ''; dial = null; if (fromBack !== true) overlayClosed(); };
   scrim.onclick = closeSheet; el('sheetX').onclick = closeSheet;
   const chips = (list, curV, attr) => `<div class="chips">${list.map(([v, t]) => `<button type="button" ${attr}="${v}" class="${String(v) === String(curV) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
-  function paintChips() { sb.querySelectorAll('[data-sp]').forEach(b => b.classList.toggle('on', +b.dataset.sp === S.speed)); }
+  // Speed chips above the maximum are shown struck through and marked; a tap on one explains the maximum.
+  function paintChips(root = sb) {
+    root.querySelectorAll('[data-sp]').forEach(b => {
+      const over = +b.dataset.sp > S.dialMax;
+      b.classList.toggle('on', +b.dataset.sp === S.speed); b.classList.toggle('over', over);
+      b.setAttribute('aria-disabled', over); b.title = over ? `Above your maximum (${fmtSpeed(S.dialMax)})` : '';
+    });
+    const m = root.querySelector('.spdMax'); if (m) m.textContent = `Maximum ${fmtSpeed(S.dialMax)}`;
+  }
   const escH = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function voiceOptions() {
     const vs = narrator.list(), curV = narrator.voice;
@@ -814,7 +888,7 @@
   let elVoices = null, elModels = MODELS_FALLBACK, elErr = '';
   const elStatus = () => !elevenKey.get() ? 'No key saved: the phone voice reads.' : !S.elVoice ? 'Choose a voice below.'
     : eleven.ready() ? 'Ready: ElevenLabs reads, the phone voice steps in on any error.' : `Paused: ${escH(eleven.reason || 'unavailable')}. The phone voice reads; it tries again in a few minutes.`;
-  const sl = (id, label, v, hint) => `<h4>${label} <span id="${id}V">${(+v).toFixed(2)}</span></h4><input type="range" id="${id}" min="0" max="1" step="0.05" value="${v}"><div class="dim">${hint}</div>`;
+  const sl = (id, label, v, hint) => `<h4>${label} <span id="${id}V">${(+v).toFixed(2)}</span></h4><input type="range" id="${id}" aria-label="${label}" min="0" max="1" step="0.05" value="${v}"><div class="dim">${hint}</div>`;
   function voiceBlock() {
     const key = elevenKey.get(), eng = S.voiceEngine;
     return `<div class="row"><label for="vOn">Read aloud</label><input type="checkbox" class="sw" id="vOn" ${S.voiceOn ? 'checked' : ''} ${reader.available ? '' : 'disabled'}></div>
@@ -822,8 +896,8 @@
       ${eng === 'eleven' ? `<div class="card" style="margin-top:.6rem">
         <div class="dim" id="elSt" style="opacity:.85">${elStatus()}</div>
         <h4>ElevenLabs API key</h4>
-        ${key ? `<div class="row"><span>Key saved on this phone</span><button class="pill" type="button" id="elDel">Remove</button></div>`
-          : `<div style="display:flex;gap:.4rem"><input type="password" id="elKey" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pill gold" type="button" id="elSave">Save</button></div>`}
+        ${key ? `<div class="row"><span>Key saved on this phone</span><button class="pill" type="button" id="elDel">Forget key</button></div>`
+          : `<div style="display:flex;gap:.4rem;flex-wrap:wrap"><input type="password" id="elKey" aria-label="ElevenLabs API key" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1 1 10rem"><button class="pill gold" type="button" id="elSave">Save</button><button class="pill" type="button" id="elDel" disabled title="No key is saved on this phone">Forget key</button></div><div class="msg" id="elMsg" role="alert"></div>`}
         <div class="dim" style="margin-top:.35rem">The key stays on this phone only (this browser's own storage). It is never part of the app, never sent anywhere but ElevenLabs, and reading uses your ElevenLabs credits. Each verse is kept on the phone after its first reading, so replays are free.</div>
         ${key ? `<h4>Voice</h4><div style="display:flex;gap:.4rem"><select id="elVoice">${elVoices ? elVoices.map(v => `<option value="${escH(v.id)}" ${v.id === S.elVoice ? 'selected' : ''}>${escH(v.name)}${v.category ? ' · ' + escH(v.category) : ''}</option>`).join('') : `<option value="${escH(S.elVoice)}">${S.elVoice ? escH(S.elVoiceName || S.elVoice) : 'loading your voices…'}</option>`}</select><button class="pill" type="button" id="elPrev" title="Play ElevenLabs' preview of this voice (no credits)">▶ Preview</button></div>
           ${elErr ? `<div class="dim" style="color:#e9a">${escH(elErr)}</div>` : ''}
@@ -836,7 +910,7 @@
       </div>` : ''}
       <h4>${eng === 'eleven' ? 'Phone voice (used when ElevenLabs cannot read)' : 'Phone voice'}</h4><select id="vSel">${voiceOptions()}</select>
       <div class="dim" style="margin-top:.35rem">From your phone, English first, the most natural (★: Apple Enhanced/Premium, Siri, Microsoft Natural/Online, Google, Neural) at the top. If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
-      <h4>Pitch <span id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">
+      <h4 id="vPitchL">Pitch <span id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" aria-label="Phone voice pitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">
       <p><button class="pill gold" type="button" id="vTest">Test voice</button></p>
       <h4>Phone voice top rate</h4><div class="seg" id="vTop">${DEVICE_TOPS.map(t => `<button type="button" data-top="${t}" class="${t === narrator.top ? 'on' : ''}">${t}×</button>`).join('')}</div>
       <div class="dim" style="margin-top:.35rem">How fast your phone's own voice really goes (many stop near 1.4×). Past it the voice keeps in step by starting each verse on time. Raise this if your voice keeps speeding up; press Test to hear it at the top rate.</div>
@@ -861,8 +935,8 @@
     q('#vTest').onclick = () => { reader.stop(); narrator.test(undefined, Math.min(narrator.top, Math.max(1, S.speed))); };
     root.querySelectorAll('[data-top]').forEach(b => b.onclick = () => { S.deviceTop = narrator.top = +b.dataset.top; save(); root.querySelectorAll('[data-top]').forEach(x => x.classList.toggle('on', x === b)); speakRest(); paintBar(); toast(`Phone voice top rate ${narrator.top}×`); });
     root.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => { S.voiceEngine = b.dataset.eng; save(); eleven.reset(); reader.stop(); redrawVoice(root); loadEleven(root); paintBar(); });
-    q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) return; elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
-    q('#elDel') && (q('#elDel').onclick = () => { if (!confirm('Remove the ElevenLabs key from this phone?')) return; elevenKey.set(''); reader.stop(); elVoices = null; toast('Key removed'); redrawVoice(root); });
+    q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) { q('#elMsg').textContent = 'Paste your ElevenLabs API key first: the field is empty.'; toast('Nothing to save: the key field is empty'); q('#elKey').focus(); return; } elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
+    q('#elDel') && (q('#elDel').onclick = () => { if (!elevenKey.get()) return; if (!confirm('Remove the ElevenLabs key from this phone?')) return; elevenKey.set(''); reader.stop(); elVoices = null; toast('Key removed'); redrawVoice(root); });
     q('#elVoice') && (q('#elVoice').onchange = e => { S.elVoice = e.target.value; S.elVoiceName = e.target.selectedOptions[0]?.textContent || ''; save(); eleven.reset(); toast('Voice saved'); redrawVoice(root); });
     q('#elPrev') && (q('#elPrev').onclick = () => { const v = (elVoices || []).find(x => x.id === S.elVoice); if (v && v.preview) { const a = new Audio(v.preview); a.play().catch(() => toast('Preview could not play')); } else toast('No preview for this voice'); });
     q('#elModel') && (q('#elModel').onchange = e => { S.elModel = e.target.value; save(); toast('Model saved'); });
@@ -883,11 +957,14 @@
     const T = el('sheetT');
     if (kind === 'speed') {
       T.textContent = 'Playback speed';
-      sb.innerHTML = chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp') + '<h4>Dial</h4><div id="dialHost"></div>' +
+      sb.innerHTML = chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp') + '<div class="dim spdMax" style="margin-top:6px"></div><h4>Dial</h4><div id="dialHost"></div><div class="msg" id="dialMsg" role="alert"></div>' +
         `<div class="dim" style="margin-top:6px">Changes apply straight away: the music, the words and the reading voice keep one clock. From 0.5× to ${MAX_RATE}× the voice speeds up with them; above ${MAX_RATE}× it rests (words and tones only).</div><div class="dim" id="spdVoiceNote" style="margin-top:4px;color:#d9b65a">${inStep() ? stepNote() : ''}</div>`;
       sb.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => setSpeed(+b.dataset.sp));
-      dial = mountDial(el('dialHost'), { get: () => S.speed, set: setSpeed, getMax: () => S.dialMax, setMax: m => { S.dialMax = m; save(); },
+      dial = mountDial(el('dialHost'), { get: () => S.speed, set: setSpeed, getMax: () => S.dialMax, min: SPEED_MIN, maxLimit: MAX_LIMIT,
+        setMax: m => { S.dialMax = m; save(); paintChips(); if (S.speed > m) setSpeed(m); },
+        onInvalid: msg => { el('dialMsg').textContent = msg; if (msg) toast(msg); },
         capFor: v => v > MAX_RATE ? `voice rests · tones ${+v.toFixed(2)}×` : '' });
+      paintChips();
     } else if (kind === 'voice') {
       T.textContent = 'Voice'; sb.innerHTML = voiceBlock(); wireVoice(sb);
     } else if (kind === 'sleep') {
@@ -976,7 +1053,7 @@
   el('tbRsvp').onclick = () => { if (rsvp.hidden) overlayOpened(); rsvp.hidden = false; rsvpShow(); };
   el('rsvpX').onclick = () => { if (!rsvp.hidden) { rsvp.hidden = true; overlayClosed(); } };
   el('rsvpPP').onclick = () => { toggle(); rsvpShow(); };
-  const nudge = d => { const s = player ? player.speed : S.speed; setSpeed(Math.max(0.5, Math.min(Math.max(S.dialMax, 3), s + d * (s >= 3 ? 0.5 : 0.25)))); rsvpShow(); };
+  const nudge = d => { const s = player ? player.speed : S.speed; setSpeed(clampSpeed(s + d * (s >= 3 ? 0.5 : 0.25))); rsvpShow(); };
   el('rsvpSlow').onclick = () => nudge(-1);
   el('rsvpFast').onclick = () => nudge(1);
 
@@ -986,8 +1063,8 @@
     const opt = (v, cv, t) => `<option value="${v}" ${String(v) === String(cv) ? 'selected' : ''}>${t}</option>`;
     setEl.innerHTML = `<div class="hd"><b>Settings</b><button class="ib" type="button" id="setX" aria-label="Close settings">✕</button></div>
       <section><h4>Playback</h4>
-        <div class="set col"><div class="l">Speed <small>Music, words and voice together. Also on the player bar.</small></div>${chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp')}</div>
-        <div class="set"><div class="l">Speed dial maximum <small>The dial runs from 1× to this, in 0.25 steps.</small></div><input type="number" id="stMax" min="1" step="0.25" value="${S.dialMax}" style="width:5rem"></div>
+        <div class="set col"><div class="l">Speed <small>Music, words and voice together. Also on the player bar.</small></div>${chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp')}<div class="dim spdMax"></div></div>
+        <div class="set"><label class="l" for="stMax">Speed maximum <small>The dial runs from 0.5× to this, in 0.25 steps (1× to ${MAX_LIMIT}×). Nothing plays faster.</small><span class="msg" id="stMaxMsg" role="alert" style="display:block"></span></label><input type="number" id="stMax" min="1" max="${MAX_LIMIT}" step="0.25" inputmode="decimal" value="${S.dialMax}" style="width:5rem"></div>
         <div class="set"><label class="l" for="stAuto">Auto play <small>Go on to the next chapter.</small></label><input type="checkbox" class="sw" id="stAuto" ${S.autoplay ? 'checked' : ''}></div>
         <div class="set"><div class="l">Repeat</div><select id="stRep" style="width:8rem">${REP.map(r => opt(r, S.repeat, r)).join('')}</select></div>
         <div class="set"><label class="l" for="stRes">Start where I left off <small>Begin opens at the last verse heard (or a link's verse). Off: always from verse 1.</small></label><input type="checkbox" class="sw" id="stRes" ${S.resume ? 'checked' : ''}></div>
@@ -1012,9 +1089,17 @@
     const q = s => setEl.querySelector(s);
     q('#stVoice').innerHTML = voiceBlock(); wireVoice(q('#stVoice'));
     q('#setX').onclick = () => { setEl.hidden = true; overlayClosed(); };
-    setEl.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { setSpeed(+b.dataset.sp); setEl.querySelectorAll('[data-sp]').forEach(x => x.classList.toggle('on', x === b)); });
+    setEl.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { setSpeed(+b.dataset.sp); paintChips(setEl); });
+    paintChips(setEl);
     const ok = () => toast(save() ? 'Saved' : 'Could not save (private browsing?)');
-    q('#stMax').onchange = e => { S.dialMax = Math.max(1, Math.round((+e.target.value || 1) * 4) / 4); e.target.value = S.dialMax; ok(); };
+    q('#stMax').onchange = e => {
+      const m = checkMax(e.target.value);
+      if (typeof m === 'string') { q('#stMaxMsg').textContent = m; toast(m); e.target.value = S.dialMax; return; }
+      q('#stMaxMsg').textContent = '';
+      S.dialMax = m; e.target.value = m; ok();
+      if (S.speed > m) setSpeed(m);
+      paintChips(setEl);
+    };
     q('#stAuto').onchange = e => { S.autoplay = e.target.checked; ok(); paintBar(); };
     q('#stRep').onchange = e => { S.repeat = e.target.value; ok(); paintBar(); };
     q('#stRes').onchange = e => { S.resume = e.target.checked; ok(); };
@@ -1028,52 +1113,104 @@
   el('gear').onclick = openSettings;
   addEventListener('keydown', e => { if (e.key === 'Escape' && anyOverlay()) history.back(); });
 
-  // ---------- back button (as in Logos Theta build 2026101305) ----------
-  // Back closes an open menu first, then steps back through tabs and chapters opened in the app,
-  // and at the first screen stays in the app instead of leaving it.
-  let popping = false, ignorePop = 0, booted = false;
-  const anyOverlay = () => !sheet.hidden || !rsvp.hidden || !setEl.hidden || !nav.picker.hidden;
-  function overlayOpened() { if (booted) history.pushState({ sono: 1, tab: S.tab, overlay: 1 }, ''); }
-  function overlayClosed() { if (history.state && history.state.overlay) { ignorePop++; history.back(); } }
+  // ---------- back button (as in Logos Theta build 2026101305; reworked in build 2026101818) ----------
+  // Back closes an open sheet or menu first, then steps back through the screens (tabs) and chapters opened in the app,
+  // and at the first screen stays in the app instead of leaving it. Whatever step Back lands on, the screen and the
+  // player are made to match its address (a chapter that was playing goes on playing the chapter Back returns to).
+  let popping = false;
+  const menuEl = el('menu'), menuScrim = el('menuScrim'), menuBtn = el('menuBtn');
+  const anyOverlay = () => !menuEl.hidden || !sheet.hidden || !rsvp.hidden || !setEl.hidden || !nav.picker.hidden;
+  function overlayOpened() { if (booted) histRun(() => history.pushState({ ...(history.state || {}), sono: 1, tab: S.tab, overlay: 1, root: undefined }, '')); }
+  function overlayClosed() { histRun(() => { if (history.state && history.state.overlay) { backPending++; history.back(); } }); }
   function closeTop() {
+    if (!menuEl.hidden) { closeMenu(true); return true; }
     if (!sheet.hidden) { closeSheet(true); return true; }
     if (!rsvp.hidden) { rsvp.hidden = true; return true; }
     if (!setEl.hidden) { setEl.hidden = true; return true; }
     if (!nav.picker.hidden) { nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false); return true; }
     return false;
   }
-  addEventListener('popstate', e => {
-    if (ignorePop) { ignorePop--; return; }
-    if (closeTop()) return;
-    const st = e.state;
-    if (st && st.sono && !st.root) {
-      popping = true;
-      try {
-        if (location.search !== shownSearch) go(location.search.slice(1), false);
-        show(st.tab || 'listen');
-      } finally { popping = false; }
-      return;
+  const addrPart = q => String(q || '').replace(/^\?/, '').split('&')[0].replace(/^([^.]+\.\d+)\.\d+$/, '$1').toLowerCase();
+  let restoreTok = 0;
+  async function restore(st) {
+    const q = location.search, tok = ++restoreTok;
+    popping = true;
+    try { show(st.tab || 'listen'); } finally { popping = false; }
+    if (addrPart(q) === addrOf(cur).toLowerCase()) return;
+    if (state === 'playing') {   // keep listening, now to the chapter Back returned to
+      const ch = await openAt(q.slice(1).split('&')[0]);
+      if (tok !== restoreTok || !ch) return;
+      delete ch.at; begin(ch, 1, 'replace'); return;
     }
-    if (st && st.root) { popping = true; try { if (location.search !== shownSearch) go(location.search.slice(1), false); show(st.tab || 'listen'); } finally { popping = false; } }
-    history.pushState({ sono: 1, tab: S.tab }, '');   // at the first screen: stay in the app
+    await go(q, false);
+  }
+  addEventListener('popstate', e => {
+    if (backPending) { backPending--; if (!backPending) histQ.splice(0).forEach(f => f()); return; }
+    if (closeTop()) { replaceScreen(); return; }   // the screen under it stays; its address is brought up to date
+    const st = e.state || {};
+    restore(st);
+    if (st.root) history.pushState({ sono: 1, tab: st.tab || S.tab }, '', location.search);   // at the first screen: stay in the app
   });
+  window.__hist = () => ({ length: history.length, state: history.state, search: location.search, cur: addrOf(cur), tab: S.tab, backPending });
+
+  // ---------- menu (☰), build 2026101818: every screen and mode in one list ----------
+  const MENU = [
+    ['Screens'],
+    ['listen', '◉', 'Listen', () => show('listen')],
+    ['read', '☰', 'Read', () => show('read')],
+    ['recall', '↻', 'Recall', () => show('recall')],
+    ['notes', '✎', 'Notes', () => show('notes')],
+    ['search', '⌕', 'Search', () => show('search')],
+    ['origins', '∿', 'Origins', () => show('origins')],
+    ['agent', '◇', 'Agent', () => show('agent')],
+    ['Modes'],
+    ['talk', '☏', 'Talk', () => { show('listen'); if (el('talk')?.hidden !== false) el('talkbtn').click(); el('talkmount').scrollIntoView({ block: 'nearest' }); }],
+    ['speed', '»', 'Speed', () => openSheet('speed')],
+    ['voice', '♪', 'Voice', () => openSheet('voice')],
+    ['sleep', '⏾', 'Sleep timer', () => openSheet('sleep')],
+    ['queue', '≡', 'Up next', () => openSheet('queue')],
+    ['rsvp', '⚡', 'Speed read', () => el('tbRsvp').click()],
+    ['More'],
+    ['settings', '⚙', 'Settings', () => openSettings()],
+  ];
+  function openMenu() {
+    if (!menuEl.hidden) return;
+    menuEl.innerHTML = MENU.map(([k, i, t]) => i === undefined ? `<h5 role="presentation">${k}</h5>`
+      : `<button type="button" role="menuitem" data-menu="${k}" class="${k === S.tab ? 'on' : ''}"${k === S.tab ? ' aria-current="page"' : ''}><b aria-hidden="true">${i}</b>${t}</button>`).join('');
+    menuEl.querySelectorAll('[data-menu]').forEach(b => b.onclick = () => {
+      const item = MENU.find(m => m[0] === b.dataset.menu);
+      closeMenu();
+      histRun(item[3]);   // after the menu's own history step is gone, so the two never cross
+    });
+    menuEl.hidden = menuScrim.hidden = false; menuBtn.setAttribute('aria-expanded', 'true');
+    overlayOpened();
+    menuEl.querySelector('.on, button')?.focus({ preventScroll: true });
+  }
+  function closeMenu(fromBack) {
+    if (menuEl.hidden) return;
+    menuEl.hidden = menuScrim.hidden = true; menuBtn.setAttribute('aria-expanded', 'false');
+    if (fromBack !== true) overlayClosed();
+  }
+  menuBtn.onclick = () => menuEl.hidden ? openMenu() : closeMenu();
+  menuScrim.onclick = () => closeMenu();
 
   // Open a chapter (or history entry) inside the app, without reloading. As in Claude's build,
   // opening another chapter stops the music; Begin (or Play chapter) starts it again.
-  let shownSearch = location.search;
+  let goTok = 0;
   async function go(q, push = true) {
     const [a, ...o] = String(q || '').replace(/^\?/, '').split('&');
+    const tok = ++goTok;
     const ch = await openAt(a);
+    if (tok !== goTok) return;   // a later step (another tap, or Back) has superseded this one
     if (!ch) { toast('That chapter could not be opened'); return; }
     if (player) { player.stop(true); player = null; }
-    reader.stop(); state = 'ready'; now = null; wake(false);
+    reader.stop(); state = 'ready'; now = null; wake(false); seekGoal = null;
     playBtn.textContent = 'Begin';
     el('ending').hidden = true; el('state').textContent = ''; el('links').innerHTML = '';
     from = o.find(x => x.startsWith('from='))?.slice(5);
     setBack();
-    if (push) history.pushState({ sono: 1, tab: S.tab }, '', '?' + a + (from ? '&from=' + from : ''));
-    start = ch; here(ch); preview(ch); shownSearch = location.search;
-    nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false);
+    if (!nav.picker.hidden) { nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false); overlayClosed(); }
+    start = ch; here(ch, push ? 'push' : 'replace'); preview(ch);
     paintBar(); paintMark();
     if (S.tab === 'read') study.rerenderRead(); else study.render(S.tab);
     scrollTo(0, 0);
@@ -1098,22 +1235,39 @@
   const kjvs = new Map();
   function show(t) {
     if (!document.getElementById('tab-' + t)) t = 'listen';
-    if (!popping && t !== S.tab && booted) history.pushState({ sono: 1, tab: t }, '');
+    const push = !popping && t !== S.tab && booted;
     S.tab = t; save();
+    if (push) pushScreen();
     document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.id === 'tab-' + t));
     document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
     study.render(t);
-    if (t === 'listen') drawStrip();
+    if (t === 'listen') { drawStrip(); fitListen(); }
     scrollTo(0, 0);
   }
+  // Build 2026101818: nothing on Listen sits under the fixed player bar. The page keeps room below for the bar and tabs
+  // (their real height, --chrome), and on a short or narrow phone the light (dish) is made smaller so that Begin,
+  // Voice on and Talk are fully in view above the bar on first load.
+  function fitListen() {
+    const bar = el('bar'), tabsEl = el('tabs'), dish = el('dish'), ctl = el('controls');
+    document.documentElement.style.setProperty('--chrome', (bar.offsetHeight + tabsEl.offsetHeight) + 'px');
+    if (!el('tab-listen').classList.contains('on')) return;
+    dish.style.width = '';
+    const top = bar.getBoundingClientRect().top + scrollY, bottom = ctl.getBoundingClientRect().bottom + scrollY;
+    const over = bottom + 10 - top;
+    if (over > 0 && !dish.hidden) dish.style.width = Math.max(96, dish.getBoundingClientRect().width - over) + 'px';
+  }
+  addEventListener('resize', () => fitListen());
+  document.fonts?.ready.then(() => fitListen());
   document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => show(b.dataset.tab));
   if (start.at && !start.history) { /* the resume / link verse is what Begin starts from */ }
   paintMark(); paintBar();
   show(S.tab || 'listen');
-  history.replaceState({ sono: 1, tab: S.tab, root: 1 }, '');
-  history.pushState({ sono: 1, tab: S.tab }, '');
+  history.replaceState({ sono: 1, tab: S.tab, root: 1 }, '', urlOf(cur));
+  history.pushState({ sono: 1, tab: S.tab }, '', urlOf(cur));
   booted = true;
-  window.__app = { go, begin, setSpeed, show, openSheet, openSettings, stepVerse, toggle, get state() { return state; }, get now() { return now; } };
+  fitListen();
+  window.__app = { go, begin, setSpeed, show, openSheet, openSettings, openMenu, closeMenu, stepVerse, stepChapter, toggle, fitListen,
+    get state() { return state; }, get now() { return now; }, get cur() { return addrOf(cur); }, get start() { return { addr: addrOf(start), at: start.at || 1 }; } };
 </script>
 </body>
 </html>
