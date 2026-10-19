@@ -31,19 +31,48 @@
   #controls button { font: .9rem system-ui, sans-serif; color: #e9e2cf; background: #15130f;
     border: 1px solid #3a352a; border-radius: 2rem; padding: .7rem 1.4rem; min-width: 7rem; }
   #controls button:active { background: #24201a; }
+  /* Day 6: walking the garden */
+  #nav { display: flex; gap: .5rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+  #nav a, #nav button, #back { font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; text-decoration: none;
+    border: 1px solid #3a352a; border-radius: 2rem; padding: .45rem .9rem; }
+  #nav a[aria-disabled] { visibility: hidden; }
+  #picker { width: min(100%, 32rem); background: #0f0e0b; border: 1px solid #2a261e; border-radius: 12px; padding: .7rem; box-sizing: border-box; }
+  #picker .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35rem; font: .75rem system-ui, sans-serif; }
+  #picker .grid.chs { grid-template-columns: repeat(auto-fill, minmax(2.6rem, 1fr)); margin-top: .6rem; }
+  #picker a, #picker button { padding: .4rem .3rem; border-radius: 6px; background: #17150f; color: #e9e2cf; text-align: center;
+    text-decoration: none; border: 0; font: inherit; }
+  #picker .on { background: #3a3020; }
+  #picker .after { grid-column: 1 / -1; }
+  /* Day 4: lights for seasons */
+  #seasons { width: min(100%, 32rem); }
+  #strip { display: block; width: 100%; height: 26px; border-radius: 4px; cursor: pointer; }
+  #seasons .note { font: .62rem system-ui, sans-serif; opacity: .45; text-align: center; margin-top: .3rem; }
+  /* After the Word (SPIRIT §11) */
+  #verse .hist { display: block; font: 600 .62rem system-ui, sans-serif; letter-spacing: .15em; text-transform: uppercase; opacity: .55; margin-bottom: .5rem; }
+  #verse .title { display: block; font-size: 1.05rem; margin-bottom: .4rem; }
+  #verse .body { display: block; font-size: .85rem; line-height: 1.5; opacity: .85; text-align: left; margin-bottom: .8rem; }
+  #verse .notes { display: block; font: .7rem/1.45 system-ui, sans-serif; opacity: .5; text-align: left; margin-top: .6rem; }
+  #verse .tied { display: block; border-left: 2px solid #6a5a35; padding-left: .7rem; text-align: left; }
+  #ending { font: .85rem system-ui, sans-serif; opacity: .75; text-align: center; max-width: 30rem; }
 </style>
 </head>
 <body>
   <h1>Sonolumina</h1>
+  <nav id="nav"><a id="prev">‹</a><button id="where" type="button" aria-expanded="false"></button><a id="next">›</a></nav>
+  <a id="back" hidden></a>
+  <div id="picker" hidden></div>
   <canvas id="dish" width="200" height="200" aria-hidden="true"></canvas>
   <p id="verse" aria-live="polite"></p>
   <div id="links"></div>
   <div id="state"></div>
   <div id="labels"></div>
+  <div id="ending" hidden>Here Scripture ends. What follows is history, not Scripture.</div>
   <div id="controls">
     <button id="play" type="button">Begin</button>
     <button id="voice" type="button" aria-pressed="true">Voice on</button>
   </div>
+  <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
+    <div class="note">1,189 chapters, Genesis to Revelation, each coloured by its feeling (V, from the stored verse scores)</div></div>
 <script type="module">
   import { LABELS } from './law/home.js';
   import { EMOTION_SOURCE, feeling } from './law/emotion.js';
@@ -51,12 +80,16 @@
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
   import { createNarrator } from './form/narrator.js';
-  import { parseRef, sung, isFinal, next } from './law/canon.js';
+  import { parseRef, sung, isFinal, next, prev, chapterIndex, refAt } from './law/canon.js';
   import { links, signature, swells, LINK_SOURCE } from './law/links.js';
+  import { seasonHue } from './law/seasons.js';
+  import { afterText, HISTORY_SOURCE } from './law/after.js';
 
   const el = id => document.getElementById(id);
   const json = u => fetch(u).then(r => r.json());
-  const [canon, cb] = await Promise.all([json('./data/canon.json'), json('./data/codebook/eng.json')]);
+  const [canon, cb, seasons, hist] = await Promise.all(['canon', 'codebook/eng', 'seasons', 'history'].map(f => json(`./data/${f}.json`)));
+  const H = hist.entries;
+  const fileOf = b => canon[b][1].replace(/\.json$/, '');
   // A book's text and feeling are fetched once, when first needed.
   const books = new Map();
   const book = b => {
@@ -69,6 +102,17 @@
     const parts = bsb.c[ref.chapter - 1].map((_, i) => sung(bsb, ref.chapter, i + 1));
     return { ref, name: canon[ref.book][0], parts, text: parts.map(x => x.text), vadBook: vad, final: isFinal(canon, ref) };
   };
+  // After the Word (SPIRIT §11): an entry is shown, and only the verse it grew from sounds, by the same Law.
+  // ref.after = the entry's index; the last entry closes on 110 Hz.
+  const loadAfter = async i => {
+    const e = H[i], [b, c, v] = e.ref, [bsb, vad] = await book(b);
+    const text = afterText(bsb, c, v);
+    return { ref: { after: i, book: b, chapter: c }, history: e, name: canon[b][0], parts: text.map(t => ({ heading: '', text: t })),
+      text, vadBook: vad, final: i === H.length - 1 };
+  };
+  const load = ref => ref.after !== undefined
+    ? (ref.after + 1 < H.length ? loadAfter(ref.after + 1) : Promise.resolve(null))
+    : (n => n ? loadChapter(n) : Promise.resolve(null))(next(canon, ref));
   // Linked verses (Day 5): the cross references of a book, fetched once; a link's tones are
   // drawn from the linked verse's own words, so its book is fetched too, in time or not at all.
   const xrefs = new Map();
@@ -78,6 +122,7 @@
   const linksFor = (ch, vs) => {
     const key = `${ch.ref.book}.${ch.ref.chapter}.${vs.verse}`;
     if (!linkSets.has(key)) linkSets.set(key, (async () => {
+      if (ch.history) return [];   // a history entry sounds its verse alone
       const ls = swells(links(canon, await xref(ch.ref.book), ch.ref.book, ch.ref.chapter, vs.verse), vs.dur);
       const mine = signature(cb.lex, ch.text[vs.verse - 1], vs.mode);
       return Promise.all(ls.map(async l => {
@@ -88,15 +133,29 @@
     })());
     return linkSets.get(key);
   };
-  // Any chapter opens from the address (?Psalms.23); Genesis 1 by default.
-  const start = await loadChapter(parseRef(canon, location.search.slice(1)) || { book: 0, chapter: 1 });
+  // Any chapter opens from the address (?Psalms.23, ?John.1.1 at a verse, ?After.3 for history);
+  // with no address, the last place on this phone, else Genesis 1.
+  const LAST = 'sonolumina.last';
+  const store = (k, v) => { try { v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); return localStorage.getItem(k); } catch { return null; } };
+  const [addr, ...opts] = location.search.slice(1).split('&');
+  const from = opts.find(o => o.startsWith('from='))?.slice(5);
+  const openAt = async a => {
+    const m = /^After\.(\d+)$/i.exec(a || '');
+    if (m && +m[1] >= 1 && +m[1] <= H.length) return loadAfter(+m[1] - 1);
+    const r = parseRef(canon, a);
+    return r ? Object.assign(await loadChapter(r), { at: r.verse }) : null;
+  };
+  let start = (await openAt(addr)) || (!addr && await openAt(store(LAST))) || await loadChapter({ book: 0, chapter: 1 });
   let cur = start;
+  const addrOf = ch => ch.history ? `After.${ch.ref.after + 1}` : `${fileOf(ch.ref.book)}.${ch.ref.chapter}`;
+  const titleOf = ch => ch.history ? `After the Word ${ch.ref.after + 1}` : `${ch.name} ${ch.ref.chapter}`;
   const here = ch => {
     cur = ch;
-    document.title = `${ch.name} ${ch.ref.chapter} · Sonolumina`;
-    history.replaceState(null, '', '?' + canon[ch.ref.book][1].replace(/\.json$/, '') + '.' + ch.ref.chapter);
+    document.title = `${titleOf(ch)} · Sonolumina`;
+    history.replaceState(null, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : ''));
+    store(LAST, addrOf(ch));
+    navTo(ch);
   };
-  here(start);
   const engine = createEngine();
   // Light for the season: hue from valence (cool blue at sorrow, warm gold at joy).
   let hue = 45;
@@ -116,34 +175,134 @@
       el('state').textContent = `${k.mode} · ${Math.round(k.bpm)} BPM · ${feeling(E)}`;
     }
     p.innerHTML = '';
+    const add = (cls, text) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; p.append(s); return s; };
+    let tied = p;
+    if (ch.history) {
+      const e = ch.history;
+      add('hist', `History · not Scripture · ${e.date}`);
+      add('title', e.title);
+      add('body', e.body);
+      tied = add('tied', '');
+    }
     const head = ch.parts[v - 1] && ch.parts[v - 1].heading;
     if (head) { const h = document.createElement('span'); h.id = 'heading'; h.textContent = head; p.append(h); }
     spans = words.map((w, i) => {
       const s = document.createElement('span');
       s.textContent = w;
-      p.append(s, i < words.length - 1 ? ' ' : '');
+      tied.append(s, i < words.length - 1 ? ' ' : '');
       return s;
     });
     const r = document.createElement('span');
     r.id = 'ref'; r.textContent = `${ch.name} ${ch.ref.chapter}:${v} · BSB`;
     // A verse the BSB leaves out (not in the oldest manuscripts) is named with the verse after it.
-    if (v > 1 && !ch.text[v - 2].trim()) r.textContent += ` · ${ch.ref.chapter}:${v - 1} omitted (not in the oldest manuscripts)`;
-    p.append(r);
-    // The verse's links, as tabs under it; each lights when it sounds, and a tap opens its chapter.
+    if (!ch.history && v > 1 && !ch.text[v - 2].trim()) r.textContent += ` · ${ch.ref.chapter}:${v - 1} omitted (not in the oldest manuscripts)`;
+    if (ch.history) r.textContent += ' · the verse it grew from';
+    tied.append(r);
     const tabs = el('links');
     tabs.innerHTML = '';
+    if (ch.history) {
+      if (ch.history.notes.length) add('notes', ch.history.notes.join(' '));
+      for (const [t, u] of ch.history.sources) {
+        const a = document.createElement('a');
+        a.href = u; a.target = '_blank'; a.rel = 'noopener'; a.textContent = t;
+        tabs.append(a);
+      }
+      return;
+    }
+    // The verse's links, as tabs under it; each lights when it sounds, and a tap opens its chapter at that verse.
     linkSets.get(`${ch.ref.book}.${ch.ref.chapter}.${v}`)?.then(ls => {
       if (el('ref') !== r) return;   // a later verse is showing now
       for (const l of ls) {
         const a = document.createElement('a');
-        a.href = `?${l.file}.${l.c}`; a.textContent = l.label;
+        a.href = `?${l.file}.${l.c}.${l.v}&from=${fileOf(ch.ref.book)}.${ch.ref.chapter}.${v}`; a.textContent = l.label;
         a.dataset.k = `${l.book}.${l.c}.${l.v}`;
         tabs.append(a);
       }
     });
   };
-  // Before the first tap: Genesis 1 shows the darkness over the deep; any other chapter its first verse.
-  { const v0 = start.ref.book === 0 && start.ref.chapter === 1 ? 2 : 1; showVerse(start, v0, start.text[v0 - 1].split(/\s+/)); }
+  // Before the first tap: Genesis 1 shows the darkness over the deep; a link's verse when one was followed;
+  // a history entry its verse; any other chapter its first verse.
+  const preview = ch => {
+    const v0 = ch.history ? ch.history.ref[2] : ch.at || (ch.ref.book === 0 && ch.ref.chapter === 1 ? 2 : 1);
+    showVerse(ch, v0, (ch.text[v0 - 1] || '').split(/\s+/).filter(Boolean));
+  };
+
+  // Day 6: walking the garden. Previous and next, the picker, and back from a link.
+  const nav = { prev: el('prev'), next: el('next'), where: el('where'), picker: el('picker') };
+  const setLink = (a, addr, text) => {
+    if (addr) { a.href = '?' + addr; a.textContent = text; a.removeAttribute('aria-disabled'); }
+    else { a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true'); a.textContent = text; }
+  };
+  const nameOf = r => `${canon[r.book][0]} ${r.chapter}`;
+  function navTo(ch) {
+    if (ch.history) {
+      const i = ch.ref.after;
+      setLink(nav.prev, i ? `After.${i}` : 'Revelation.22', i ? `‹ ${H[i - 1].date}` : '‹ Revelation 22');
+      setLink(nav.next, i + 1 < H.length ? `After.${i + 2}` : '', `${H[i + 1]?.date || ''} ›`);
+      nav.where.textContent = `After the Word ${ch.ref.after + 1} ▾`;
+    } else {
+      const p = prev(canon, ch.ref), n = next(canon, ch.ref);
+      setLink(nav.prev, p && `${fileOf(p.book)}.${p.chapter}`, p ? `‹ ${nameOf(p)}` : '‹');
+      setLink(nav.next, n ? `${fileOf(n.book)}.${n.chapter}` : 'After.1', n ? `${nameOf(n)} ›` : 'After the Word ›');
+      nav.where.textContent = `${nameOf(ch.ref)} ▾`;
+    }
+    drawStrip();
+  }
+  const pick = bk => {
+    const P = nav.picker;
+    P.innerHTML = '';
+    const g = document.createElement('div'); g.className = 'grid'; P.append(g);
+    canon.forEach(([name], b) => {
+      const x = document.createElement('button'); x.type = 'button'; x.textContent = name;
+      if (b === bk) x.className = 'on';
+      x.onclick = () => pick(b);
+      g.append(x);
+    });
+    const af = document.createElement('button'); af.type = 'button'; af.className = 'after' + (bk === 'after' ? ' on' : '');
+    af.textContent = 'After the Word · history, not Scripture'; af.onclick = () => pick('after'); g.append(af);
+    const cs = document.createElement('div'); cs.className = 'grid chs'; P.append(cs);
+    const items = bk === 'after' ? H.map((e, i) => [`After.${i + 1}`, String(e.year)])
+      : canon[bk][2].map((_, c) => [`${fileOf(bk)}.${c + 1}`, String(c + 1)]);
+    for (const [addr, label] of items) {
+      const a = document.createElement('a'); a.href = '?' + addr; a.textContent = label;
+      if (addr === addrOf(cur)) a.className = 'on';
+      cs.append(a);
+    }
+  };
+  nav.where.onclick = () => {
+    const open = nav.picker.hidden;
+    nav.picker.hidden = !open; nav.where.setAttribute('aria-expanded', open);
+    if (open) pick(cur.history ? 'after' : cur.ref.book);
+  };
+  if (from) {
+    const r = parseRef(canon, from);
+    if (r) { const b = el('back'); b.hidden = false; b.href = '?' + from; b.textContent = `↩ back to ${canon[r.book][0]} ${r.chapter}:${r.verse || 1}`; }
+  }
+
+  // Day 4: lights for seasons. One thin band per chapter, coloured by its mean feeling with the light's hue rule;
+  // the white mark is where you are. Tap to open that chapter.
+  const strip = el('strip');
+  function drawStrip() {
+    const w = Math.round(strip.clientWidth * devicePixelRatio) || 1189, h = Math.round(26 * devicePixelRatio);
+    strip.width = w; strip.height = h;
+    const g = strip.getContext('2d');
+    seasons.forEach((V, i) => {
+      g.fillStyle = `hsl(${seasonHue(V)},55%,${35 + 25 * V}%)`;
+      g.fillRect(Math.floor(i * w / 1189), 0, Math.ceil(w / 1189) + 1, h);
+    });
+    if (!cur.history) {
+      const x = (chapterIndex(canon, cur.ref) + 0.5) * w / 1189;
+      g.fillStyle = '#fff'; g.fillRect(x - devicePixelRatio, 0, 2 * devicePixelRatio, h);
+    }
+  }
+  strip.onclick = e => {
+    const r = strip.getBoundingClientRect();
+    const at = refAt(canon, Math.min(1188, Math.max(0, Math.floor((e.clientX - r.left) / r.width * 1189))));
+    location.href = `?${fileOf(at.book)}.${at.chapter}`;
+  };
+  addEventListener('resize', drawStrip);
+  here(start);
+  preview(start);
 
   const narrator = createNarrator();
   const voiceBtn = el('voice'), playBtn = el('play');
@@ -172,10 +331,10 @@
     if (state === 'ready') {
       state = 'playing';
       playBtn.textContent = 'Pause';
-      el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, LINK_SOURCE, LABELS.DISH].join('<br>');
+      el('ending').hidden = true;
+      el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, start.history ? HISTORY_SOURCE : LINK_SOURCE, LABELS.DISH].join('<br>');
       player = createPlayer({
-        engine, lex: cb.lex, first: start,
-        load: ref => { const n = next(canon, ref); return n ? loadChapter(n) : Promise.resolve(null); },
+        engine, lex: cb.lex, first: start, load,
         narrating: () => narrator.on,
         onChapter: ch => here(ch),
         onVerse: (ch, v, words, E, k, vs) => {
@@ -193,7 +352,19 @@
           spans.forEach(x => x.className = '');
           el('state').textContent = 'Amen · IV–I · home 110 Hz';
         },
-        onEnd: () => { state = 'ready'; playBtn.textContent = 'Begin again'; wake(false); },
+        onEnd: async () => {
+          state = 'ready'; wake(false);
+          // Scripture has come home; after a rest, the history may follow (SPIRIT §11), only when asked.
+          if (!cur.history && cur.final) {
+            el('ending').hidden = false;
+            start = await loadAfter(0); here(start);
+            playBtn.textContent = 'After the Word ›';
+          } else {
+            start = cur.history ? await loadChapter({ book: 0, chapter: 1 }) : start;
+            here(start); preview(start);
+            playBtn.textContent = 'Begin again';
+          }
+        },
       });
       player.play();
       wake(true);

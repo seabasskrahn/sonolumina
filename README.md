@@ -11,10 +11,12 @@ Built in the order of the creation days, first on Genesis 1 (all seven done), th
 1. Light: any of the 1,189 chapters opens (`?Psalms.23`). **(done)**
 2. Separation: the Law proven on every chapter, apart from the Form (`tests/canon.html`). **(done)**
 3. Seed bearing fruit: chapters flow on, one into the next, Genesis 1 to Revelation 22. **(done)**
-4. Lights for seasons: a strip of all 1,189 chapters coloured by feeling. **(concept shown in `concept/`, waiting for Seabass's yes)**
+4. Lights for seasons: a strip of all 1,189 chapters, each coloured by its feeling with the light's own hue rule; tap to open one. **(done)**
 5. Living things: linked verses sound together. **(done)**
-6. Man: book, chapter and verse navigation. **(concept shown in `concept/`, waiting for Seabass's yes)**
+6. Man: previous and next, a picker of books and chapters, a link opens at its verse with a way back, and the last place is remembered on the phone. **(done)**
 7. Rest: the whole Bible comes home. Every sung verse ends V–I, every chapter ends on the major IV–I "Amen", and only Revelation 22 closes on 110 Hz itself. **(done)**
+
+After the Word (SPIRIT §11): when Revelation 22 has come home, "Here Scripture ends. What follows is history, not Scripture." The history is shown and never sounded; only the verse each entry grew from sings, by the same Law, and the last entry closes on 110 Hz. Entries are researched by Claude, approved by Seabass, kept in `history/approved/` and built into `data/history.json` by `tools/build_history.py`, which checks every quoted verse against the BSB. Open one with `?After.1`.
 
 ## Sources and credits
 - Text: Berean Standard Bible (BSB), public domain.
@@ -35,7 +37,7 @@ No frequency is named in Scripture. Sonolumina makes no medical or spiritual cla
 
 ## Checks
 - `python3 -I tools/verify_codebook.py <dir with kjv/ and bsb/>` rebuilds the codebook from the Law and compares it.
-- Open `tests/law.html` in a browser to run the Law tests (67 checks, including every resolution rule on Genesis 1 as heard).
+- Open `tests/law.html` in a browser to run the Law tests (77 checks, including every resolution rule on Genesis 1 as heard).
 - `python3 -I tools/run_canon.py` runs `tests/canon.html`: the whole Bible, every chapter cold and as one walk (25 checks).
 - Open `tests/mix.html` to measure the balance of the four sections.
 - `python3 tools/smoke.py <url> <seconds> <shot.png> [js expression] [tap|notap]` drives headless Chrome at phone size.
