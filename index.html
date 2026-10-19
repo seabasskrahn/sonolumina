@@ -288,6 +288,119 @@
   #talk input.ttype { flex: 1; min-height: 44px; font: .88rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid var(--line); border-radius: 2rem; padding: 0 18px; }
   #talk input.ttype::placeholder { color: var(--faint); }
   #talk .tnote { font-size: .68rem; color: var(--faint); text-align: center; }
+  /* ---- Speed and voice screens: The Artisan's speed-controls and voice-settings concepts (looks only; tokens from this page) ---- */
+  #sheet, #settings { --dim: #a8a291; --faint: #8f8a7c; --glow: #fff3c4; --gold: #e6d6a8; --tied: #6a5a35; --line: #3a352a; --hair: #2a261e;
+    --focus: 0 0 0 2px #0f0e0b, 0 0 0 4px #fff3c4, 0 0 14px 2px rgba(255,220,140,.45); }
+  #sheet { background: #0f0e0b; border: 1px solid var(--hair); border-bottom: 0; border-radius: 18px 18px 0 0; padding: 8px 20px calc(22px + env(safe-area-inset-bottom));
+    box-shadow: 0 -20px 60px rgba(0,0,0,.8); }
+  #sheet .grab { width: 40px; background: var(--line); margin: 0 auto 6px; }
+  #sheet h3 { font: normal 1.15rem Georgia, 'Times New Roman', serif; min-height: 48px; margin: 0 0 .4rem; }
+  #sheet h3 #sheetT::before { display: block; font: .68rem system-ui, sans-serif; letter-spacing: .24em; text-transform: uppercase; color: var(--dim); margin-bottom: 2px; }
+  #sheet[data-kind=speed] h3 #sheetT::before { content: 'Speed'; }
+  #sheet[data-kind=voice] h3 #sheetT::before { content: 'Voice'; }
+  #sheet .ib, #settings .ib { width: 44px; height: 44px; font-size: 1rem; background: #15130f; border: 1px solid var(--line); flex-shrink: 0; }
+  #sheet :focus-visible, #settings :focus-visible { outline: none; box-shadow: var(--focus); }
+  #sheet h4, #settings section > h4, #settings #stVoice h4 { font: 600 .66rem system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); opacity: 1; margin: 16px 0 8px; }
+  #sheet .dim, #settings .dim { opacity: 1; color: var(--dim); font: .74rem/1.45 system-ui, sans-serif; }
+  #sheet .hint, #settings .hint { margin: 8px 2px 0; }
+  #sheet .hint.gold { color: var(--gold); }
+  #sheet .hint:empty { display: none; }
+  /* chips: the live pill, selected with the picker's .on fill and the tied border */
+  #sheet .chips, #settings .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  #sheet .chips button, #settings .chips button { min-height: 44px; padding: 0; border-radius: 2rem; background: #15130f; border: 1px solid var(--line); color: #e9e2cf;
+    font: .8rem system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+  #sheet .chips button.on, #settings .chips button.on { background: #3a3020; border-color: var(--tied); color: var(--glow); font-weight: normal; box-shadow: 0 0 12px rgba(255,220,140,.25); }
+  #sheet[data-kind=sleep] .chips { grid-template-columns: repeat(3, 1fr); }
+  /* segmented choices (engine, top rate, repeat) */
+  #sheet .seg button, #settings .seg button { min-height: 44px; padding: 0 16px; background: #15130f; border: 1px solid var(--line); color: #e9e2cf; font-size: .82rem; }
+  #sheet .seg button.on, #settings .seg button.on { background: #3a3020; border-color: var(--tied); color: var(--glow); font-weight: normal; }
+  #sheet .vseg, #settings .vseg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+  #sheet .pill, #settings .pill { min-height: 44px; padding: 0 18px; font-size: .85rem; }
+  #sheet .pill.gold, #settings .pill.gold { background: #3a3020; color: var(--glow); border-color: var(--tied); font-weight: normal; }
+  /* the dial: thin gold arc, glowing knob, value in Georgia glow */
+  #sheet #dialW, #settings #dialW { gap: 4px; margin: 2px 0 4px; }
+  #sheet #dial { width: 236px; height: 236px; }
+  #sheet #dial .ptr { filter: drop-shadow(0 0 6px rgba(255,220,140,.75)); }
+  #sheet #dial:focus-visible { box-shadow: none; } #sheet #dial:focus-visible .ptr { stroke: var(--glow); stroke-width: 3; }
+  #sheet #dialW .ib.step { width: 48px; height: 48px; font: 1.3rem system-ui, sans-serif; }
+  #sheet #dialW .dmax { margin-top: 2px; gap: 8px; }
+  #sheet #dialW .dmax label { display: flex; align-items: center; gap: 6px; }
+  #sheet #dialW .dmax input { width: 72px; min-height: 44px; text-align: center; background: #17150f; border: 1px solid var(--line); border-radius: 12px; color: #e9e2cf; font: .85rem system-ui, sans-serif; padding: 0 6px; }
+  #sheet #dialW .dmax .pill { min-height: 44px; font-size: .78rem; padding: 0 14px; }
+  /* toggles: the off knob is dim ink so the state reads at better than 3:1 */
+  #sheet .sw, #settings .sw { width: 52px; height: 32px; border-radius: 16px; background: #17150f; border: 1px solid var(--line); box-sizing: border-box; }
+  #sheet .sw::after, #settings .sw::after { top: 4px; left: 4px; width: 22px; height: 22px; background: var(--faint); }
+  #sheet .sw:checked, #settings .sw:checked { background: #3a3020; border-color: var(--tied); }
+  #sheet .sw:checked::after, #settings .sw:checked::after { left: 24px; background: var(--glow); box-shadow: 0 0 10px rgba(255,220,140,.6); }
+  #sheet .sw:disabled, #settings .sw:disabled { opacity: .4; }
+  #sheet .row, #settings #stVoice .row { min-height: 52px; margin: 0; gap: 12px; font-size: .92rem; }
+  #sheet .vrowsw, #settings .vrowsw { border-bottom: 1px solid var(--hair); }
+  #sheet .elcard .vrowsw, #settings .elcard .vrowsw { margin-top: 12px; border-top: 1px solid var(--line); border-bottom: 0; padding-top: 8px; }
+  #sheet .vrowsw label .dim, #settings .vrowsw label .dim { display: block; margin-top: 2px; }
+  /* sliders: a 44px hit track, glow knob, plain-word ends */
+  #sheet .slh, #settings .slh { display: flex; justify-content: space-between; align-items: baseline; }
+  #sheet .slh .val, #settings .slh .val { font: .95rem system-ui, sans-serif; letter-spacing: 0; color: var(--glow); font-variant-numeric: tabular-nums; }
+  #sheet input[type=range], #settings input[type=range] { -webkit-appearance: none; appearance: none; height: 44px; margin: 0; background: transparent; }
+  #sheet input[type=range]::-webkit-slider-runnable-track, #settings input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line); }
+  #sheet input[type=range]::-moz-range-track, #settings input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line); }
+  #sheet input[type=range]::-moz-range-progress, #settings input[type=range]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--gold); }
+  #sheet input[type=range]::-webkit-slider-thumb, #settings input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -11px; border-radius: 50%;
+    background: var(--glow); border: 0; box-shadow: 0 0 12px rgba(255,220,140,.6); }
+  #sheet input[type=range]::-moz-range-thumb, #settings input[type=range]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--glow); border: 0; box-shadow: 0 0 12px rgba(255,220,140,.6); }
+  #sheet input[type=range]:focus-visible, #settings input[type=range]:focus-visible { box-shadow: none; }
+  #sheet input[type=range]:focus-visible::-webkit-slider-thumb, #settings input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus); }
+  #sheet .ends, #settings .ends { display: flex; justify-content: space-between; margin: -6px 0 2px; font: .74rem system-ui, sans-serif; color: var(--dim); }
+  /* selects and the ElevenLabs card */
+  #sheet select, #settings select { min-height: 48px; background: #17150f; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; font-size: .88rem; }
+  #sheet .elcard, #settings .elcard { margin-top: 10px; background: #17150f; border-color: var(--line); padding: 4px 14px 14px; }
+  #sheet .elcard select, #settings .elcard select { background: #0f0e0b; }
+  #sheet .elst, #settings .elst { margin: 10px 0 0; color: #e9e2cf; }
+  #sheet .err, #settings .err { color: #e8b0a0; margin-top: 6px; }
+  #sheet .vpick, #settings .vpick { display: flex; gap: 8px; align-items: center; }
+  #sheet .vpick .prev, #settings .vpick .prev { flex-shrink: 0; }
+  /* the key: masked field with Save / Forget key, and the lock note on the tied rule */
+  #sheet .keyf, #settings .keyf { display: flex; align-items: center; gap: 4px; min-height: 48px; background: #0f0e0b; border: 1px solid var(--line); border-radius: 12px; padding: 0 4px 0 14px; }
+  #sheet .keyf:focus-within, #settings .keyf:focus-within { border-color: var(--tied); }
+  #sheet .keyf input, #settings .keyf input { flex: 1; min-width: 0; background: none; border: 0; padding: 12px 0; font: .88rem ui-monospace, monospace; letter-spacing: .04em; }
+  #sheet .keyf input::placeholder, #settings .keyf input::placeholder { font-family: system-ui, sans-serif; letter-spacing: 0; color: var(--faint); }
+  #sheet .keyf input:focus-visible, #settings .keyf input:focus-visible { box-shadow: none; }
+  #sheet .keyf code, #settings .keyf code { font: .88rem ui-monospace, monospace; letter-spacing: .04em; color: #e9e2cf; }
+  #sheet .keyf .ks, #settings .keyf .ks { flex: 1; white-space: nowrap; margin-left: 6px; font: .72rem system-ui, sans-serif; color: var(--dim); }
+  #sheet .keyf .lnk, #settings .keyf .lnk { min-height: 44px; min-width: 52px; padding: 0 10px; background: none; border: 0; border-radius: 10px; color: var(--glow); font: .8rem system-ui, sans-serif; }
+  #sheet .keynote, #settings .keynote { display: flex; gap: 10px; margin-top: 8px; padding: 10px 12px; border-left: 2px solid var(--tied); font: .76rem/1.45 system-ui, sans-serif; color: var(--dim); }
+  #sheet .keynote b, #settings .keynote b { color: #e9e2cf; font-weight: 600; }
+  #sheet .keynote svg, #settings .keynote svg { flex: none; width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 1.6; margin-top: 1px; }
+  /* settings page: picker surface, serif title, 52px rows on hairlines */
+  #settings { background: #000; padding: 0 20px 3rem; }
+  #settings .hd { min-height: 60px; }
+  #settings .hd b { font: normal 1.25rem Georgia, 'Times New Roman', serif; }
+  #settings section { background: #0f0e0b; border: 1px solid var(--hair); border-radius: 12px; padding: 2px 16px 10px; }
+  #settings section > h4 { margin: 14px 0 4px; }
+  #settings .set { min-height: 52px; border-bottom-color: var(--hair); font-size: .92rem; }
+  #settings section > .set:last-child { border-bottom: 0; }
+  #settings .set .l small { opacity: 1; color: var(--dim); font-size: .74rem; line-height: 1.35; }
+  #settings .set input[type=number] { min-height: 44px; background: #17150f; border: 1px solid var(--line); border-radius: 12px; text-align: center; }
+  #settings .set select { min-height: 44px; }
+  /* player bar: the Speed / Voice / Sleep tiles lit like the speed presets, at least 44px tall */
+  #bar .tb button { min-height: 44px; }
+  #bar .tb button.on { background: #3a3020; color: #fff3c4; box-shadow: inset 0 0 0 1px #6a5a35, 0 0 12px rgba(255,220,140,.2); }
+  #bar .tb button.on b { color: #fff3c4; }
+  /* Build 2026101818 pieces in the same look (CSS only): struck-through chips, messages, the ☰ menu, toasts, the sleep sheet */
+  #sheet .chips button.over, #settings .chips button.over { opacity: 1; color: #8f8a7c; background: #0f0e0b; border-style: dashed; border-color: #3a352a;
+    text-decoration: line-through; text-decoration-color: #a8a291; box-shadow: none; }
+  #sheet .msg, #settings .msg { color: #e8b0a0; font-size: .76rem; }
+  #sheet .msg:empty { min-height: 0; margin: 0; }
+  #sheet .keyf .lnk.forget, #settings .keyf .lnk.forget { color: #a8a291; font-size: .74rem; }
+  #sheet .keyf .lnk:disabled, #settings .keyf .lnk:disabled { opacity: .35; }
+  #sheet[data-kind=sleep] h3 #sheetT::before { content: 'Sleep'; }
+  #sheet[data-kind=queue] h3 #sheetT::before { content: 'Up next'; }
+  #menu { background: #0f0e0b; border-color: #2a261e; border-radius: 12px; padding: 6px; box-shadow: 0 20px 60px rgba(0,0,0,.8); }
+  #menu h5 { font: 600 .66rem system-ui, sans-serif; letter-spacing: .18em; color: #a8a291; margin: 12px 10px 4px; }
+  #menu button { min-height: 44px; border-radius: 10px; }
+  #menu button b { color: #e6d6a8; opacity: 1; }
+  #menu button.on { background: #3a3020; color: #fff3c4; box-shadow: inset 0 0 0 1px #6a5a35; }
+  #menu button:focus-visible { outline: none; box-shadow: 0 0 0 2px #0f0e0b, 0 0 0 4px #fff3c4; }
+  #toast { background: #17150f; border-color: #6a5a35; color: #e9e2cf; padding: .6rem 1rem; box-shadow: 0 10px 30px rgba(0,0,0,.7), 0 0 14px rgba(255,220,140,.12); }
 </style>
 </head>
 <body>
@@ -976,32 +1089,34 @@
   let elVoices = null, elModels = MODELS_FALLBACK, elErr = '';
   const elStatus = () => !elevenKey.get() ? 'No key saved: the phone voice reads.' : !S.elVoice ? 'Choose a voice below.'
     : eleven.ready() ? 'Ready: ElevenLabs reads, the phone voice steps in on any error.' : `Paused: ${escH(eleven.reason || 'unavailable')}. The phone voice reads; it tries again in a few minutes.`;
-  const sl = (id, label, v, hint) => `<h4>${label} <span id="${id}V">${(+v).toFixed(2)}</span></h4><input type="range" id="${id}" aria-label="${label}" min="0" max="1" step="0.05" value="${v}"><div class="dim">${hint}</div>`;
+  const ends = e => e ? `<div class="ends" aria-hidden="true"><span>${e[0]}</span><span>${e[1]}</span></div>` : '';
+  const sl = (id, label, v, hint, e) => `<h4 class="slh">${label} <span class="val" id="${id}V">${(+v).toFixed(2)}</span></h4><input type="range" id="${id}" aria-label="${label}" min="0" max="1" step="0.05" value="${v}">${ends(e)}<div class="dim">${hint}</div>`;
+  const LOCK = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>';
   function voiceBlock() {
     const key = elevenKey.get(), eng = S.voiceEngine;
-    return `<div class="row"><label for="vOn">Read aloud</label><input type="checkbox" class="sw" id="vOn" ${S.voiceOn ? 'checked' : ''} ${reader.available ? '' : 'disabled'}></div>
-      <h4>Reading voice</h4><div class="seg"><button type="button" data-eng="device" class="${eng === 'device' ? 'on' : ''}">Phone voice (free)</button><button type="button" data-eng="eleven" class="${eng === 'eleven' ? 'on' : ''}">ElevenLabs</button></div>
-      ${eng === 'eleven' ? `<div class="card" style="margin-top:.6rem">
-        <div class="dim" id="elSt" style="opacity:.85">${elStatus()}</div>
+    return `<div class="row vrowsw"><label for="vOn">Read aloud</label><input type="checkbox" class="sw" id="vOn" ${S.voiceOn ? 'checked' : ''} ${reader.available ? '' : 'disabled'}></div>
+      <h4>Reading voice</h4><div class="seg vseg"><button type="button" data-eng="device" class="${eng === 'device' ? 'on' : ''}">Phone voice (free)</button><button type="button" data-eng="eleven" class="${eng === 'eleven' ? 'on' : ''}">ElevenLabs</button></div>
+      ${eng === 'eleven' ? `<div class="card elcard">
+        <div class="dim elst" id="elSt">${elStatus()}</div>
         <h4>ElevenLabs API key</h4>
-        ${key ? `<div class="row"><span>Key saved on this phone</span><button class="pill" type="button" id="elDel">Forget key</button></div>`
-          : `<div style="display:flex;gap:.4rem;flex-wrap:wrap"><input type="password" id="elKey" aria-label="ElevenLabs API key" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1 1 10rem"><button class="pill gold" type="button" id="elSave">Save</button><button class="pill" type="button" id="elDel" disabled title="No key is saved on this phone">Forget key</button></div><div class="msg" id="elMsg" role="alert"></div>`}
-        <div class="dim" style="margin-top:.35rem">The key stays on this phone only (this browser's own storage). It is never part of the app, never sent anywhere but ElevenLabs, and reading uses your ElevenLabs credits. Each verse is kept on the phone after its first reading, so replays are free.</div>
-        ${key ? `<h4>Voice</h4><div style="display:flex;gap:.4rem"><select id="elVoice">${elVoices ? elVoices.map(v => `<option value="${escH(v.id)}" ${v.id === S.elVoice ? 'selected' : ''}>${escH(v.name)}${v.category ? ' · ' + escH(v.category) : ''}</option>`).join('') : `<option value="${escH(S.elVoice)}">${S.elVoice ? escH(S.elVoiceName || S.elVoice) : 'loading your voices…'}</option>`}</select><button class="pill" type="button" id="elPrev" title="Play ElevenLabs' preview of this voice (no credits)">▶ Preview</button></div>
-          ${elErr ? `<div class="dim" style="color:#e9a">${escH(elErr)}</div>` : ''}
+        ${key ? `<div class="keyf"><code aria-hidden="true">••••••••</code><span class="ks">Key saved on this phone</span><button class="lnk" type="button" id="elDel">Forget key</button></div>`
+          : `<div class="keyf"><input type="password" id="elKey" aria-label="ElevenLabs API key" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="lnk" type="button" id="elSave">Save</button><button class="lnk forget" type="button" id="elDel" disabled title="No key is saved on this phone">Forget key</button></div><div class="msg" id="elMsg" role="alert"></div>`}
+        <div class="keynote">${LOCK}<span><b>The key stays on this phone only</b> (this browser's own storage). It is never part of the app, never sent anywhere but ElevenLabs, and reading uses your ElevenLabs credits. Each verse is kept on the phone after its first reading, so replays are free.</span></div>
+        ${key ? `<h4>Voice</h4><div class="vpick"><select id="elVoice">${elVoices ? elVoices.map(v => `<option value="${escH(v.id)}" ${v.id === S.elVoice ? 'selected' : ''}>${escH(v.name)}${v.category ? ' · ' + escH(v.category) : ''}</option>`).join('') : `<option value="${escH(S.elVoice)}">${S.elVoice ? escH(S.elVoiceName || S.elVoice) : 'loading your voices…'}</option>`}</select><button class="pill prev" type="button" id="elPrev" title="Play ElevenLabs' preview of this voice (no credits)">▶ Preview</button></div>
+          ${elErr ? `<div class="dim err">${escH(elErr)}</div>` : ''}
           <h4>Model</h4><select id="elModel">${elModels.map(m => `<option value="${escH(m.model_id)}" ${m.model_id === S.elModel ? 'selected' : ''}>${escH(m.name || m.model_id)}</option>`).join('')}</select>
-          ${sl('elStab', 'Stability', S.elStability, 'Lower: more feeling and variety. Higher: steadier.')}
-          ${sl('elSim', 'Similarity', S.elSimilarity, 'How closely it keeps to the original voice.')}
-          ${sl('elStyle', 'Style', S.elStyle, 'Exaggerates the speaker\'s style; 0 is plainest and fastest.')}
-          <div class="row" style="margin-top:.8rem"><label for="elExpr">Expressive reading<br><span class="dim">ElevenLabs v3 audio tags ([softly], [solemn], pauses) where a chapter has checked markup (now Genesis 1–3). The words never change.</span></label><input type="checkbox" class="sw" id="elExpr" ${S.elExpressive ? 'checked' : ''}></div>
+          ${sl('elStab', 'Stability', S.elStability, 'Lower: more feeling and variety. Higher: steadier.', ['More varied', 'Steadier'])}
+          ${sl('elSim', 'Similarity', S.elSimilarity, 'How closely it keeps to the original voice.', ['Looser', 'Closer'])}
+          ${sl('elStyle', 'Style', S.elStyle, 'Exaggerates the speaker\'s style; 0 is plainest and fastest.', ['Plain', 'Dramatic'])}
+          <div class="row vrowsw"><label for="elExpr">Expressive reading<br><span class="dim">ElevenLabs v3 audio tags ([softly], [solemn], pauses) where a chapter has checked markup (now Genesis 1–3). The words never change.</span></label><input type="checkbox" class="sw" id="elExpr" ${S.elExpressive ? 'checked' : ''}></div>
           <p><button class="pill" type="button" id="elClear">Clear saved verse audio</button></p>` : ''}
       </div>` : ''}
       <h4>${eng === 'eleven' ? 'Phone voice (used when ElevenLabs cannot read)' : 'Phone voice'}</h4><select id="vSel">${voiceOptions()}</select>
-      <div class="dim" style="margin-top:.35rem">From your phone, English first, the most natural (★: Apple Enhanced/Premium, Siri, Microsoft Natural/Online, Google, Neural) at the top. If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
-      <h4 id="vPitchL">Pitch <span id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" aria-label="Phone voice pitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">
+      <div class="dim hint">From your phone, English first, the most natural (★: Apple Enhanced/Premium, Siri, Microsoft Natural/Online, Google, Neural) at the top. If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
+      <h4 class="slh" id="vPitchL">Pitch <span class="val" id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" aria-label="Phone voice pitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">${ends(['Lower', 'Higher'])}
       <p><button class="pill gold" type="button" id="vTest">Test voice</button></p>
-      <h4>Phone voice top rate</h4><div class="seg" id="vTop">${DEVICE_TOPS.map(t => `<button type="button" data-top="${t}" class="${t === narrator.top ? 'on' : ''}">${t}×</button>`).join('')}</div>
-      <div class="dim" style="margin-top:.35rem">How fast your phone's own voice really goes (many stop near 1.4×). Past it the voice keeps in step by starting each verse on time. Raise this if your voice keeps speeding up; press Test to hear it at the top rate.</div>
+      <h4>Phone voice top rate</h4><div class="seg vseg" id="vTop">${DEVICE_TOPS.map(t => `<button type="button" data-top="${t}" class="${t === narrator.top ? 'on' : ''}">${t}×</button>`).join('')}</div>
+      <div class="dim hint">How fast your phone's own voice really goes (many stop near 1.4×). Past it the voice keeps in step by starting each verse on time. Raise this if your voice keeps speeding up; press Test to hear it at the top rate.</div>
       <div class="dim">The rate follows the Speed control from 0.5× to ${MAX_RATE}×; above ${MAX_RATE}× the voice rests and only the words and tones go on.</div>`;
   }
   async function loadEleven(root) {
@@ -1041,12 +1156,12 @@
 
   function openSheet(kind, arg) {
     if (sheet.hidden) overlayOpened();
-    sheetKind = kind; sheet.hidden = scrim.hidden = false;
+    sheetKind = kind; sheet.hidden = scrim.hidden = false; sheet.dataset.kind = kind;
     const T = el('sheetT');
     if (kind === 'speed') {
       T.textContent = 'Playback speed';
-      sb.innerHTML = chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp') + '<div class="dim spdMax" style="margin-top:6px"></div><h4>Dial</h4><div id="dialHost"></div><div class="msg" id="dialMsg" role="alert"></div>' +
-        `<div class="dim" style="margin-top:6px">Changes apply straight away: the music, the words and the reading voice keep one clock. From 0.5× to ${MAX_RATE}× the voice speeds up with them; above ${MAX_RATE}× it rests (words and tones only).</div><div class="dim" id="spdVoiceNote" style="margin-top:4px;color:#d9b65a">${inStep() ? stepNote() : ''}</div>`;
+      sb.innerHTML = '<div id="dialHost"></div><div class="msg" id="dialMsg" role="alert"></div><h4>Presets</h4>' + chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp') + '<div class="dim spdMax hint"></div>' +
+        `<div class="dim hint">Changes apply straight away: the music, the words and the reading voice keep one clock. From 0.5× to ${MAX_RATE}× the voice speeds up with them; above ${MAX_RATE}× it rests (words and tones only).</div><div class="dim hint gold" id="spdVoiceNote">${inStep() ? stepNote() : ''}</div>`;
       sb.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => setSpeed(+b.dataset.sp));
       dial = mountDial(el('dialHost'), { get: () => S.speed, set: setSpeed, getMax: () => S.dialMax, min: SPEED_MIN, maxLimit: MAX_LIMIT,
         setMax: m => { S.dialMax = m; save(); paintChips(); if (S.speed > m) setSpeed(m); },
@@ -1054,7 +1169,7 @@
         capFor: v => v > MAX_RATE ? `voice rests · tones ${+v.toFixed(2)}×` : '' });
       paintChips();
     } else if (kind === 'voice') {
-      T.textContent = 'Voice'; sb.innerHTML = voiceBlock(); wireVoice(sb);
+      T.textContent = 'Reading voice'; sb.innerHTML = voiceBlock(); wireVoice(sb);
     } else if (kind === 'sleep') {
       T.textContent = 'Sleep timer';
       const curS = sleepEoc ? 'eoc' : sleepEnd ? 'on' : '0';
