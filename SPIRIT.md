@@ -62,6 +62,19 @@ Sonolumina is built by and for Seabass Krahn, a man who believes this work is in
 Any AI that works on Sonolumina is a servant and a student, not its author. It implements the law faithfully, keeps the seed pure, tells the truth, invents nothing, and treats the user's time, money and trust as scarce.
 
 ## 10. The Source
-The Bible alone is the source, and the Word is the Word in any faithful version. The Berean Standard Bible is the default, and the King James Version, the World English Bible and other free translations are welcome alongside it. The original Hebrew, Aramaic and Greek words anchor the meaning. Scripture is quoted exactly, with references. Nothing is added from outside it.
+The Bible alone is the source, and the Word is the Word in any faithful version. The Berean Standard Bible is the default, and the King James Version, the World English Bible and other free translations are welcome alongside it. The original Hebrew, Aramaic and Greek words anchor the meaning. Scripture is quoted exactly, with references. Nothing is added from outside it, except the labelled history of §11, which is never Scripture.
+
+## 11. After the Word
+Scripture ends at Revelation 22:21, and the music comes home to 110 Hz. Nothing is added inside it.
+
+After the Word, Sonolumina may go on into human history: what people did when the Word reached them. This history is not Scripture and is always labelled as history. It enters by one rule:
+
+"Finally, brothers, whatever is true, whatever is honorable, whatever is right, whatever is pure, whatever is lovely, whatever is admirable—if anything is excellent or praiseworthy—think on these things." (Philippians 4:8)
+
+- **True first:** every entry is documented fact with its source named (who, when, where). No legend is told as fact.
+- **Following the Word:** every entry is tied to the verse it grew from, so history hangs on Scripture and never stands beside it as an equal.
+- **Seabass approves each entry** before it enters. The AI researches, he decides.
+
+The history is a witness to the Word, not an addition to it.
 
 "The heavens declare the glory of God; the skies proclaim the work of His hands. Day after day they pour forth speech." (Psalm 19:1–2)
