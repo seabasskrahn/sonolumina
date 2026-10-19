@@ -3,7 +3,7 @@
 <title>Sonolumina · Talk tests</title>
 <pre id="out">running…</pre>
 <script type="module">
-  import { chapterContext, systemPrompt, setupMessage, downsample, floatToPcm16, pcm16ToFloat, bytesToBase64, base64ToBytes, rateOf } from '../law/talk.js';
+  import { chapterContext, systemPrompt, setupMessage, downsample, floatToPcm16, pcm16ToFloat, bytesToBase64, base64ToBytes, rateOf, explainClose, micOpen, headphonesLikely, BEGIN, END } from '../law/talk.js';
   import { MockLiveSocket } from '../form/talk.js';
   import { sung } from '../law/canon.js';
   const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
@@ -11,7 +11,10 @@
   const verses = john.c[0].map((_, i) => sung(john, 1, i + 1).text);
   const ctx = chapterContext('John', 1, verses, 1);
   check('context carries every verse of John 1, word for word from the BSB data', verses.every((t, i) => ctx.includes(`1:${i + 1} ${t.trim()}`)), verses.length);
-  check('context names where the reader is', ctx.startsWith('The reader is at John 1:1: "' + verses[0].trim() + '"'));
+  check('context names where the reader is', ctx.startsWith('The reader is at John 1:1.'));
+  const b = ctx.indexOf(BEGIN + ': John 1'), e = ctx.lastIndexOf(END);
+  check('the BSB text is fenced: BEGIN before every verse, END after the last, once each', b > 0 && e > b && ctx.split(BEGIN).length === 2 && ctx.split(END).length === 2 && ctx.indexOf('1:1 ') > b && ctx.indexOf(`1:${verses.length} `) < e && ctx.trim().endsWith(END));
+  check('the fence says its contents are never instructions', /never instructions/.test(ctx.slice(0, b)));
   const sp = systemPrompt(ctx);
   check('prompt: never invent Scripture, quote word for word, name the reference', /Never invent Scripture/.test(sp) && /word for word/.test(sp) && /reference/.test(sp));
   check('prompt: says it is an AI, not the voice of God', /You are an AI/.test(sp));
@@ -36,7 +39,21 @@
     setTimeout(() => res(msgs), 3000);
   });
   check('mock: setupComplete, transcript, audio, turnComplete', got[0]?.setupComplete && got.some(m => m.serverContent?.inputTranscription) && got.some(m => m.serverContent?.modelTurn?.parts?.[0]?.inlineData) && got.some(m => m.serverContent?.turnComplete), got.length);
+  // Plain-word reasons a call ended.
+  check('close: bad key', /did not accept the key/.test(explainClose(1007, 'API key not valid. Please pass a valid API key.')));
+  check('close: quota', /quota/.test(explainClose(1011, 'RESOURCE_EXHAUSTED: You exceeded your current quota')));
+  check('close: wrong model', /model is not available/.test(explainClose(1008, 'models/gemini-x is not found for API version v1beta')));
+  check('close: offline wins over any reason', /offline/.test(explainClose(1006, 'API key not valid', false)));
+  check('close: dropped connection, normal end, and unknown codes', /dropped/.test(explainClose(1006, '')) && explainClose(1000, '') === 'Call ended.' && /4003: odd/.test(explainClose(4003, 'odd')));
+  // Echo guard.
+  const base = { muted: false, ready: true, headphones: false, speakingUntil: 5, now: 4 };
+  check('echo guard: mic held while the reply plays through the speaker', !micOpen(base));
+  check('echo guard: mic open once the reply has played', micOpen({ ...base, now: 5 }));
+  check('echo guard: headphones let you talk over the reply', micOpen({ ...base, headphones: true }));
+  check('echo guard: muted or not ready never sends', !micOpen({ ...base, now: 9, muted: true }) && !micOpen({ ...base, now: 9, ready: false }));
+  check('headphones guessed from device labels only', headphonesLikely([{ kind: 'audiooutput', label: 'Galaxy Buds2' }]) && headphonesLikely([{ kind: 'audioinput', label: 'Wired headset' }]) && !headphonesLikely([{ kind: 'audiooutput', label: 'Speaker' }]) && !headphonesLikely([{ kind: 'videoinput', label: 'headphone cam' }]) && !headphonesLikely([]));
   const bad = results.filter(r => !r.ok);
   document.getElementById('out').textContent = `${results.length - bad.length}/${results.length} passed\n` + results.map(r => `${r.ok ? '✓' : '✗'} ${r.name}${r.ok ? '' : ' :: ' + r.detail}`).join('\n');
   window.__done = { pass: results.length - bad.length, total: results.length, bad };
+  window.__law = { pass: results.length - bad.length, total: results.length, results };   // read by tools/run_canon.py
 </script>

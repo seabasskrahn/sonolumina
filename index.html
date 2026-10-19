@@ -63,7 +63,8 @@
   #talk input, #talk select { flex: 1 1 10rem; font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #17150f; border: 1px solid #3a352a; border-radius: 6px; padding: .45rem; }
   #talk button { font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 2rem; padding: .45rem .9rem; }
   #talk button.call { background: #2a2418; }
-  #talk button:disabled { opacity: .4; }
+  #talk button:disabled, #controls button:disabled { opacity: .4; }
+  #talk .tphones { opacity: .7; }
   #talk a { color: #e9d9a8; }
   #talk .tsetup p { opacity: .7; margin: .4rem 0; }
   #talk .tstatus { opacity: .75; min-height: 1.2em; }
@@ -171,7 +172,7 @@
   const here = ch => {
     cur = ch;
     document.title = `${titleOf(ch)} · Sonolumina`;
-    history.replaceState(null, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : ''));
+    history.replaceState(history.state, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : '') + (opts.includes('talktest') ? '&talktest' : ''));
     store(LAST, addrOf(ch));
     navTo(ch);
   };
@@ -326,13 +327,18 @@
   preview(start);
 
   // Talk: the companion is told the chapter on screen (a history entry: the chapter of the verse it grew from).
-  createTalk({
-    mount: el('talkmount'), toggle: el('talkbtn'),
+  // While a call is live the reading cannot start or resume, so the two voices never overlap.
+  const talk = createTalk({
+    mount: el('talkmount'), toggle: el('talkbtn'), test: opts.includes('talktest'),
     context: async () => {
       const ch = cur.history ? await loadChapter({ book: cur.ref.book, chapter: cur.ref.chapter }) : cur;
       return { name: ch.name, chapter: ch.ref.chapter, verses: ch.text, verse: cur.history ? cur.history.ref[2] : curVerse };
     },
-    onStart: () => { if (state === 'playing') playBtn.click(); },   // the reading rests while you talk
+    onLive: on => {
+      if (on && state === 'playing') playBtn.click();   // the reading rests while you talk
+      playBtn.disabled = on;
+      playBtn.title = on ? 'End the Talk call to read on' : '';
+    },
   });
 
   const narrator = createNarrator();
