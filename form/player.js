@@ -6,7 +6,7 @@
 // carrying its mode and melody on (prevMode/prevMel), and starts where the
 // one before ended (its Amen and a breath). Only the last chapter of the Bible has the close.
 //
-// Preview build (2026101816-p2): playback speed. The Law's times are "score seconds";
+// Build 2026101817: playback speed. The Law's times are "score seconds";
 // the Form maps them onto the audio clock through one straight line, audio = a + (score − s) / speed.
 // A speed change (or a seek) moves that line at the present moment: the sound already
 // scheduled fades out over 0.15 s and everything from now on is scheduled again on a

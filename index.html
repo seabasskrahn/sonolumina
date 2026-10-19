@@ -58,14 +58,14 @@
   #verse .tied { display: block; border-left: 2px solid #6a5a35; padding-left: .7rem; text-align: left; }
   #ending { font: .85rem system-ui, sans-serif; opacity: .75; text-align: center; max-width: 30rem; }
   [hidden] { display: none !important; }
-  /* ---- Preview build 2026101816-p2: tabs, player bar, sheets, settings, study ---- */
+  /* ---- Build 2026101817: tabs, player bar, sheets, settings, study ---- */
   body { display: block; padding: 0 0 calc(196px + env(safe-area-inset-bottom)); }
   .ui, .ui button, .ui input, .ui select, .ui textarea { font-family: system-ui, sans-serif; }
   button { cursor: pointer; }
   #top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: .6rem;
     padding: .7rem 1rem .5rem; background: linear-gradient(#000 70%, #0000); }
   #top h1 { flex: 1; text-align: center; padding-left: 2.4rem; }
-  #badge { font: 600 .55rem system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9b65a;
+  #badge { min-width: 1px; font: 600 .55rem system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9b65a;
     border: 1px solid #6a5a35; border-radius: 1rem; padding: .15rem .5rem; position: absolute; left: 1rem; }
   .ib { background: none; border: 0; color: #e9e2cf; font-size: 1.25rem; width: 2.4rem; height: 2.4rem; border-radius: 50%; }
   .ib:active { background: #24201a; }
@@ -171,10 +171,26 @@
   .orig-t { font: 600 .8rem system-ui, sans-serif; margin: .2rem 0; }
   .kv { display: grid; grid-template-columns: auto 1fr; gap: .2rem .7rem; font: .8rem system-ui, sans-serif; }
   .kv b { opacity: .6; font-weight: 600; }
+  /* Talk: a live voice conversation (an AI, not Scripture) */
+  #talk { width: min(100%, 32rem); background: #0f0e0b; border: 1px solid #2a261e; border-radius: 12px; padding: .8rem; box-sizing: border-box;
+    font: .8rem/1.45 system-ui, sans-serif; user-select: text; }
+  #talk .thead { font-weight: 600; letter-spacing: .08em; opacity: .75; margin-bottom: .5rem; }
+  #talk .trow { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0; align-items: center; }
+  #talk input, #talk select { flex: 1 1 10rem; font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #17150f; border: 1px solid #3a352a; border-radius: 6px; padding: .45rem; }
+  #talk button { font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 2rem; padding: .45rem .9rem; }
+  #talk button.call { background: #2a2418; }
+  #talk button:disabled, #controls button:disabled { opacity: .4; }
+  #talk .tphones { opacity: .7; }
+  #talk a { color: #e9d9a8; }
+  #talk .tsetup p { opacity: .7; margin: .4rem 0; }
+  #talk .tstatus { opacity: .75; min-height: 1.2em; }
+  #talk .tlog { max-height: 14rem; overflow-y: auto; margin-top: .4rem; }
+  #talk .tlog p { margin: .3rem 0; } #talk .tlog p.you { opacity: .7; }
+  #talk .tnote { font-size: .65rem; opacity: .45; margin-top: .5rem; }
 </style>
 </head>
 <body>
-  <header id="top" class="ui"><span id="badge" title="Preview build, not the live app">Preview</span><h1>Sonolumina</h1><button class="ib" id="gear" type="button" aria-label="Settings">⚙</button></header>
+  <header id="top" class="ui"><span id="badge" aria-hidden="true" style="visibility:hidden"></span><h1>Sonolumina</h1><button class="ib" id="gear" type="button" aria-label="Settings">⚙</button></header>
   <main>
   <section id="tab-listen" class="tab on">
   <nav id="nav"><a id="prev">‹</a><button id="where" type="button" aria-expanded="false"></button><a id="next">›</a></nav>
@@ -190,7 +206,9 @@
   <div id="controls">
     <button id="play" type="button">Begin</button>
     <button id="voice" type="button" aria-pressed="true">Voice on</button>
+    <button id="talkbtn" type="button" aria-expanded="false">Talk</button>
   </div>
+  <div id="talkmount"></div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
     <div class="note">1,189 chapters, Genesis to Revelation, each coloured by its feeling (V, from the stored verse scores)</div></div>
   </section>
@@ -262,12 +280,13 @@
   import { loadSettings, saveSettings, resetSettings, SPEEDS, marks, mark, recall, addRecall, dropRecall } from './page/store.js';
   import { mountDial } from './page/dial.js';
   import { createStudy } from './page/study.js';
+  import { createTalk } from './form/talk.js';
 
   const S = loadSettings();
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026101816-p2';
+  const BUILD = '2026101817';
   const toastEl = document.getElementById('toast'); let toastT = 0;
   const toast = msg => { toastEl.textContent = msg; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2200); };
   const keyOf = (ch, v) => ch.history ? '' : `${ch.ref.book}.${ch.ref.chapter}.${v}`;
@@ -344,7 +363,7 @@
   const here = ch => {
     cur = ch;
     document.title = `${titleOf(ch)} · Sonolumina`;
-    history.replaceState(history.state, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : ''));
+    history.replaceState(history.state, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : '') + (opts.includes('talktest') ? '&talktest' : ''));
     store(LAST, addrOf(ch));
     navTo(ch);
   };
@@ -360,9 +379,10 @@
   window.__sono = engine;   // for smoke tests
   window.__links = linkSets;
 
-  let spans = [], shown = null;
+  let spans = [], shown = null, curVerse = 0;
   const p = el('verse');
   const showVerse = (ch, v, words, E, k) => {
+    curVerse = v;
     if (k) {
       hue = k.hue;
       const sp = player ? player.speed : S.speed;
@@ -503,7 +523,25 @@
   here(start);
   preview(start);
 
-  // ======================= Preview build 2026101816-p2 =======================
+  // ======================= Build 2026101817 =======================
+
+  // Talk: the companion is told the chapter on screen (a history entry: the chapter of the verse it grew from).
+  // While a call is live the reading cannot start or resume, so the two voices never overlap.
+  let talkLive = false;   // the new player bar, Read tab and verse sheet also wait while a call is live
+  const talk = createTalk({
+    mount: el('talkmount'), toggle: el('talkbtn'), test: opts.includes('talktest'),
+    context: async () => {
+      const ch = cur.history ? await loadChapter({ book: cur.ref.book, chapter: cur.ref.chapter }) : cur;
+      return { name: ch.name, chapter: ch.ref.chapter, verses: ch.text, verse: cur.history ? cur.history.ref[2] : curVerse };
+    },
+    onLive: on => {
+      talkLive = on;
+      if (on && state === 'playing') playBtn.click();   // the reading rests while you talk
+      playBtn.disabled = on;
+      playBtn.title = on ? 'End the Talk call to read on' : '';
+    },
+  });
+
 
   // ---------- voice ----------
   const narrator = createNarrator();   // the phone's own voice: the free default, and the fallback
@@ -583,6 +621,7 @@
 
   // Start playing chapter ch from verse v (in a tap, so the phone lets the sound start).
   function begin(ch = start, v = 1) {
+    if (talkLive) { toast('End the Talk call to read on'); return; }
     engine.start();
     if (player) player.stop(true);
     reader.stop();
@@ -650,7 +689,7 @@
     paintBar();
   }
   const pauseAll = () => { if (state !== 'playing') return; state = 'paused'; playBtn.textContent = 'Resume'; player.pause(); reader.pause(); wake(false); paintBar(); };
-  const resumeAll = () => { if (state !== 'paused') return; state = 'playing'; playBtn.textContent = 'Pause'; player.resume(); reader.resume(); wake(true); paintBar(); };
+  const resumeAll = () => { if (state !== 'paused') return; if (talkLive) { toast('End the Talk call to read on'); return; } state = 'playing'; playBtn.textContent = 'Pause'; player.resume(); reader.resume(); wake(true); paintBar(); };
   const toggle = () => {
     if (state === 'ready') begin(start, start.history ? 1 : (start.at || 1));
     else if (state === 'playing') pauseAll();
@@ -966,7 +1005,7 @@
       <section><h4>This phone</h4>
         <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Nothing leaves the phone.</small></div></div>
         <div class="set"><div class="l">Reset settings <small>Notes, highlights and Recall are kept.</small></div><button class="pill" type="button" id="stReset">Reset</button></div>
-        <div class="set"><div class="l">Build <small>Preview ${BUILD} · built on Claude's Sonolumina 2026101815 · not the live app</small></div></div>
+        <div class="set"><div class="l">Build <small>${BUILD}</small></div></div>
       </section>`;
     if (setEl.hidden) overlayOpened();
     setEl.hidden = false;

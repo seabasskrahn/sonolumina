@@ -6,7 +6,7 @@
 // Preview build: a chosen voice (English voices first), pitch, and playback speed.
 // The rate is the music's reading pace (already multiplied by the speed); at 1× it is
 // clamped 0.7–1.4 as before, and the speed then scales it.
-// Seabass's rule (build p2): from 0.5× to 3× the voice speeds up with the music and never goes silent,
+// Seabass's rule (build 2026101817): from 0.5× to 3× the voice speeds up with the music and never goes silent,
 // and voice, highlight and harmonics stay locked on the same verse. Phone voices only speed up so far
 // (about 1.4× on many phones; set in Settings as "Phone voice top rate"). Past that the rate is held at
 // the top and the voice keeps in step by starting every verse on time: a verse it has not finished is
@@ -64,7 +64,7 @@ export function createNarrator() {
   }
 
   // Speak a verse at the pace the music reads it (words per minute).
-  // Locked to the music (build p2): a new verse always starts on time; if the voice is still on the
+  // Locked to the music (build 2026101817): a new verse always starts on time; if the voice is still on the
   // last one it is cut off, so voice and highlight are never on different verses.
   // Preview build: long verses are read in pieces of up to ~180 characters, split at
   // punctuation, because some phone voices stop after about 15 s of one utterance.
