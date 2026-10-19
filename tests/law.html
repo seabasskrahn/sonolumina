@@ -9,7 +9,9 @@
   import { verseE, smooth, K, snapMode, modeOf, MODES } from '../law/emotion.js';
   import { scoreChapter } from '../law/chapter.js';
   import { chordR, progression, pivot, pc } from '../law/harmony.js';
-  import { parseRef, next, prev, isFinal, sung, gIndex } from '../law/canon.js';
+  import { parseRef, next, prev, isFinal, sung, gIndex, chapterIndex, refAt } from '../law/canon.js';
+  import { meanV, seasonHue } from '../law/seasons.js';
+  import { afterText } from '../law/after.js';
   import { links, signature, swells } from '../law/links.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
@@ -150,6 +152,31 @@
   check('signature: at most 3 tones, every one in the mode', sig.length === 3 && sig.every(f => MODES.Dorian.some(m => near(pc(f / 110), m, 1e-9)) || near(pc(f / 110), 1, 1e-9)), sig.join());
   const sw = swells([{ alpha: 1 }, { alpha: 0.5 }, { alpha: 0.25 }], 8);
   check('swells: evenly spread, 2 s then 1.2 s, gain 0.4 + 0.6α', sw.map(x => x.t).join() === '2,4,6' && sw[0].len === 2 && sw[1].len === 1.2 && near(sw[1].gain, 0.7, 1e-12));
+
+  // Navigation (Day 6): a verse in the address, and a chapter's place among all 1,189.
+  const j11 = parseRef(canon, 'John.1.1');
+  check('parseRef reads "John.1.1" (verse) and leaves the verse out of "Psalms.23"', j11 && j11.book === jn && j11.chapter === 1 && j11.verse === 1 && ps.verse === undefined, JSON.stringify(j11));
+  check('parseRef refuses a verse past the end (John 1:52)', parseRef(canon, 'John.1.52') === null);
+  check('chapterIndex: Genesis 1 = 0, Revelation 22 = 1,188', chapterIndex(canon, { book: 0, chapter: 1 }) === 0 && chapterIndex(canon, rev) === 1188);
+  const r49 = refAt(canon, 49), r50 = refAt(canon, 50), r1188 = refAt(canon, 1188);
+  check('refAt: 49 = Genesis 50, 50 = Exodus 1, 1,188 = Revelation 22', r49.book === 0 && r49.chapter === 50 && r50.book === 1 && r50.chapter === 1 && r1188.book === 65 && r1188.chapter === 22);
+
+  // Seasons (Day 4): each chapter's mean feeling, coloured by the light's own hue rule.
+  const gvad = await (await fetch('../data/vad/Genesis.json')).json();
+  const seasons = await (await fetch('../data/seasons.json')).json();
+  check('seasons: one mean V per chapter (1,189), each 0..1', seasons.length === 1189 && seasons.every(x => x >= 0 && x <= 1));
+  check('seasons[0] is the mean V of Genesis 1 as stored', near(seasons[0], meanV(gvad[0]), 1e-3), [seasons[0], meanV(gvad[0])]);
+  check('a season is coloured as the light: hue = 210 − 170·V', seasonHue(0.5) === K({ v: 0.5, a: 0.5, d: 0.5 }).hue && seasonHue(1) === 40);
+
+  // After the Word (SPIRIT §11): history is silent; only its tied verse sounds, by the same Law.
+  const history = await (await fetch('../data/history.json')).json();
+  check('history: entries in date order, each with a tied verse, sources and "not Scripture" label', history.entries.length >= 1 && history.entries.every((e, i) => e.ref && e.sources.length && (i === 0 || e.year >= history.entries[i - 1].year)) && /not Scripture/.test(history.label));
+  const romans = await (await fetch('../data/bsb/Romans.json')).json();
+  const at = afterText(romans, 10, 14);
+  check('afterText: only the tied verse is sung, the rest is silent', at.length === romans.c[9].length && at.filter(t => t).length === 1 && at[13] === sung(romans, 10, 14).text);
+  const hc = scoreChapter({ lex, text: at, vadBook: (await (await fetch('../data/vad/Romans.json')).json()), chapter: 10 });
+  const sungH = hc.verses.filter(x => !x.omitted);
+  check('a history entry sounds one verse, starting at once and ending on the Amen (IV–I)', sungH.length === 1 && sungH[0].verse === 14 && sungH[0].at === 0 && sungH[0].bars[sungH[0].bars.length - 2].amen && sungH[0].bars[sungH[0].bars.length - 1].chord === 'I');
 
   // Chladni (Day 5).
   const [cn, cm] = chladniMode(5);   // 5·5 = 25 = 5² + 0² or 4² + 3²; first found wins
