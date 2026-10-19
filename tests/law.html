@@ -10,7 +10,7 @@
   import { scoreChapter } from '../law/chapter.js';
   import { chordR, progression, pivot, pc } from '../law/harmony.js';
   import { parseRef, next, prev, isFinal, sung, gIndex, chapterIndex, refAt } from '../law/canon.js';
-  import { meanV, seasonHue } from '../law/seasons.js';
+  import { meanV, seasonHue, ranks } from '../law/seasons.js';
   import { afterText } from '../law/after.js';
   import { links, signature, swells } from '../law/links.js';
   const results = [];
@@ -167,6 +167,8 @@
   check('seasons: one mean V per chapter (1,189), each 0..1', seasons.length === 1189 && seasons.every(x => x >= 0 && x <= 1));
   check('seasons[0] is the mean V of Genesis 1 as stored', near(seasons[0], meanV(gvad[0]), 1e-3), [seasons[0], meanV(gvad[0])]);
   check('a season is coloured as the light: hue = 210 − 170·V', seasonHue(0.5) === K({ v: 0.5, a: 0.5, d: 0.5 }).hue && seasonHue(1) === 40);
+  const rk = ranks(seasons), lo = seasons.indexOf(Math.min(...seasons)), hi = seasons.indexOf(Math.max(...seasons));
+  check('strip B: ranks run 0..1, lowest mean is 0, highest is 1, order kept, ties share', rk[lo] === 0 && rk[hi] === 1 && seasons.every((v, i) => seasons.every((w, j) => v >= w || rk[i] < rk[j])) && ranks([0.2, 0.5, 0.5, 0.9]).join() === [0, 0.5, 0.5, 1].join());
 
   // After the Word (SPIRIT §11): history is silent; only its tied verse sounds, by the same Law.
   const history = await (await fetch('../data/history.json')).json();

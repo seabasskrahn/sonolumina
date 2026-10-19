@@ -425,7 +425,7 @@
   </div>
   <div id="talkmount"></div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
-    <div class="note">1,189 chapters, Genesis to Revelation, each coloured by its feeling (V, from the stored verse scores)</div></div>
+    <div class="note">1,189 chapters, Genesis to Revelation, each ranked against the rest: blue most sorrowful, gold most joyful</div></div>
   </section>
   <section id="tab-read" class="tab page ui"></section>
   <section id="tab-recall" class="tab page ui"></section>
@@ -490,7 +490,7 @@
   import { createEleven, createReader, elevenKey, MODELS_FALLBACK, stripTags } from './form/eleven.js';
   import { parseRef, sung, isFinal, next, prev, chapterIndex, refAt } from './law/canon.js';
   import { links, signature, swells, LINK_SOURCE } from './law/links.js';
-  import { seasonHue } from './law/seasons.js';
+  import { seasonHue, ranks } from './law/seasons.js';
   import { afterText, HISTORY_SOURCE } from './law/after.js';
   import { loadSettings, saveSettings, resetSettings, SPEEDS, marks, mark, recall, addRecall, dropRecall } from './page/store.js';
   import { mountDial } from './page/dial.js';
@@ -739,14 +739,14 @@
   };
   setBack();
 
-  // Day 4: lights for seasons. One thin band per chapter, coloured by its mean feeling with the light's hue rule;
-  // the white mark is where you are. Tap to open that chapter.
-  const strip = el('strip');
+  // Day 4: lights for seasons. One thin band per chapter, coloured with the light's hue rule by its mean feeling's
+  // rank among all 1,189 (variant B), so the whole range shows; the white mark is where you are. Tap to open that chapter.
+  const strip = el('strip'), rank = ranks(seasons);
   function drawStrip() {
     const w = Math.round(strip.clientWidth * devicePixelRatio) || 1189, h = Math.round(26 * devicePixelRatio);
     strip.width = w; strip.height = h;
     const g = strip.getContext('2d');
-    seasons.forEach((V, i) => {
+    rank.forEach((V, i) => {
       g.fillStyle = `hsl(${seasonHue(V)},55%,${35 + 25 * V}%)`;
       g.fillRect(Math.floor(i * w / 1189), 0, Math.ceil(w / 1189) + 1, h);
     });
