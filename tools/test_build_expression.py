@@ -54,4 +54,24 @@ class T(unittest.TestCase):
             src = json.load(open(os.path.join(FX, 'expression_good', 'Genesis.3.json')))
             self.assertEqual(json.load(open(os.path.join(d, 'Genesis.3.json'))), src)
 
+    def test_tags_match_scribe(self):
+        import re
+        cfg = json.load(open(os.path.join(HERE, 'expression_tags.json')))
+        ours = {f'[{t}]' for t in cfg['tone_tags'] + cfg['pause_tags']}
+        self.assertEqual(len(cfg['tone_tags']), 13); self.assertEqual(cfg['pause_tags'], ['short pause', 'long pause'])
+        ce = os.path.join(HERE, 'check_expression.py')   # the Scribe's checker as copied to main
+        if os.path.exists(ce):
+            self.assertEqual(ours, set(re.findall(r"'(\[[^\]]+\])'", re.search(r'ALLOWED=\{(.*?)\}', open(ce).read()).group(1))))
+        guide = '/workspace/sonolumina-expression/GUIDE.md'
+        if os.path.exists(guide):
+            sec = open(guide).read().split('## Allowed tags')[1].split('## ')[0]
+            self.assertEqual(ours, set(re.findall(r'`(\[[^\]]+\])`', sec)))
+    def test_hashes_match_main(self):
+        with tempfile.TemporaryDirectory() as d:
+            run('--src', os.path.join(FX, 'expression_good'), '--package', '--out', d)
+            m = json.load(open(os.path.join(d, 'manifest.json')))
+            idx = os.path.join(os.path.dirname(HERE), 'data', 'expression-meta', 'index.json')
+            if os.path.exists(idx):
+                self.assertEqual(json.load(open(idx))['Genesis.1'], m['chapters']['Genesis.1']['plain_fnv'])
+
 if __name__ == '__main__': unittest.main(verbosity=2)

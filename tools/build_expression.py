@@ -73,6 +73,13 @@ def strip_markup(text, cfg, where, errs, warns):
             out = out.replace(ch, ' ')
     return out
 
+def fnv(s):
+    """FNV-1a 32-bit of whitespace-collapsed text, 8 hex (same as form/eleven.js and build_expression_hashes.py)."""
+    h = 0x811c9dc5
+    for b in norm(s).encode('utf-8'):
+        h = ((h ^ b) * 0x01000193) & 0xffffffff
+    return f'{h:08x}'
+
 def first_diff(got, want):
     g, w = got.split(), want.split()
     for i in range(max(len(g), len(w))):
@@ -82,7 +89,7 @@ def first_diff(got, want):
             return i + 1, a, b
     return None
 
-def check_file(path, canon, bsb_cache, cfg, root, errs, warns):
+def check_file(path, canon, bsb_cache, cfg, root, errs, warns, plain):
     fn = os.path.basename(path)
     mo = FNAME_RE.match(fn)
     if not mo or mo.group(1) not in canon:
@@ -126,6 +133,7 @@ def check_file(path, canon, bsb_cache, cfg, root, errs, warns):
             errs.append(f'{where}: text mismatch at word {d[0]}: got {d[1]!r}, BSB has {d[2]!r}')
             continue
         clean[k] = v
+    plain[fn[:-5]] = {k: fnv(verses[int(k) - 1]) for k, v in clean.items() if TAG_RE.search(v)}
     return (fn[:-5], dict(sorted(clean.items(), key=lambda kv: int(kv[0])))) if len(errs) == n0 else None
 
 def main(argv=None):
@@ -142,9 +150,9 @@ def main(argv=None):
     cfg = json.load(open(a.tags, encoding='utf-8'))
     canon = load_canon(a.root)
     files = sorted(f for f in os.listdir(src) if f.endswith('.json')) if os.path.isdir(src) else []
-    errs, warns, ok, cache = [], [], {}, {}
+    errs, warns, ok, cache, plain = [], [], {}, {}, {}
     for f in files:
-        r = check_file(os.path.join(src, f), canon, cache, cfg, a.root, errs, warns)
+        r = check_file(os.path.join(src, f), canon, cache, cfg, a.root, errs, warns, plain)
         if r: ok[r[0]] = r[1]
     nv = sum(len(v) for v in ok.values())
     for w in warns: print('WARNING', w)
@@ -160,7 +168,7 @@ def main(argv=None):
             open(os.path.join(out, k + '.json'), 'w', encoding='utf-8').write(json.dumps(v, ensure_ascii=False, separators=(',', ':')))
         man = {'tags': 'tools/expression_tags.json (Scribe GUIDE.md)', 'bundle': 'expression.min.json',
                'sha256': hashlib.sha256(blob).hexdigest(), 'bytes': len(blob),
-               'chapters': {k: {'file': k + '.json', 'verses': len(v), 'sha256': hashlib.sha256(json.dumps(v, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()} for k, v in sorted(ok.items())},
+               'chapters': {k: {'file': k + '.json', 'verses': len(v), 'plain_fnv': plain.get(k, {}), 'sha256': hashlib.sha256(json.dumps(v, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()} for k, v in sorted(ok.items())},
                'totals': {'chapters': len(ok), 'verses': nv}}
         open(os.path.join(out, 'manifest.json'), 'w', encoding='utf-8').write(json.dumps(man, indent=1) + '\n')
         print(f'packaged -> {os.path.relpath(out, a.root)}/expression.min.json ({len(blob)} bytes) + per-chapter files + manifest.json')
