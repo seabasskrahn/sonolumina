@@ -61,7 +61,7 @@ export function createStudy(X) {
         ${S.showOrig && ov ? `<div class="orig ${b < 39 ? 'he' : ''}" lang="${b < 39 ? 'he' : 'grc'}">${esc(ov)}</div>` : ''}
         ${m.note ? `<div class="note">✎ ${esc(m.note)}</div>` : ''}</div>`;
     }).join('');
-    const missing = S.showOrig && !(kj && kj.h) ? `<div class="card dim">The ${b >= 39 ? 'Greek' : 'Hebrew'} text for ${esc(name(b))} is not in this build yet${b < 39 ? ' (the old app carried Hebrew for Genesis to Deuteronomy only)' : ''}.</div>` : '';
+    const missing = S.showOrig && !(kj && kj.h) ? `<div class="card dim">The ${b >= 39 ? 'Greek' : 'Hebrew'} text for ${esc(name(b))} is not in this build yet.</div>` : '';
     el('rdList').innerHTML = missing + rows;
     el('rdList').onclick = e => { const r = e.target.closest('.vrow'); if (r) X.verseSheet(keyOf(b, c, +r.dataset.v)); };
     markPlaying();
@@ -76,8 +76,7 @@ export function createStudy(X) {
   function readAt(key) {
     const [b, c, v] = key.split('.').map(Number), ch = X.cur();
     if (!ch.history && ch.ref.book === b && ch.ref.chapter === c) { jumpTo = v; X.show('read'); renderRead(); return; }
-    X.S.tab = 'read'; X.save();
-    location.href = `?${X.fileOf(b)}.${c}.${v}`;
+    X.go(`${X.fileOf(b)}.${c}.${v}`).then(() => { jumpTo = v; readFor = ''; X.show('read'); });
   }
 
   // ---------- Recall ----------
@@ -203,13 +202,13 @@ export function createStudy(X) {
     let now = '<div class="dim">Press Begin and the verse now sounding is explained here.</div>';
     if (n && n.vs && n.vs.melody) {
       const { k, E } = n.vs, sp = X.S.speed;
-      const mel = n.vs.melody.filter(m => m.word).slice(0, 12);
+      const mel = n.vs.melody.filter(m => Number.isInteger(m.word) && n.words[m.word]).slice(0, 12);
       now = `<div class="kv"><b>Verse</b><span>${esc(n.ch.name)} ${n.ch.ref.chapter}:${n.vs.verse}</span>
         <b>Feeling</b><span>V ${E.v.toFixed(2)} · A ${E.a.toFixed(2)} · D ${E.d.toFixed(2)}</span>
         <b>Mode</b><span>${k.mode} = M[⌊5·${E.v.toFixed(2)}⌋]</span>
         <b>Tempo</b><span>54 + 30·${E.a.toFixed(2)} = ${k.bpm.toFixed(1)} BPM${sp !== 1 ? ` × ${sp} speed = ${(k.bpm * sp).toFixed(1)}` : ''}</span>
         <b>Loudness</b><span>0.75 + 0.5·${E.d.toFixed(2)} = ${k.loud.toFixed(2)}</span></div>
-        ${mel.length ? `<div class="orig-t" style="margin-top:.6rem">Melody words (key words, fewer than 200 uses)</div><div class="kv">${mel.map(m => `<b>${esc(m.word)}</b><span>${m.freq.toFixed(1)} Hz · ${(m.freq / F0).toFixed(3)} × 110${m.res && m.res !== 'resolved' ? ' · ' + m.res : ''}</span>`).join('')}</div>` : ''}`;
+        ${mel.length ? `<div class="orig-t" style="margin-top:.6rem">Melody words (key words, fewer than 200 uses)</div><div class="kv">${mel.map(m => `<b>${esc(n.words[m.word].replace(/[^\p{L}\p{N}’'-]/gu, ''))}</b><span>${m.freq.toFixed(1)} Hz · ${(m.freq / F0).toFixed(3)} × 110${m.res && m.res !== 'resolved' ? ' · ' + m.res : ''}</span>`).join('')}</div>` : ''}`;
     }
     T.innerHTML = `<h2>Origins</h2><div class="dim" style="text-align:center">Where every sound comes from, and which parts are human choices.</div>
       <div class="card"><div class="orig-t">Now sounding</div>${now}</div>

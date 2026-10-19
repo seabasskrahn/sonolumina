@@ -6,7 +6,8 @@ export const SPEEDS = ['0.5', '0.75', '1', '1.25', '1.5', '2', '2.5', '3'];   //
 export const DEFAULTS = {
   speed: 1, dialMax: 10, autoplay: true, repeat: 'off', resume: true,
   voiceOn: true, voiceName: '', pitch: 1,
-  rsvpChunk: 1, showKJV: true, showOrig: false, dish: 'both', textSize: 1,
+  voiceEngine: 'device', elVoice: '', elVoiceName: '', elModel: 'eleven_multilingual_v2', elStability: 0.5, elSimilarity: 0.75, elStyle: 0.2, elExpressive: false,
+  rsvpChunk: 1, showKJV: true, showOrig: false, dish: 'full', textSize: 1,
   queue: [], tab: 'listen',
 };
 const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? v : d; } catch { return d; } };

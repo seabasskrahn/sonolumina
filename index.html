@@ -16,6 +16,7 @@
   h1 { font-weight: normal; letter-spacing: .3em; font-size: .85rem;
     opacity: .55; margin: 0; text-transform: uppercase; }
   canvas { width: min(78vw, 46vh); aspect-ratio: 1; border-radius: 50%; }
+  #dish { pointer-events: none; }   /* the light takes no taps: every tap goes to the controls (preview fix, item 14) */
   #verse { max-width: 32rem; text-align: center; font-size: 1.15rem;
     line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
   #heading { display: block; margin-bottom: .5rem; font-size: .85rem; font-style: italic; opacity: .6; }
@@ -57,7 +58,7 @@
   #verse .tied { display: block; border-left: 2px solid #6a5a35; padding-left: .7rem; text-align: left; }
   #ending { font: .85rem system-ui, sans-serif; opacity: .75; text-align: center; max-width: 30rem; }
   [hidden] { display: none !important; }
-  /* ---- Preview build 2026101815-p1: tabs, player bar, sheets, settings, study ---- */
+  /* ---- Preview build 2026101816-p2: tabs, player bar, sheets, settings, study ---- */
   body { display: block; padding: 0 0 calc(196px + env(safe-area-inset-bottom)); }
   .ui, .ui button, .ui input, .ui select, .ui textarea { font-family: system-ui, sans-serif; }
   button { cursor: pointer; }
@@ -93,7 +94,7 @@
   #bar .prog { height: 3px; background: #2a261e; border-radius: 2px; margin: .35rem 0 .3rem; overflow: hidden; }
   #barProg { display: block; height: 100%; width: 0; background: #d9b65a; transition: width .4s; }
   #bar .tr { display: flex; justify-content: space-between; align-items: center; gap: .2rem; }
-  #bar .tr button { background: none; border: 0; color: #e9e2cf; font-size: 1.15rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; }
+  #bar .tr button { background: none; border: 0; color: #e9e2cf; font-size: 1.05rem; width: 2.3rem; height: 2.1rem; border-radius: 50%; }
   #bar .tr button.on { color: #d9b65a; }
   #bar .tr button:disabled { opacity: .3; }
   #bar .tr #play { width: auto; min-width: 6.5rem; height: 2.5rem; font: .9rem system-ui, sans-serif; border: 1px solid #6a5a35; border-radius: 2rem; background: #15130f; }
@@ -151,8 +152,10 @@
   .vrow.playing { outline: 1px solid #6a5a35; }
   .vrow .lbl { font: .58rem system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; opacity: .4; }
   .hl-gold { background: #3a301a; } .hl-rose { background: #3a1f24; } .hl-sky { background: #1a2a3a; } .hl-sage { background: #1f3020; }
-  .sw-c { width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid #3a352a; }
-  .sw-c.on { border-color: #e9e2cf; }
+  .sw-c { width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 2px solid #3a352a; }
+  .sw-c.hl-gold { background: #b8923a; } .sw-c.hl-rose { background: #b0505e; } .sw-c.hl-sky { background: #4f7fb0; } .sw-c.hl-sage { background: #5f9a62; }
+  .row { display: flex; gap: .5rem; align-items: center; justify-content: space-between; margin: .45rem 0; font: .85rem system-ui, sans-serif; }
+  .sw-c.on { border-color: #fff; box-shadow: 0 0 0 2px #000 inset; }
   #verse.hl-gold, #verse.hl-rose, #verse.hl-sky, #verse.hl-sage { border-radius: 12px; padding: .4rem .6rem; }
   #vact { display: flex; gap: .4rem; justify-content: center; }
   #vact button { font: .72rem system-ui, sans-serif; color: #e9e2cf; background: none; border: 1px solid #2a261e; border-radius: 1rem; padding: .25rem .7rem; opacity: .7; }
@@ -184,6 +187,10 @@
   <div id="state"></div>
   <div id="labels"></div>
   <div id="ending" hidden>Here Scripture ends. What follows is history, not Scripture.</div>
+  <div id="controls">
+    <button id="play" type="button">Begin</button>
+    <button id="voice" type="button" aria-pressed="true">Voice on</button>
+  </div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
     <div class="note">1,189 chapters, Genesis to Revelation, each coloured by its feeling (V, from the stored verse scores)</div></div>
   </section>
@@ -210,10 +217,8 @@
       <button id="rep" type="button" title="Repeat: off" aria-label="Repeat">🔁</button>
       <button id="pch" type="button" title="Previous chapter" aria-label="Previous chapter">⏮</button>
       <button id="pv" type="button" title="Back one verse" aria-label="Back one verse">↺</button>
-      <button id="play" type="button">Begin</button>
       <button id="nv" type="button" title="Forward one verse" aria-label="Forward one verse">↻</button>
       <button id="nch" type="button" title="Next chapter" aria-label="Next chapter">⏭</button>
-      <button id="voice" type="button" aria-pressed="true" title="Reading voice" aria-label="Reading voice">🗣</button>
     </div>
     <div class="tb">
       <button id="tbSpd" type="button"><b id="tbSpdV">1×</b>Speed</button>
@@ -249,6 +254,7 @@
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
   import { createNarrator, MAX_RATE } from './form/narrator.js';
+  import { createEleven, createReader, elevenKey, MODELS_FALLBACK, stripTags } from './form/eleven.js';
   import { parseRef, sung, isFinal, next, prev, chapterIndex, refAt } from './law/canon.js';
   import { links, signature, swells, LINK_SOURCE } from './law/links.js';
   import { seasonHue } from './law/seasons.js';
@@ -261,7 +267,7 @@
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026101815-p1';
+  const BUILD = '2026101816-p2';
   const toastEl = document.getElementById('toast'); let toastT = 0;
   const toast = msg => { toastEl.textContent = msg; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2200); };
   const keyOf = (ch, v) => ch.history ? '' : `${ch.ref.book}.${ch.ref.chapter}.${v}`;
@@ -320,7 +326,7 @@
   const LAST = 'sonolumina.last';
   const store = (k, v) => { try { v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); return localStorage.getItem(k); } catch { return null; } };
   const [addr, ...opts] = location.search.slice(1).split('&');
-  const from = opts.find(o => o.startsWith('from='))?.slice(5);
+  let from = opts.find(o => o.startsWith('from='))?.slice(5);
   const openAt = async a => {
     const m = /^After\.(\d+)$/i.exec(a || '');
     if (m && +m[1] >= 1 && +m[1] <= H.length) return loadAfter(+m[1] - 1);
@@ -338,7 +344,7 @@
   const here = ch => {
     cur = ch;
     document.title = `${titleOf(ch)} · Sonolumina`;
-    history.replaceState(null, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : ''));
+    history.replaceState(history.state, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : ''));
     store(LAST, addrOf(ch));
     navTo(ch);
   };
@@ -462,12 +468,15 @@
   nav.where.onclick = () => {
     const open = nav.picker.hidden;
     nav.picker.hidden = !open; nav.where.setAttribute('aria-expanded', open);
+    if (open) overlayOpened(); else overlayClosed();
     if (open) pick(cur.history ? 'after' : cur.ref.book);
   };
-  if (from) {
-    const r = parseRef(canon, from);
-    if (r) { const b = el('back'); b.hidden = false; b.href = '?' + from; b.textContent = `↩ back to ${canon[r.book][0]} ${r.chapter}:${r.verse || 1}`; }
-  }
+  const setBack = () => {
+    const r = from && parseRef(canon, from), b = el('back');
+    b.hidden = !r;
+    if (r) { b.href = '?' + from; b.textContent = `↩ back to ${canon[r.book][0]} ${r.chapter}:${r.verse || 1}`; }
+  };
+  setBack();
 
   // Day 4: lights for seasons. One thin band per chapter, coloured by its mean feeling with the light's hue rule;
   // the white mark is where you are. Tap to open that chapter.
@@ -488,28 +497,31 @@
   strip.onclick = e => {
     const r = strip.getBoundingClientRect();
     const at = refAt(canon, Math.min(1188, Math.max(0, Math.floor((e.clientX - r.left) / r.width * 1189))));
-    location.href = `?${fileOf(at.book)}.${at.chapter}`;
+    go(`${fileOf(at.book)}.${at.chapter}`);
   };
   addEventListener('resize', drawStrip);
   here(start);
   preview(start);
 
-  // ======================= Preview build 2026101815-p1 =======================
+  // ======================= Preview build 2026101816-p2 =======================
 
   // ---------- voice ----------
-  const narrator = createNarrator();
+  const narrator = createNarrator();   // the phone's own voice: the free default, and the fallback
   narrator.on = S.voiceOn;
+  const eleven = createEleven(S, { onNotice: m => toast(m) });
+  const reader = createReader(narrator, eleven);   // ElevenLabs when set up and working, else the phone voice
+  reader.on = S.voiceOn;
   narrator.voiceName = S.voiceName;
   narrator.pitch = S.pitch;
   const voiceRests = () => (player ? player.speed : S.speed) > MAX_RATE;   // above the speech max: words and tones only
   const speaking = () => narrator.on && !voiceRests();
   const setVoice = on => {
     S.voiceOn = !!on; save();
-    narrator.on = S.voiceOn;
+    reader.on = S.voiceOn;
     paintBar();
     if (sheetKind === 'voice') openSheet('voice');
   };
-  if (!narrator.available) { el('voice').disabled = true; el('tbVoice').disabled = true; }
+  if (!reader.available) el('voice').disabled = true;
   el('voice').onclick = () => setVoice(!narrator.on);
 
   // Keep the screen awake while reading.
@@ -529,9 +541,9 @@
   const wpmOf = (words, vs, sp) => words.length / (vs.dur / sp / 60);
   function speakRest() {   // after a speed change or a seek mid-verse: read the rest of the verse at the new rate
     if (!now || state !== 'playing') return;
-    if (!speaking()) { narrator.stop(); return; }
+    if (!speaking()) { reader.stop(); return; }
     const rest = now.words.slice(Math.max(0, wordAt)).join(' ');
-    narrator.restart(rest, wpmOf(now.words, now.vs, player.speed), player.speed);
+    reader.restart(rest, wpmOf(now.words, now.vs, player.speed), player.speed);
   }
 
   // Up next: the queue first, then (with auto play) the next chapter; repeat chapter plays it again.
@@ -546,6 +558,21 @@
     return load(ref);
   };
 
+  // Expressive reading markup (data/expression, the Scribe's files) with the plain-text hashes beside them
+  // (data/expression-meta/index.json). Only chapters in the index are fetched; a verse's markup is used
+  // only when its hash matches the plain text, and only by ElevenLabs v3 (form/eleven.js).
+  let exprIndex = null; const exprFiles = new Map();
+  const exprReady = json('./data/expression-meta/index.json').then(x => { exprIndex = x; }).catch(() => { exprIndex = {}; });
+  function exprEntry(ch, v, plain) {
+    if (!S.elExpressive || ch.history || !exprIndex) return null;
+    const id = `${fileOf(ch.ref.book)}.${ch.ref.chapter}`, h = exprIndex[id]?.[String(v)];
+    if (!h) return null;
+    if (!exprFiles.has(id)) { exprFiles.set(id, null); json(`./data/expression/${id}.json`).then(x => exprFiles.set(id, x)).catch(() => {}); }
+    const t = exprFiles.get(id)?.[String(v)];
+    return t ? { t, h } : null;
+  }
+  const exprWarm = ch => { if (S.elExpressive && !ch.history && exprIndex) exprEntry(ch, 1, ''); };
+
   let sleepEnd = 0, sleepEoc = false, sleepFrom = null;
   const playBtn = el('play');
 
@@ -553,30 +580,37 @@
   function begin(ch = start, v = 1) {
     engine.start();
     if (player) player.stop(true);
-    narrator.stop();
+    reader.stop();
     start = ch; here(ch);
     state = 'playing';
     playBtn.textContent = 'Pause';
     el('ending').hidden = true;
     el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, ch.history ? HISTORY_SOURCE : LINK_SOURCE, LABELS.DISH].join('<br>');
-    sleepFrom = ch;
+    sleepFrom = ch; exprWarm(ch);
     const p = createPlayer({
       engine, lex: cb.lex, first: ch, load: loadNext, speed: S.speed, startVerse: v,
       narrating: speaking, repeatVerse: () => S.repeat === 'verse',
       onChapter: c => {
         if (sleepEoc && c !== sleepFrom) { sleepEoc = false; here(c); preview(c); sleepPause('Sleep: stopped at the end of the chapter'); return; }
-        here(c); study.render(S.tab);
+        here(c); exprWarm(c); study.render(S.tab);
       },
       onVerse: (c, vn, words, E, k, vs) => {
         now = { ch: c, v: vn, words, vs, E, k }; wordAt = -1;
         showVerse(c, vn, words, E, k);
         if (!c.history) store(LAST, `${addrOf(c)}.${vn}`);
-        if (speaking()) narrator.speak(words.join(' '), wpmOf(words, vs, p.speed), p.speed);
+        if (speaking()) {
+          const plain = stripTags(c.text[vn - 1] || words.join(' '));
+          reader.speak(plain, wpmOf(words, vs, p.speed), p.speed, { dur: vs.dur, entry: exprEntry(c, vn, plain) });
+          // Fetch the next verse ahead (ElevenLabs only) so there is no gap.
+          let nx = vn; while (nx < c.text.length && !(c.text[nx] || '').trim()) nx++;
+          if (nx < c.text.length) { const t = stripTags(c.text[nx]); reader.prefetch(t, exprEntry(c, nx + 1, t)); }
+        }
         paintBar(); study.markPlaying(); rsvpShow();
         if (S.tab === 'origins') study.render('origins');
       },
       linksFor,
       onLink: (c, vn, l) => {
+        window.__linkCount = (window.__linkCount || 0) + 1;
         const a = el('links').querySelector(`a[data-k="${l.book}.${l.c}.${l.v}"]`);
         if (a) { a.classList.add('lit'); setTimeout(() => a.classList.remove('lit'), 1300); }
       },
@@ -610,8 +644,8 @@
     wake(true);
     paintBar();
   }
-  const pauseAll = () => { if (state !== 'playing') return; state = 'paused'; playBtn.textContent = 'Resume'; player.pause(); narrator.pause(); wake(false); paintBar(); };
-  const resumeAll = () => { if (state !== 'paused') return; state = 'playing'; playBtn.textContent = 'Pause'; player.resume(); narrator.resume(); wake(true); paintBar(); };
+  const pauseAll = () => { if (state !== 'playing') return; state = 'paused'; playBtn.textContent = 'Resume'; player.pause(); reader.pause(); wake(false); paintBar(); };
+  const resumeAll = () => { if (state !== 'paused') return; state = 'playing'; playBtn.textContent = 'Pause'; player.resume(); reader.resume(); wake(true); paintBar(); };
   const toggle = () => {
     if (state === 'ready') begin(start, start.history ? 1 : (start.at || 1));
     else if (state === 'playing') pauseAll();
@@ -632,7 +666,7 @@
   // ---------- verse and chapter steps ----------
   function seekTo(v) {
     if (state === 'paused') resumeAll();
-    narrator.stop();
+    reader.stop();
     player.seek(player.current.seg, v);
   }
   async function stepVerse(d) {
@@ -655,7 +689,7 @@
     if (!a) return;
     const ch = await openAt(a.slice(1));
     if (!ch) return;
-    if (state === 'ready') { location.href = a; return; }
+    if (state === 'ready') { go(a.slice(1)); return; }
     playFrom(ch, atEnd && !ch.history ? ch.text.length : 1);
   }
   el('pv').onclick = () => stepVerse(-1);
@@ -692,9 +726,10 @@
       state === 'ready' ? (ch.history ? '' : `verse ${v} of ${n}`) : state === 'paused' ? 'paused' : ''].filter(Boolean).join(' · ');
     el('tbSpdV').textContent = fmtSpeed(sp);
     el('tbSpd').classList.toggle('on', sp !== 1);
-    el('tbVoiceV').textContent = !narrator.available ? 'none' : !narrator.on ? 'off' : voiceRests() ? 'rests' : 'on';
-    el('voice').classList.toggle('on', narrator.on); el('voice').setAttribute('aria-pressed', narrator.on);
-    el('voice').title = narrator.on ? 'Reading voice on' : 'Reading voice off';
+    el('tbVoiceV').textContent = !reader.available ? 'none' : !S.voiceOn ? 'off' : voiceRests() ? 'rests' : reader.using === 'eleven' ? '11L' : 'on';
+    // Claude's Voice button, as built: "Voice on" / "Voice off" ("No voice" when the phone has none).
+    el('voice').textContent = !reader.available ? 'No voice' : S.voiceOn ? 'Voice on' : 'Voice off';
+    el('voice').disabled = !reader.available; el('voice').setAttribute('aria-pressed', S.voiceOn);
     el('rep').classList.toggle('on', S.repeat !== 'off'); el('rep').title = `Repeat: ${S.repeat}`;
     el('rep').textContent = S.repeat === 'verse' ? '🔂' : '🔁';
     el('tbSlp').classList.toggle('on', !!(sleepEnd || sleepEoc));
@@ -710,40 +745,88 @@
   // ---------- sheets ----------
   let sheetKind = '', dial = null;
   const sheet = el('sheet'), scrim = el('scrim'), sb = el('sheetB');
-  const closeSheet = () => { sheet.hidden = scrim.hidden = true; sheetKind = ''; dial = null; };
+  const closeSheet = (fromBack) => { if (sheet.hidden) return; sheet.hidden = scrim.hidden = true; sheetKind = ''; dial = null; if (fromBack !== true) overlayClosed(); };
   scrim.onclick = closeSheet; el('sheetX').onclick = closeSheet;
   const chips = (list, curV, attr) => `<div class="chips">${list.map(([v, t]) => `<button type="button" ${attr}="${v}" class="${String(v) === String(curV) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
   function paintChips() { sb.querySelectorAll('[data-sp]').forEach(b => b.classList.toggle('on', +b.dataset.sp === S.speed)); }
+  const escH = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function voiceOptions() {
     const vs = narrator.list(), curV = narrator.voice;
     if (!vs.length) return '<option value="">(no voices yet)</option>';
     let h = '', group = '';
     for (const v of vs) {
-      const g = /^en/i.test(v.lang) ? 'English' : 'Other languages';
+      const g = /^en/i.test(v.lang) ? 'English (most natural first)' : 'Other languages';
       if (g !== group) { h += `${group ? '</optgroup>' : ''}<optgroup label="${g}">`; group = g; }
-      h += `<option value="${v.voiceURI.replace(/"/g, '&quot;')}" ${curV && v.voiceURI === curV.voiceURI ? 'selected' : ''}>${v.name.replace(/</g, '&lt;')} · ${v.lang}${v.localService ? '' : ' · online'}</option>`;
+      const q = narrator.quality(v);
+      h += `<option value="${escH(v.voiceURI)}" ${curV && v.voiceURI === curV.voiceURI ? 'selected' : ''}>${q >= 3 ? '★ ' : ''}${escH(v.name)} · ${escH(v.lang)}${v.localService ? '' : ' · online'}</option>`;
     }
     return h + '</optgroup>';
   }
+  let elVoices = null, elModels = MODELS_FALLBACK, elErr = '';
+  const elStatus = () => !elevenKey.get() ? 'No key saved: the phone voice reads.' : !S.elVoice ? 'Choose a voice below.'
+    : eleven.ready() ? 'Ready: ElevenLabs reads, the phone voice steps in on any error.' : `Paused: ${escH(eleven.reason || 'unavailable')}. The phone voice reads; it tries again in a few minutes.`;
+  const sl = (id, label, v, hint) => `<h4>${label} <span id="${id}V">${(+v).toFixed(2)}</span></h4><input type="range" id="${id}" min="0" max="1" step="0.05" value="${v}"><div class="dim">${hint}</div>`;
   function voiceBlock() {
-    return `<div class="row"><label for="vOn">Read aloud</label><input type="checkbox" class="sw" id="vOn" ${narrator.on ? 'checked' : ''} ${narrator.available ? '' : 'disabled'}></div>
-      <h4>Voice</h4><select id="vSel">${voiceOptions()}</select>
-      <div class="dim" style="margin-top:.35rem">Voices come from your phone (English first). If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
+    const key = elevenKey.get(), eng = S.voiceEngine;
+    return `<div class="row"><label for="vOn">Read aloud</label><input type="checkbox" class="sw" id="vOn" ${S.voiceOn ? 'checked' : ''} ${reader.available ? '' : 'disabled'}></div>
+      <h4>Reading voice</h4><div class="seg"><button type="button" data-eng="device" class="${eng === 'device' ? 'on' : ''}">Phone voice (free)</button><button type="button" data-eng="eleven" class="${eng === 'eleven' ? 'on' : ''}">ElevenLabs</button></div>
+      ${eng === 'eleven' ? `<div class="card" style="margin-top:.6rem">
+        <div class="dim" id="elSt" style="opacity:.85">${elStatus()}</div>
+        <h4>ElevenLabs API key</h4>
+        ${key ? `<div class="row"><span>Key saved on this phone (ends …${escH(key.slice(-4))})</span><button class="pill" type="button" id="elDel">Remove</button></div>`
+          : `<div style="display:flex;gap:.4rem"><input type="password" id="elKey" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pill gold" type="button" id="elSave">Save</button></div>`}
+        <div class="dim" style="margin-top:.35rem">The key stays on this phone only (this browser's own storage). It is never part of the app, never sent anywhere but ElevenLabs, and reading uses your ElevenLabs credits. Each verse is kept on the phone after its first reading, so replays are free.</div>
+        ${key ? `<h4>Voice</h4><div style="display:flex;gap:.4rem"><select id="elVoice">${elVoices ? elVoices.map(v => `<option value="${escH(v.id)}" ${v.id === S.elVoice ? 'selected' : ''}>${escH(v.name)}${v.category ? ' · ' + escH(v.category) : ''}</option>`).join('') : `<option value="${escH(S.elVoice)}">${S.elVoice ? escH(S.elVoiceName || S.elVoice) : 'loading your voices…'}</option>`}</select><button class="pill" type="button" id="elPrev" title="Play ElevenLabs' preview of this voice (no credits)">▶ Preview</button></div>
+          ${elErr ? `<div class="dim" style="color:#e9a">${escH(elErr)}</div>` : ''}
+          <h4>Model</h4><select id="elModel">${elModels.map(m => `<option value="${escH(m.model_id)}" ${m.model_id === S.elModel ? 'selected' : ''}>${escH(m.name || m.model_id)}</option>`).join('')}</select>
+          ${sl('elStab', 'Stability', S.elStability, 'Lower: more feeling and variety. Higher: steadier.')}
+          ${sl('elSim', 'Similarity', S.elSimilarity, 'How closely it keeps to the original voice.')}
+          ${sl('elStyle', 'Style', S.elStyle, 'Exaggerates the speaker\'s style; 0 is plainest and fastest.')}
+          <div class="row" style="margin-top:.8rem"><label for="elExpr">Expressive reading<br><span class="dim">ElevenLabs v3 audio tags ([softly], [solemn], pauses) where a chapter has checked markup (now Genesis 1–3). The words never change.</span></label><input type="checkbox" class="sw" id="elExpr" ${S.elExpressive ? 'checked' : ''}></div>
+          <p><button class="pill" type="button" id="elClear">Clear saved verse audio</button></p>` : ''}
+      </div>` : ''}
+      <h4>${eng === 'eleven' ? 'Phone voice (used when ElevenLabs cannot read)' : 'Phone voice'}</h4><select id="vSel">${voiceOptions()}</select>
+      <div class="dim" style="margin-top:.35rem">From your phone, English first, the most natural (★: Apple Enhanced/Premium, Siri, Microsoft Natural/Online, Google, Neural) at the top. If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
       <h4>Pitch <span id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">
       <p><button class="pill gold" type="button" id="vTest">Test voice</button></p>
-      <div class="dim">The rate follows the Speed control${MAX_RATE ? `; above ${MAX_RATE}× the voice rests and only the words and tones go on` : ''}.</div>`;
+      <div class="dim">The rate follows the Speed control; above ${MAX_RATE}× the voice rests and only the words and tones go on.</div>`;
   }
-  function wireVoice(root) {
+  async function loadEleven(root) {
+    if (!elevenKey.get() || S.voiceEngine !== 'eleven') return;
+    try {
+      const [vs, ms] = await Promise.all([eleven.voices(), eleven.models()]);
+      elVoices = vs; elModels = ms; elErr = '';
+      if (!S.elVoice && vs.length) { S.elVoice = vs[0].id; S.elVoiceName = vs[0].name; save(); }
+    } catch (e) { elErr = `Could not load your voices: ${e.message || 'error'}`; }
+    redrawVoice(root);
+  }
+  const redrawVoice = root => { if (!root.isConnected) return; root.innerHTML = voiceBlock(); wireVoice(root, false); };
+  function wireVoice(root, fetchEl = true) {
     const q = s => root.querySelector(s);
     q('#vOn') && (q('#vOn').onchange = e => setVoice(e.target.checked));
     q('#vSel').onchange = e => { S.voiceName = e.target.value; save(); narrator.voiceName = S.voiceName; toast('Voice saved'); };
     q('#vPitch').oninput = e => { narrator.pitch = +e.target.value; S.pitch = narrator.pitch; q('#vPv').textContent = narrator.pitch.toFixed(2); };
     q('#vPitch').onchange = () => save();
-    q('#vTest').onclick = () => narrator.test();
+    q('#vTest').onclick = () => { reader.stop(); narrator.test(); };
+    root.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => { S.voiceEngine = b.dataset.eng; save(); eleven.reset(); reader.stop(); redrawVoice(root); loadEleven(root); paintBar(); });
+    q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) return; elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
+    q('#elDel') && (q('#elDel').onclick = () => { if (!confirm('Remove the ElevenLabs key from this phone?')) return; elevenKey.set(''); reader.stop(); elVoices = null; toast('Key removed'); redrawVoice(root); });
+    q('#elVoice') && (q('#elVoice').onchange = e => { S.elVoice = e.target.value; S.elVoiceName = e.target.selectedOptions[0]?.textContent || ''; save(); eleven.reset(); toast('Voice saved'); redrawVoice(root); });
+    q('#elPrev') && (q('#elPrev').onclick = () => { const v = (elVoices || []).find(x => x.id === S.elVoice); if (v && v.preview) { const a = new Audio(v.preview); a.play().catch(() => toast('Preview could not play')); } else toast('No preview for this voice'); });
+    q('#elModel') && (q('#elModel').onchange = e => { S.elModel = e.target.value; save(); toast('Model saved'); });
+    for (const [id, k] of [['elStab', 'elStability'], ['elSim', 'elSimilarity'], ['elStyle', 'elStyle']]) {
+      const r = q('#' + id); if (!r) continue;
+      r.oninput = () => { S[k] = +r.value; q('#' + id + 'V').textContent = (+r.value).toFixed(2); };
+      r.onchange = () => save();
+    }
+    q('#elExpr') && (q('#elExpr').onchange = e => { S.elExpressive = e.target.checked; save(); toast(S.elExpressive ? 'Expressive reading on (v3, where markup exists)' : 'Expressive reading off'); });
+    q('#elClear') && (q('#elClear').onclick = async () => { await eleven.clearCache(); toast('Saved verse audio cleared'); });
+    if (fetchEl && !elVoices) loadEleven(root);
   }
   narrator.onvoices = () => { const s = document.getElementById('vSel'); if (s) s.innerHTML = voiceOptions(); };
 
   function openSheet(kind, arg) {
+    if (sheet.hidden) overlayOpened();
     sheetKind = kind; sheet.hidden = scrim.hidden = false;
     const T = el('sheetT');
     if (kind === 'speed') {
@@ -765,7 +848,7 @@
       T.textContent = 'Up next';
       let h = `<div class="row"><label for="qAuto">Auto play the next chapter</label><input type="checkbox" class="sw" id="qAuto" ${S.autoplay ? 'checked' : ''}></div>`;
       h += `<div class="row"><label>Repeat</label><span class="seg">${REP.map(r => `<button type="button" data-rp="${r}" class="${S.repeat === r ? 'on' : ''}">${r}</button>`).join('')}</span></div>`;
-      h += '<h4>Your queue</h4>' + (S.queue.length ? S.queue.map((a, i) => `<div class="qi"><span>${a.replace(/\./g, ' ').replace(/^(\d)/, '$1 ')}</span><span><button class="pill" type="button" data-qup="${i}" aria-label="Move up">↑</button> <button class="pill" type="button" data-qrm="${i}" aria-label="Remove">✕</button></span></div>`).join('')
+      h += '<h4>Your queue</h4>' + (S.queue.length ? S.queue.map((a, i) => `<div class="qi"><span>${escH(a.replace(/\./g, ' ').replace(/^(\d)/, '$1 '))}</span><span><button class="pill" type="button" data-qup="${i}" aria-label="Move up">↑</button> <button class="pill" type="button" data-qrm="${i}" aria-label="Remove">✕</button></span></div>`).join('')
         : '<div class="dim">Empty. Add chapters with "＋ Queue chapter" on any verse (Read, Notes, Search).</div>');
       h += '<h4>Then</h4>';
       const list = []; let r = cur.history ? null : cur.ref;
@@ -780,7 +863,7 @@
       sb.querySelectorAll('[data-go]').forEach(b => b.onclick = async () => { engine.start(); const ch = await openAt(b.dataset.go); if (ch) { closeSheet(); playFrom(ch, 1); } });
     } else if (kind === 'verse') {
       const key = arg, [b, c, v] = key.split('.').map(Number), m = marks[key] || {};
-      T.textContent = `${canon[b][0]} ${c}:${v}`;
+      T.textContent = `${canon[b][0]} ${c}:${v}`;   // textContent: escaped
       sb.innerHTML = `<p><button class="pill gold" type="button" id="vaPlay">▶ Play from here</button> <button class="pill" type="button" id="vaQ">＋ Queue chapter</button></p>
         <h4>Highlight</h4><div style="display:flex;gap:.6rem;align-items:center">${['gold', 'rose', 'sky', 'sage'].map(h => `<button type="button" class="sw-c hl-${h} ${m.hl === h ? 'on' : ''}" data-hl="${h}" aria-label="${h}"></button>`).join('')}
           <button class="pill" type="button" data-hl="">None</button></div>
@@ -831,15 +914,15 @@
     el('rsvpRef').textContent = now.ch.history ? `After the Word ${now.ch.ref.after + 1}` : `${now.ch.name} ${now.ch.ref.chapter}:${now.v}`;
     const n = Math.max(1, Math.min(5, +S.rsvpChunk || 1)), i = Math.max(0, wordAt), c0 = Math.floor(i / n) * n;
     const chunk = now.words.slice(c0, c0 + n), mid = Math.min(chunk.length - 1, i - c0);
-    el('rsvpW').innerHTML = chunk.map((w, j) => {
+    el('rsvpW').innerHTML = '<span>' + chunk.map((w, j) => {
       if (j !== mid) return esc(w);
       const f = focal(w), letters = [...w]; let k = -1, at = 0;
       for (let q = 0; q < letters.length; q++) if (/[\p{L}\p{N}]/u.test(letters[q])) { k++; if (k === f) { at = q; break; } }
       return esc(letters.slice(0, at).join('')) + `<span class="f">${esc(letters[at] || '')}</span>` + esc(letters.slice(at + 1).join(''));
-    }).join(' ');
+    }).join(' ') + '</span>';
   }
-  el('tbRsvp').onclick = () => { rsvp.hidden = false; rsvpShow(); };
-  el('rsvpX').onclick = () => { rsvp.hidden = true; };
+  el('tbRsvp').onclick = () => { if (rsvp.hidden) overlayOpened(); rsvp.hidden = false; rsvpShow(); };
+  el('rsvpX').onclick = () => { if (!rsvp.hidden) { rsvp.hidden = true; overlayClosed(); } };
   el('rsvpPP').onclick = () => { toggle(); rsvpShow(); };
   const nudge = d => { const s = player ? player.speed : S.speed; setSpeed(Math.max(0.5, Math.min(Math.max(S.dialMax, 3), s + d * (s >= 3 ? 0.5 : 0.25)))); rsvpShow(); };
   el('rsvpSlow').onclick = () => nudge(-1);
@@ -870,12 +953,13 @@
       <section><h4>This phone</h4>
         <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Nothing leaves the phone.</small></div></div>
         <div class="set"><div class="l">Reset settings <small>Notes, highlights and Recall are kept.</small></div><button class="pill" type="button" id="stReset">Reset</button></div>
-        <div class="set"><div class="l">Build <small>Preview ${BUILD} · based on Sonolumina 2026101815 · not the live app</small></div></div>
+        <div class="set"><div class="l">Build <small>Preview ${BUILD} · built on Claude's Sonolumina 2026101815 · not the live app</small></div></div>
       </section>`;
+    if (setEl.hidden) overlayOpened();
     setEl.hidden = false;
     const q = s => setEl.querySelector(s);
     q('#stVoice').innerHTML = voiceBlock(); wireVoice(q('#stVoice'));
-    q('#setX').onclick = () => { setEl.hidden = true; };
+    q('#setX').onclick = () => { setEl.hidden = true; overlayClosed(); };
     setEl.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { setSpeed(+b.dataset.sp); setEl.querySelectorAll('[data-sp]').forEach(x => x.classList.toggle('on', x === b)); });
     const ok = () => toast(save() ? 'Saved' : 'Could not save (private browsing?)');
     q('#stMax').onchange = e => { S.dialMax = Math.max(1, Math.round((+e.target.value || 1) * 4) / 4); e.target.value = S.dialMax; ok(); };
@@ -890,7 +974,66 @@
     q('#stReset').onclick = () => { if (!confirm('Reset all settings to the defaults? Notes, highlights and Recall are kept.')) return; resetSettings(); location.reload(); };
   }
   el('gear').onclick = openSettings;
-  addEventListener('keydown', e => { if (e.key === 'Escape') { if (!sheet.hidden) closeSheet(); else if (!setEl.hidden) setEl.hidden = true; else if (!rsvp.hidden) rsvp.hidden = true; } });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && anyOverlay()) history.back(); });
+
+  // ---------- back button (as in Logos Theta build 2026101305) ----------
+  // Back closes an open menu first, then steps back through tabs and chapters opened in the app,
+  // and at the first screen stays in the app instead of leaving it.
+  let popping = false, ignorePop = 0, booted = false;
+  const anyOverlay = () => !sheet.hidden || !rsvp.hidden || !setEl.hidden || !nav.picker.hidden;
+  function overlayOpened() { if (booted) history.pushState({ sono: 1, tab: S.tab, overlay: 1 }, ''); }
+  function overlayClosed() { if (history.state && history.state.overlay) { ignorePop++; history.back(); } }
+  function closeTop() {
+    if (!sheet.hidden) { closeSheet(true); return true; }
+    if (!rsvp.hidden) { rsvp.hidden = true; return true; }
+    if (!setEl.hidden) { setEl.hidden = true; return true; }
+    if (!nav.picker.hidden) { nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false); return true; }
+    return false;
+  }
+  addEventListener('popstate', e => {
+    if (ignorePop) { ignorePop--; return; }
+    if (closeTop()) return;
+    const st = e.state;
+    if (st && st.sono && !st.root) {
+      popping = true;
+      try {
+        if (location.search !== shownSearch) go(location.search.slice(1), false);
+        show(st.tab || 'listen');
+      } finally { popping = false; }
+      return;
+    }
+    if (st && st.root) { popping = true; try { if (location.search !== shownSearch) go(location.search.slice(1), false); show(st.tab || 'listen'); } finally { popping = false; } }
+    history.pushState({ sono: 1, tab: S.tab }, '');   // at the first screen: stay in the app
+  });
+
+  // Open a chapter (or history entry) inside the app, without reloading. As in Claude's build,
+  // opening another chapter stops the music; Begin (or Play chapter) starts it again.
+  let shownSearch = location.search;
+  async function go(q, push = true) {
+    const [a, ...o] = String(q || '').replace(/^\?/, '').split('&');
+    const ch = await openAt(a);
+    if (!ch) { toast('That chapter could not be opened'); return; }
+    if (player) { player.stop(true); player = null; }
+    reader.stop(); state = 'ready'; now = null; wake(false);
+    playBtn.textContent = 'Begin';
+    el('ending').hidden = true; el('state').textContent = ''; el('links').innerHTML = '';
+    from = o.find(x => x.startsWith('from='))?.slice(5);
+    setBack();
+    if (push) history.pushState({ sono: 1, tab: S.tab }, '', '?' + a + (from ? '&from=' + from : ''));
+    start = ch; here(ch); preview(ch); shownSearch = location.search;
+    nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false);
+    paintBar(); paintMark();
+    if (S.tab === 'read') study.rerenderRead(); else study.render(S.tab);
+    scrollTo(0, 0);
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="?"]');
+    if (!a || a.target === '_blank' || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    go(a.getAttribute('href'));
+  });
+  // The first tap anywhere unlocks the sound (phones only allow audio to start inside a tap).
+  addEventListener('pointerdown', () => { try { engine.start(); } catch {} try { if (elevenKey.get() && S.voiceEngine === 'eleven') eleven.unlock(); } catch {} }, { once: true, capture: true });
 
   // ---------- tabs ----------
   const study = createStudy({
@@ -898,11 +1041,12 @@
     kjv: b => kjvs.has(b) ? kjvs.get(b) : (kjvs.set(b, json('./data/kjv/' + canon[b][1])), kjvs.get(b)),
     cur: () => cur, playing: () => now && { ch: now.ch, v: now.v }, nowVerse: () => now,
     prevRef: r => prev(canon, r), nextRef: r => next(canon, r), loadedBooks: () => [...books.entries()],
-    playFrom, playKey, verseSheet: k => openSheet('verse', k), show: t => show(t),
+    playFrom, playKey, verseSheet: k => openSheet('verse', k), show: t => show(t), go: q => go(q),
   });
   const kjvs = new Map();
   function show(t) {
     if (!document.getElementById('tab-' + t)) t = 'listen';
+    if (!popping && t !== S.tab && booted) history.pushState({ sono: 1, tab: t }, '');
     S.tab = t; save();
     document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.id === 'tab-' + t));
     document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
@@ -914,7 +1058,10 @@
   if (start.at && !start.history) { /* the resume / link verse is what Begin starts from */ }
   paintMark(); paintBar();
   show(S.tab || 'listen');
-  window.__app = { begin, setSpeed, show, openSheet, openSettings, stepVerse, toggle, get state() { return state; }, get now() { return now; } };
+  history.replaceState({ sono: 1, tab: S.tab, root: 1 }, '');
+  history.pushState({ sono: 1, tab: S.tab }, '');
+  booted = true;
+  window.__app = { go, begin, setSpeed, show, openSheet, openSettings, stepVerse, toggle, get state() { return state; }, get now() { return now; } };
 </script>
 </body>
 </html>

@@ -8,7 +8,8 @@ export function createEngine(given = null) {
 
   function start() {
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
+    // An offline context (tests/mix.html) cannot be resumed before it renders; only a live one is.
+    if (ctx.state === 'suspended' && !(window.OfflineAudioContext && ctx instanceof OfflineAudioContext)) ctx.resume().catch(() => {});
     if (!out) {
       out = ctx.createGain();
       out.gain.value = 0.8;

@@ -9,7 +9,9 @@ Prints one JSON line per eval and a final JSON summary; exits 1 if any error was
 import asyncio, json, subprocess, sys, time, base64, urllib.request, tempfile, socket
 import websockets
 
+import os
 base, steps = sys.argv[1], json.load(open(sys.argv[2]))
+VW, VH = map(int, os.environ.get('VIEW', '412x860').split('x')); TOUCH = os.environ.get('TOUCH') == '1'
 def free_port():
     s = socket.socket(); s.bind(('127.0.0.1', 0)); p = s.getsockname()[1]; s.close(); return p
 dbg = free_port()
@@ -45,7 +47,8 @@ async def main():
             n[0] += 1; f = asyncio.get_event_loop().create_future(); waiting[n[0]] = f
             await ws.send(json.dumps({'id': n[0], 'method': meth, 'params': params})); return await f
         for d in ('Runtime', 'Network', 'Log', 'Page'): await cmd(d + '.enable')
-        await cmd('Emulation.setDeviceMetricsOverride', width=412, height=860, deviceScaleFactor=2, mobile=True)
+        await cmd('Emulation.setDeviceMetricsOverride', width=VW, height=VH, deviceScaleFactor=2, mobile=True)
+        if TOUCH: await cmd('Emulation.setTouchEmulationEnabled', enabled=True, maxTouchPoints=5)
         async def ev(expr):
             r = await cmd('Runtime.evaluate', expression=expr, returnByValue=True, awaitPromise=True)
             if r and 'exceptionDetails' in r: return {'error': r['exceptionDetails'].get('exception', {}).get('description', '')[:300]}
@@ -54,11 +57,23 @@ async def main():
             if 'go' in st: await cmd('Page.navigate', url=base + st['go']); await asyncio.sleep(st.get('settle', 2.5))
             elif 'reload' in st: await cmd('Page.reload'); await asyncio.sleep(2.5)
             elif 'wait' in st: await asyncio.sleep(st['wait'])
+            elif 'tapxy' in st:
+                x, y = st['tapxy']
+                await cmd('Input.dispatchTouchEvent', type='touchStart', touchPoints=[{'x': x, 'y': y}])
+                await cmd('Input.dispatchTouchEvent', type='touchEnd', touchPoints=[])
+                await asyncio.sleep(st.get('after', 0.4))
+            elif 'heap' in st:
+                await cmd('HeapProfiler.collectGarbage')
+                h = await cmd('Runtime.getHeapUsage'); print(json.dumps({st['heap']: round(h['usedSize'] / 1e6, 2)}), flush=True)
             elif 'click' in st:
                 r = await ev(f'(e=>{{if(!e)return null;e.scrollIntoView({{block:"center"}});const r=e.getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2]}})(document.querySelector({json.dumps(st["click"])}))')
                 if not r: errors.append({'type': 'step', 'text': 'no element ' + st['click']}); continue
-                for t in ('mousePressed', 'mouseReleased'):
-                    await cmd('Input.dispatchMouseEvent', type=t, x=r[0], y=r[1], button='left', clickCount=1)
+                if TOUCH:
+                    await cmd('Input.dispatchTouchEvent', type='touchStart', touchPoints=[{'x': r[0], 'y': r[1]}])
+                    await cmd('Input.dispatchTouchEvent', type='touchEnd', touchPoints=[])
+                else:
+                    for t in ('mousePressed', 'mouseReleased'):
+                        await cmd('Input.dispatchMouseEvent', type=t, x=r[0], y=r[1], button='left', clickCount=1)
                 await asyncio.sleep(st.get('after', 0.4))
             elif 'eval' in st:
                 v = await ev(st['eval']); print(json.dumps({st.get('label', 'eval'): v}), flush=True)

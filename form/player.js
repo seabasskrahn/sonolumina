@@ -6,7 +6,7 @@
 // carrying its mode and melody on (prevMode/prevMel), and starts where the
 // one before ended (its Amen and a breath). Only the last chapter of the Bible has the close.
 //
-// Preview build (2026101815-p1): playback speed. The Law's times are "score seconds";
+// Preview build (2026101816-p2): playback speed. The Law's times are "score seconds";
 // the Form maps them onto the audio clock through one straight line, audio = a + (score − s) / speed.
 // A speed change (or a seek) moves that line at the present moment: the sound already
 // scheduled fades out over 0.15 s and everything from now on is scheduled again on a
@@ -255,6 +255,15 @@ export function createPlayer({ engine, lex, first, load, linksFor, onVerse, onWo
       else onWord?.(ev.seg.ch, ev.verse, ev.index);
     }
     while (pending.length && pending[0].s <= now) { const p = pending.shift(); onLink?.(p.seg.ch, p.vs.verse, p.link); }
+    // Long listening: chapters that ended over a minute (audio) ago are let go, so memory stays flat.
+    while (segs.length > 2 && segs[0].t0 + segs[0].score.dur < now - 60 * speed && (!cur || cur.seg !== segs[0])) {
+      const gone = segs.shift();
+      let before = 0;
+      for (let i = 0; i < cursor; i++) if ((timeline[i].seg || timeline[i].chapter) === gone) before++;
+      const keep = timeline.filter(e => (e.seg || e.chapter) !== gone);
+      timeline.length = 0; timeline.push(...keep);
+      cursor -= before;
+    }
     if (!asked && now >= end + speed && segs[segs.length - 1] === last) { stop(); onEnd?.(); }
   }
 
