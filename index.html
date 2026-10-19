@@ -55,6 +55,21 @@
   #verse .notes { display: block; font: .7rem/1.45 system-ui, sans-serif; opacity: .5; text-align: left; margin-top: .6rem; }
   #verse .tied { display: block; border-left: 2px solid #6a5a35; padding-left: .7rem; text-align: left; }
   #ending { font: .85rem system-ui, sans-serif; opacity: .75; text-align: center; max-width: 30rem; }
+  /* Talk: a live voice conversation (an AI, not Scripture) */
+  #talk { width: min(100%, 32rem); background: #0f0e0b; border: 1px solid #2a261e; border-radius: 12px; padding: .8rem; box-sizing: border-box;
+    font: .8rem/1.45 system-ui, sans-serif; user-select: text; }
+  #talk .thead { font-weight: 600; letter-spacing: .08em; opacity: .75; margin-bottom: .5rem; }
+  #talk .trow { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0; align-items: center; }
+  #talk input, #talk select { flex: 1 1 10rem; font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #17150f; border: 1px solid #3a352a; border-radius: 6px; padding: .45rem; }
+  #talk button { font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 2rem; padding: .45rem .9rem; }
+  #talk button.call { background: #2a2418; }
+  #talk button:disabled { opacity: .4; }
+  #talk a { color: #e9d9a8; }
+  #talk .tsetup p { opacity: .7; margin: .4rem 0; }
+  #talk .tstatus { opacity: .75; min-height: 1.2em; }
+  #talk .tlog { max-height: 14rem; overflow-y: auto; margin-top: .4rem; }
+  #talk .tlog p { margin: .3rem 0; } #talk .tlog p.you { opacity: .7; }
+  #talk .tnote { font-size: .65rem; opacity: .45; margin-top: .5rem; }
 </style>
 </head>
 <body>
@@ -71,7 +86,9 @@
   <div id="controls">
     <button id="play" type="button">Begin</button>
     <button id="voice" type="button" aria-pressed="true">Voice on</button>
+    <button id="talkbtn" type="button" aria-expanded="false">Talk</button>
   </div>
+  <div id="talkmount"></div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
     <div class="note">1,189 chapters, Genesis to Revelation, each coloured by its feeling (V, from the stored verse scores)</div></div>
 <script type="module">
@@ -85,6 +102,7 @@
   import { links, signature, swells, LINK_SOURCE } from './law/links.js';
   import { seasonHue } from './law/seasons.js';
   import { afterText, HISTORY_SOURCE } from './law/after.js';
+  import { createTalk } from './form/talk.js';
 
   const el = id => document.getElementById(id);
   const json = u => fetch(u).then(r => r.json());
@@ -168,9 +186,10 @@
   window.__sono = engine;   // for smoke tests
   window.__links = linkSets;
 
-  let spans = [];
+  let spans = [], curVerse = 0;
   const p = el('verse');
   const showVerse = (ch, v, words, E, k) => {
+    curVerse = v;
     if (k) {
       hue = k.hue;
       el('state').textContent = `${k.mode} · ${Math.round(k.bpm)} BPM · ${feeling(E)}`;
@@ -305,6 +324,16 @@
   addEventListener('resize', drawStrip);
   here(start);
   preview(start);
+
+  // Talk: the companion is told the chapter on screen (a history entry: the chapter of the verse it grew from).
+  createTalk({
+    mount: el('talkmount'), toggle: el('talkbtn'),
+    context: async () => {
+      const ch = cur.history ? await loadChapter({ book: cur.ref.book, chapter: cur.ref.chapter }) : cur;
+      return { name: ch.name, chapter: ch.ref.chapter, verses: ch.text, verse: cur.history ? cur.history.ref[2] : curVerse };
+    },
+    onStart: () => { if (state === 'playing') playBtn.click(); },   // the reading rests while you talk
+  });
 
   const narrator = createNarrator();
   const voiceBtn = el('voice'), playBtn = el('play');
