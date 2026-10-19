@@ -61,23 +61,32 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
   const keyIn = $('input', { type: 'password', placeholder: 'Paste your Gemini API key', autocomplete: 'off', spellcheck: false });
   const model = $('select', {}, ...MODELS.map(m => $('option', { value: m, textContent: m })));
   model.value = MODELS.includes(get(MODEL)) ? get(MODEL) : MODELS[0];
-  const save = $('button', { type: 'button', textContent: 'Save key' });
-  const forget = $('button', { type: 'button', textContent: 'Forget key' });
+  const save = $('button', { type: 'button', className: 'tlnk', textContent: 'Save key' });
+  const forget = $('button', { type: 'button', className: 'tlnk forget', textContent: 'Forget key' });
   const call = $('button', { type: 'button', className: 'call', textContent: 'Start talking' });
   const mute = $('button', { type: 'button', className: 'mute', textContent: 'Mute', disabled: true });
   const hush = $('button', { type: 'button', className: 'hush', textContent: 'Stop reply', disabled: true });
   const demo = $('button', { type: 'button', className: 'demo', textContent: 'Try the demo (no key)' });
   const phones = $('input', { type: 'checkbox', className: 'phones' });
-  const typed = $('input', { type: 'text', placeholder: 'or type a question', enterKeyHint: 'send' });
+  const typed = $('input', { type: 'text', className: 'ttype', placeholder: 'or type a question', enterKeyHint: 'send' });
+  // Presentation only: the mic sits in a dish of rings, and data-state on the panel (idle, connecting, live, error) and data-mic pick the look.
+  const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>';
   const setup = $('details', { className: 'tsetup' }, $('summary', { textContent: 'Setup: your own free Gemini key' }),
-    $('p', { innerHTML: 'Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. It is kept only on this phone (localStorage) and sent only to Google. On the free tier there is no charge, and Google may use the conversation to improve its products. Use a project with no billing account and it can never be charged.' }),
-    $('div', { className: 'trow' }, keyIn, save, forget), $('div', { className: 'trow' }, $('label', { textContent: 'Model ' }, model)));
+    $('div', { className: 'tlabel', textContent: 'Gemini API key' }),
+    $('div', { className: 'tkey' }, keyIn, save), $('div', { className: 'tforget' }, forget),
+    $('p', { className: 'tkeynote', innerHTML: lock + '<span>Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. It is kept only on this phone (localStorage) and sent only to Google. On the free tier there is no charge, and Google may use the conversation to improve its products. Use a project with no billing account and it can never be charged.</span>' }),
+    $('label', { className: 'tmodel' }, $('span', { className: 'tlabel', textContent: 'Model' }), model));
   const panel = $('section', { id: 'talk', hidden: true },
-    $('div', { className: 'thead', textContent: 'Talk · an AI voice, not Scripture' }),
-    setup, $('div', { className: 'trow' }, call, mute, hush, demo),
-    $('div', { className: 'trow' }, $('label', { className: 'tphones' }, phones, ' Headphones (talk over the reply to interrupt)')),
-    $('div', { className: 'trow' }, typed), status, log,
+    $('div', { className: 'thead' }, $('span', { className: 'tkick', textContent: 'Talk' }), ' ',
+      $('span', { className: 'tpill' }, $('i', { ariaHidden: 'true' }), 'AI voice, not Scripture')),
+    log, status,
+    $('div', { className: 'tdish' }, call),
+    $('div', { className: 'tcap', ariaHidden: 'true' }),
+    $('div', { className: 'tbar' }, mute, hush, demo),
+    $('label', { className: 'tphones' }, $('span', {}, 'Headphones', $('small', { textContent: 'Talk over the reply to interrupt' })), phones),
+    $('div', { className: 'trow' }, typed), setup,
     $('div', { className: 'tnote', textContent: TALK_SOURCE }));
+  const look = s => { panel.dataset.state = s; };
   mount.append(panel);
 
   // State for tests only (never the socket, the URL or the key), and only in test mode.
@@ -89,7 +98,7 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
   const refresh = () => {
     keyIn.value = ''; keyIn.placeholder = hasKey() ? 'Key saved on this phone ✓ (paste to replace)' : 'Paste your Gemini API key';
     forget.disabled = !hasKey(); setup.open = !hasKey();
-    if (!live) say(hasKey() ? 'Ready. Tap Start talking, then speak.' : 'No key yet: try the demo, or add your own free key below.');
+    if (!live) { look('idle'); say(hasKey() ? 'Ready. Tap Start talking, then speak.' : 'No key yet: try the demo, or add your own free key below.'); }
   };
   save.onclick = () => { const k = keyIn.value.trim(); if (k) { put(KEY, k); refresh(); } };
   forget.onclick = () => { put(KEY, ''); refresh(); };
@@ -119,7 +128,7 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
   const line = (who, text) => {
     if (!text) return;
     if (who === lastWho && lastLine) { lastLine.lastChild.textContent += text; st.transcript[st.transcript.length - 1].text += text; }
-    else { lastLine = $('p', { className: who }, $('b', { textContent: who === 'you' ? 'You: ' : 'AI: ' }), $('span', { textContent: text })); log.append(lastLine); st.transcript.push({ who, text }); }
+    else { lastLine = $('p', { className: who }, $('b', { textContent: who === 'you' ? 'You: ' : 'AI voice · not Scripture' }), $('span', { textContent: text })); log.append(lastLine); st.transcript.push({ who, text }); }
     lastWho = who; log.scrollTop = log.scrollHeight;
   };
   const endTurn = () => { lastWho = null; lastLine = null; };
@@ -158,7 +167,7 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
       mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     } catch (e) {
       say(e.name === 'NotAllowedError' || e.name === 'SecurityError' ? MIC_HELP : `No microphone (${e.name}). You can still type a question.`);
-      st.micError = e.name; return false;
+      st.micError = e.name; panel.dataset.mic = e.name === 'NotAllowedError' || e.name === 'SecurityError' ? 'blocked' : 'none'; return false;
     }
     if (!live) { mic.getTracks().forEach(t => t.stop()); mic = null; return false; }
     try { if (headphonesLikely(await navigator.mediaDevices.enumerateDevices())) phones.checked = true; } catch {}
@@ -179,12 +188,12 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
   async function start(mode) {
     if (live) return;
     const key = get(KEY);
-    if (mode === 'live' && !key) { setup.open = true; say('Add your Gemini key first, or try the demo.'); return; }
-    if (mode === 'live' && !navigator.onLine) { say(explainClose(0, '', false)); return; }
+    if (mode === 'live' && !key) { setup.open = true; look('error'); say('Add your Gemini key first, or try the demo.'); return; }
+    if (mode === 'live' && !navigator.onLine) { look('error'); say(explainClose(0, '', false)); return; }
     live = true; onLive?.(true);
     Object.assign(st, { mode, error: null, ready: false, micError: null });
     call.textContent = 'End'; mute.disabled = false; demo.disabled = true;
-    say('Connecting…');
+    delete panel.dataset.mic; look('connecting'); say('Connecting…');
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)(); await ctx.resume();
       const micOk = await startMic();
@@ -198,7 +207,7 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
         if (ws !== sock) return;
         const m = JSON.parse(typeof ev.data === 'string' ? ev.data : await ev.data.text());
         if (m.setupComplete) {
-          clearTimeout(timer); st.ready = true;
+          clearTimeout(timer); st.ready = true; look('live');
           say((mode === 'demo' ? 'Demo: speak (or type), and a mock reply will play. ' : `Listening · ${c.name} ${c.chapter}${c.verse ? ':' + c.verse : ''}. `) + (micOk ? '' : (st.micError === 'NotAllowedError' ? MIC_HELP : 'No microphone: type a question.')));
         }
         const sc = m.serverContent;
@@ -233,7 +242,7 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
     ctx?.close().catch(() => {}); ctx = null;
     call.textContent = 'Start talking'; mute.disabled = true; mute.textContent = 'Mute'; muted = false; demo.disabled = false;
     if (was) onLive?.(false);
-    say(msg);
+    look(/^Call ended/.test(msg) ? 'idle' : 'error'); say(msg);
   }
   call.onclick = () => (live ? stop() : start('live'));
   demo.onclick = () => start('demo');
