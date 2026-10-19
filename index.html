@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>Sonolumina</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22 fill=%22%23d9b65a%22/%3E%3C/svg%3E">
 <style>
   html, body { margin: 0; min-height: 100%; background: #000; color: #e9e2cf;
     font-family: Georgia, 'Times New Roman', serif; }
@@ -15,6 +16,7 @@
   h1 { font-weight: normal; letter-spacing: .3em; font-size: .85rem;
     opacity: .55; margin: 0; text-transform: uppercase; }
   canvas { width: min(78vw, 46vh); aspect-ratio: 1; border-radius: 50%; }
+  #dish { pointer-events: none; }   /* the light takes no taps: every tap goes to the controls (preview fix, item 14) */
   #verse { max-width: 32rem; text-align: center; font-size: 1.15rem;
     line-height: 1.6; min-height: 5.2em; transition: opacity 2s; }
   #heading { display: block; margin-bottom: .5rem; font-size: .85rem; font-style: italic; opacity: .6; }
@@ -55,15 +57,148 @@
   #verse .notes { display: block; font: .7rem/1.45 system-ui, sans-serif; opacity: .5; text-align: left; margin-top: .6rem; }
   #verse .tied { display: block; border-left: 2px solid #6a5a35; padding-left: .7rem; text-align: left; }
   #ending { font: .85rem system-ui, sans-serif; opacity: .75; text-align: center; max-width: 30rem; }
+  [hidden] { display: none !important; }
+  /* ---- Build 2026101817: tabs, player bar, sheets, settings, study ---- */
+  body { display: block; padding: 0 0 calc(196px + env(safe-area-inset-bottom)); }
+  .ui, .ui button, .ui input, .ui select, .ui textarea { font-family: system-ui, sans-serif; }
+  button { cursor: pointer; }
+  #top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: .6rem;
+    padding: .7rem 1rem .5rem; background: linear-gradient(#000 70%, #0000); }
+  #top h1 { flex: 1; text-align: center; padding-left: 2.4rem; }
+  #badge { min-width: 1px; font: 600 .55rem system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9b65a;
+    border: 1px solid #6a5a35; border-radius: 1rem; padding: .15rem .5rem; position: absolute; left: 1rem; }
+  .ib { background: none; border: 0; color: #e9e2cf; font-size: 1.25rem; width: 2.4rem; height: 2.4rem; border-radius: 50%; }
+  .ib:active { background: #24201a; }
+  .tab { display: none; }
+  .tab.on { display: flex; flex-direction: column; align-items: center; gap: 1.4rem; padding: .5rem 1.5rem 1.5rem; box-sizing: border-box; }
+  .tab.on > * { flex-shrink: 0; }
+  .page { width: min(100%, 34rem); align-items: stretch !important; gap: .9rem !important; }
+  .page h2 { font: 600 .75rem system-ui, sans-serif; letter-spacing: .2em; text-transform: uppercase; opacity: .6; margin: .3rem 0 0; text-align: center; }
+  .dim { opacity: .55; font: .75rem/1.45 system-ui, sans-serif; }
+  .card { background: #0f0e0b; border: 1px solid #2a261e; border-radius: 12px; padding: .8rem .9rem; }
+  .pill, .chips button, .seg button { font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a;
+    border-radius: 2rem; padding: .45rem .9rem; }
+  .pill.gold, .chips button.on, .seg button.on { background: #d9b65a; color: #141218; border-color: #d9b65a; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .seg { display: flex; flex-wrap: wrap; gap: .35rem; }
+  input[type=text], input[type=search], input[type=number], textarea, select { width: 100%; box-sizing: border-box; background: #15130f; color: #e9e2cf;
+    border: 1px solid #3a352a; border-radius: 8px; padding: .55rem .6rem; font: .9rem system-ui, sans-serif; }
+  textarea { min-height: 5rem; font-family: Georgia, serif; }
+  input[type=range] { width: 100%; accent-color: #d9b65a; }
+  /* player bar */
+  #bar { position: fixed; left: 0; right: 0; bottom: calc(52px + env(safe-area-inset-bottom)); z-index: 8; background: #0b0a08f2;
+    border-top: 1px solid #2a261e; padding: .45rem .7rem .4rem; box-sizing: border-box; backdrop-filter: blur(8px); }
+  #bar .row1 { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; font: .78rem system-ui, sans-serif; }
+  #barRef { font: 1rem Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #barSub { opacity: .6; white-space: nowrap; }
+  #bar .prog { height: 3px; background: #2a261e; border-radius: 2px; margin: .35rem 0 .3rem; overflow: hidden; }
+  #barProg { display: block; height: 100%; width: 0; background: #d9b65a; transition: width .4s; }
+  #bar .tr { display: flex; justify-content: space-between; align-items: center; gap: .2rem; }
+  #bar .tr button { background: none; border: 0; color: #e9e2cf; font-size: 1.05rem; width: 2.3rem; height: 2.1rem; border-radius: 50%; }
+  #bar .tr button.on { color: #d9b65a; }
+  #bar .tr button:disabled { opacity: .3; }
+  #bar .tr #play { width: auto; min-width: 6.5rem; height: 2.5rem; font: .9rem system-ui, sans-serif; border: 1px solid #6a5a35; border-radius: 2rem; background: #15130f; }
+  #bar .tb { display: flex; gap: .3rem; margin-top: .3rem; }
+  #bar .tb button { flex: 1; background: #ffffff0d; border: 0; border-radius: 12px; font: .62rem system-ui, sans-serif; color: #c9c4b6; padding: .3rem .1rem; line-height: 1.25; }
+  #bar .tb button b { display: block; font-size: .88rem; color: #e9e2cf; font-weight: 600; }
+  #bar .tb button.on { background: #d9b65a; color: #141218; }
+  #bar .tb button.on b { color: #141218; }
+  #tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; display: flex; background: #000; border-top: 1px solid #1d1a14;
+    padding-bottom: env(safe-area-inset-bottom); }
+  #tabs button { flex: 1; height: 52px; background: none; border: 0; color: #e9e2cf; opacity: .5; font: .58rem system-ui, sans-serif; letter-spacing: .02em; }
+  #tabs button b { display: block; font-size: 1.05rem; font-weight: normal; margin-bottom: 2px; }
+  #tabs button.on { opacity: 1; color: #fff3c4; }
+  /* sheets */
+  #scrim { position: fixed; inset: 0; background: #0009; z-index: 20; }
+  #sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; background: #12110d; border-top: 1px solid #3a352a; border-radius: 16px 16px 0 0;
+    max-height: 82vh; overflow: auto; padding: .4rem 1rem calc(1.2rem + env(safe-area-inset-bottom)); box-sizing: border-box; }
+  #sheet .grab { width: 2.6rem; height: 4px; border-radius: 2px; background: #3a352a; margin: .3rem auto .6rem; }
+  #sheet h3 { font: 600 .95rem system-ui, sans-serif; margin: 0 0 .7rem; display: flex; justify-content: space-between; align-items: center; }
+  #sheet h4 { font: 600 .7rem system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; opacity: .55; margin: 1rem 0 .45rem; }
+  #sheet .row { display: flex; gap: .5rem; align-items: center; margin: .45rem 0; font: .85rem system-ui, sans-serif; }
+  #sheet .row > label { flex: 1; }
+  .qi { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .5rem .2rem; border-bottom: 1px solid #1f1c16; font: .85rem system-ui, sans-serif; }
+  .qi button { flex-shrink: 0; }
+  /* dial (ported from Logos Theta build 2026101209) */
+  #dialW { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 6px 0; }
+  #dial { width: 190px; height: 190px; touch-action: none; cursor: grab; }
+  #dialW .dmax { flex-basis: 100%; display: flex; gap: 6px; justify-content: center; align-items: center; font: .8rem system-ui, sans-serif; }
+  #dialW .dmax input { width: 70px; }
+  /* settings */
+  #settings { position: fixed; inset: 0; z-index: 30; background: #000; overflow: auto; padding: 0 1rem 3rem; box-sizing: border-box; }
+  #settings .hd { position: sticky; top: 0; background: #000; display: flex; align-items: center; justify-content: space-between; padding: .6rem 0; z-index: 1; }
+  #settings .hd b { font: 600 1rem system-ui, sans-serif; }
+  #settings section { max-width: 34rem; margin: 0 auto 1rem; }
+  #settings h4 { font: 600 .7rem system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #d9b65a; margin: 1.1rem 0 .4rem; }
+  .set { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .6rem 0; border-bottom: 1px solid #1a1712; font: .88rem system-ui, sans-serif; }
+  .set .l { flex: 1; } .set .l small { display: block; opacity: .5; font-size: .72rem; margin-top: .15rem; }
+  .set.col { flex-direction: column; align-items: stretch; }
+  .sw { appearance: none; -webkit-appearance: none; width: 2.6rem; height: 1.5rem; border-radius: 1rem; background: #3a352a; position: relative; flex-shrink: 0; margin: 0; }
+  .sw::after { content: ''; position: absolute; top: .15rem; left: .15rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: #e9e2cf; transition: left .15s; }
+  .sw:checked { background: #d9b65a; } .sw:checked::after { left: 1.25rem; }
+  /* speed-read */
+  #rsvp { position: fixed; inset: 0; z-index: 25; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6rem; padding: 1rem; }
+  #rsvpW { font: 2.1rem/1.2 Georgia, serif; min-height: 3.2em; display: flex; align-items: center; justify-content: center; text-align: center; max-width: 92vw; }
+  #rsvpW .f { color: #ff6b5a; }
+  #rsvpRef { font: .8rem system-ui, sans-serif; opacity: .55; }
+  #rsvp .ctl { display: flex; gap: .6rem; align-items: center; }
+  /* read */
+  .vrow { display: grid; gap: .25rem .8rem; padding: .55rem .5rem; border-radius: 8px; line-height: 1.55; }
+  .vrow .n { font: 600 .65rem system-ui, sans-serif; opacity: .5; vertical-align: super; margin-right: .3rem; }
+  .vrow .kjv { opacity: .75; font-size: .92em; }
+  .vrow .orig { font-size: 1.05em; opacity: .85; }
+  .vrow .orig.he { direction: rtl; text-align: right; font-family: 'SBL Hebrew', 'Ezra SIL', 'Times New Roman', serif; }
+  .vrow .note { font: italic .8rem Georgia, serif; opacity: .7; border-left: 2px solid #6a5a35; padding-left: .5rem; }
+  .vrow.playing { outline: 1px solid #6a5a35; }
+  .vrow .lbl { font: .58rem system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; opacity: .4; }
+  .hl-gold { background: #3a301a; } .hl-rose { background: #3a1f24; } .hl-sky { background: #1a2a3a; } .hl-sage { background: #1f3020; }
+  .sw-c { width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 2px solid #3a352a; }
+  .sw-c.hl-gold { background: #b8923a; } .sw-c.hl-rose { background: #b0505e; } .sw-c.hl-sky { background: #4f7fb0; } .sw-c.hl-sage { background: #5f9a62; }
+  .row { display: flex; gap: .5rem; align-items: center; justify-content: space-between; margin: .45rem 0; font: .85rem system-ui, sans-serif; }
+  .sw-c.on { border-color: #fff; box-shadow: 0 0 0 2px #000 inset; }
+  #verse.hl-gold, #verse.hl-rose, #verse.hl-sky, #verse.hl-sage { border-radius: 12px; padding: .4rem .6rem; }
+  #vact { display: flex; gap: .4rem; justify-content: center; }
+  #vact button { font: .72rem system-ui, sans-serif; color: #e9e2cf; background: none; border: 1px solid #2a261e; border-radius: 1rem; padding: .25rem .7rem; opacity: .7; }
+  mark { background: #6a5a35; color: #fff3c4; border-radius: 3px; }
+  .res { padding: .55rem .3rem; border-bottom: 1px solid #1a1712; font-size: .92rem; line-height: 1.5; }
+  .res .r { font: 600 .72rem system-ui, sans-serif; color: #d9b65a; display: flex; justify-content: space-between; gap: .4rem; margin-bottom: .2rem; }
+  .res .r span { display: flex; gap: .3rem; }
+  .res .r button { font: .7rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 1rem; padding: .15rem .55rem; }
+  .flash { animation: fl 1.6s; } @keyframes fl { from { background: #6a5a35; } }
+  #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 210px; z-index: 40; background: #24201a; border: 1px solid #6a5a35;
+    padding: .5rem .9rem; border-radius: 2rem; font: .8rem system-ui, sans-serif; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 86vw; text-align: center; }
+  #toast.on { opacity: 1; }
+  .orig-t { font: 600 .8rem system-ui, sans-serif; margin: .2rem 0; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: .2rem .7rem; font: .8rem system-ui, sans-serif; }
+  .kv b { opacity: .6; font-weight: 600; }
+  /* Talk: a live voice conversation (an AI, not Scripture) */
+  #talk { width: min(100%, 32rem); background: #0f0e0b; border: 1px solid #2a261e; border-radius: 12px; padding: .8rem; box-sizing: border-box;
+    font: .8rem/1.45 system-ui, sans-serif; user-select: text; }
+  #talk .thead { font-weight: 600; letter-spacing: .08em; opacity: .75; margin-bottom: .5rem; }
+  #talk .trow { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0; align-items: center; }
+  #talk input, #talk select { flex: 1 1 10rem; font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #17150f; border: 1px solid #3a352a; border-radius: 6px; padding: .45rem; }
+  #talk button { font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 2rem; padding: .45rem .9rem; }
+  #talk button.call { background: #2a2418; }
+  #talk button:disabled, #controls button:disabled { opacity: .4; }
+  #talk .tphones { opacity: .7; }
+  #talk a { color: #e9d9a8; }
+  #talk .tsetup p { opacity: .7; margin: .4rem 0; }
+  #talk .tstatus { opacity: .75; min-height: 1.2em; }
+  #talk .tlog { max-height: 14rem; overflow-y: auto; margin-top: .4rem; }
+  #talk .tlog p { margin: .3rem 0; } #talk .tlog p.you { opacity: .7; }
+  #talk .tnote { font-size: .65rem; opacity: .45; margin-top: .5rem; }
 </style>
 </head>
 <body>
-  <h1>Sonolumina</h1>
+  <header id="top" class="ui"><span id="badge" aria-hidden="true" style="visibility:hidden"></span><h1>Sonolumina</h1><button class="ib" id="gear" type="button" aria-label="Settings">⚙</button></header>
+  <main>
+  <section id="tab-listen" class="tab on">
   <nav id="nav"><a id="prev">‹</a><button id="where" type="button" aria-expanded="false"></button><a id="next">›</a></nav>
   <a id="back" hidden></a>
   <div id="picker" hidden></div>
   <canvas id="dish" width="200" height="200" aria-hidden="true"></canvas>
   <p id="verse" aria-live="polite"></p>
+  <div id="vact" class="ui"><button type="button" id="vaHl">☆ Highlight</button><button type="button" id="vaNote">✎ Note</button><button type="button" id="vaRecall">＋ Recall</button></div>
   <div id="links"></div>
   <div id="state"></div>
   <div id="labels"></div>
@@ -71,20 +206,91 @@
   <div id="controls">
     <button id="play" type="button">Begin</button>
     <button id="voice" type="button" aria-pressed="true">Voice on</button>
+    <button id="talkbtn" type="button" aria-expanded="false">Talk</button>
   </div>
+  <div id="talkmount"></div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
     <div class="note">1,189 chapters, Genesis to Revelation, each coloured by its feeling (V, from the stored verse scores)</div></div>
+  </section>
+  <section id="tab-read" class="tab page ui"></section>
+  <section id="tab-recall" class="tab page ui"></section>
+  <section id="tab-notes" class="tab page ui"></section>
+  <section id="tab-search" class="tab page ui"></section>
+  <section id="tab-origins" class="tab page ui"></section>
+  <section id="tab-agent" class="tab page ui">
+    <h2>Agent</h2>
+    <div class="card">
+      <div class="orig-t">Agent desk (Paperclip) · opens on your Tailscale network only</div>
+      <p class="dim">The agent desk runs on a private computer on your Tailscale network. This button only opens it in a new tab; the app sends it nothing and reads nothing from it. Off the tailnet (or on a phone without Tailscale on) the page will not load.</p>
+      <p><a class="pill gold" id="agentGo" href="http://100.89.107.88:3100/sun/agents" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block">Open agent desk ↗</a></p>
+      <p class="dim">Placeholder: nothing else here yet. What the agents do inside the app is still to be decided.</p>
+    </div>
+  </section>
+  </main>
+
+  <div id="bar" class="ui">
+    <div class="row1"><span id="barRef">—</span><span id="barSub"></span></div>
+    <div class="prog"><i id="barProg"></i></div>
+    <div class="tr">
+      <button id="rep" type="button" title="Repeat: off" aria-label="Repeat">🔁</button>
+      <button id="pch" type="button" title="Previous chapter" aria-label="Previous chapter">⏮</button>
+      <button id="pv" type="button" title="Back one verse" aria-label="Back one verse">↺</button>
+      <button id="nv" type="button" title="Forward one verse" aria-label="Forward one verse">↻</button>
+      <button id="nch" type="button" title="Next chapter" aria-label="Next chapter">⏭</button>
+    </div>
+    <div class="tb">
+      <button id="tbSpd" type="button"><b id="tbSpdV">1×</b>Speed</button>
+      <button id="tbVoice" type="button"><b id="tbVoiceV">on</b>Voice</button>
+      <button id="tbSlp" type="button"><b id="tbSlpV">⏾</b>Sleep</button>
+      <button id="tbQ" type="button"><b>☰</b>Up next</button>
+      <button id="tbRsvp" type="button"><b>⚡</b>Speed-read</button>
+    </div>
+  </div>
+  <nav id="tabs" class="ui">
+    <button data-tab="listen" class="on" type="button"><b>◉</b>Listen</button>
+    <button data-tab="read" type="button"><b>☰</b>Read</button>
+    <button data-tab="recall" type="button"><b>↻</b>Recall</button>
+    <button data-tab="notes" type="button"><b>✎</b>Notes</button>
+    <button data-tab="search" type="button"><b>⌕</b>Search</button>
+    <button data-tab="origins" type="button"><b>∿</b>Origins</button>
+    <button data-tab="agent" type="button"><b>◇</b>Agent</button>
+  </nav>
+  <div id="scrim" hidden></div>
+  <div id="sheet" class="ui" hidden role="dialog" aria-modal="true"><div class="grab"></div><h3><span id="sheetT"></span><button class="ib" id="sheetX" type="button" aria-label="Close">✕</button></h3><div id="sheetB"></div></div>
+  <div id="settings" class="ui" hidden role="dialog" aria-modal="true"></div>
+  <div id="rsvp" class="ui" hidden>
+    <div id="rsvpRef"></div><div id="rsvpW"></div>
+    <div class="ctl"><button class="pill" id="rsvpSlow" type="button">− slower</button><b id="rsvpSpd">1×</b><button class="pill" id="rsvpFast" type="button">faster +</button></div>
+    <div class="ctl"><button class="pill" id="rsvpPP" type="button">Pause</button><button class="pill gold" id="rsvpX" type="button">Close</button></div>
+    <div class="dim" id="rsvpNote"></div>
+  </div>
+  <div id="toast" class="ui" role="status"></div>
 <script type="module">
   import { LABELS } from './law/home.js';
   import { EMOTION_SOURCE, feeling } from './law/emotion.js';
   import { createEngine } from './form/engine.js';
   import { createDish } from './form/dish.js';
   import { createPlayer } from './form/player.js';
-  import { createNarrator } from './form/narrator.js';
+  import { createNarrator, MAX_RATE, DEVICE_TOPS } from './form/narrator.js';
+  import { createEleven, createReader, elevenKey, MODELS_FALLBACK, stripTags } from './form/eleven.js';
   import { parseRef, sung, isFinal, next, prev, chapterIndex, refAt } from './law/canon.js';
   import { links, signature, swells, LINK_SOURCE } from './law/links.js';
   import { seasonHue } from './law/seasons.js';
   import { afterText, HISTORY_SOURCE } from './law/after.js';
+  import { loadSettings, saveSettings, resetSettings, SPEEDS, marks, mark, recall, addRecall, dropRecall } from './page/store.js';
+  import { mountDial } from './page/dial.js';
+  import { createStudy } from './page/study.js';
+  import { createTalk } from './form/talk.js';
+
+  const S = loadSettings();
+  const save = () => saveSettings(S);
+  let player = null, state = 'ready';
+  window.__S = S;   // for smoke tests
+  const BUILD = '2026101817';
+  const toastEl = document.getElementById('toast'); let toastT = 0;
+  const toast = msg => { toastEl.textContent = msg; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2200); };
+  const keyOf = (ch, v) => ch.history ? '' : `${ch.ref.book}.${ch.ref.chapter}.${v}`;
+  const fmtSpeed = x => (+(+x).toFixed(2)) + '×';
 
   const el = id => document.getElementById(id);
   const json = u => fetch(u).then(r => r.json());
@@ -139,21 +345,25 @@
   const LAST = 'sonolumina.last';
   const store = (k, v) => { try { v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); return localStorage.getItem(k); } catch { return null; } };
   const [addr, ...opts] = location.search.slice(1).split('&');
-  const from = opts.find(o => o.startsWith('from='))?.slice(5);
+  let from = opts.find(o => o.startsWith('from='))?.slice(5);
   const openAt = async a => {
     const m = /^After\.(\d+)$/i.exec(a || '');
     if (m && +m[1] >= 1 && +m[1] <= H.length) return loadAfter(+m[1] - 1);
     const r = parseRef(canon, a);
     return r ? Object.assign(await loadChapter(r), { at: r.verse }) : null;
   };
-  let start = (await openAt(addr)) || (!addr && await openAt(store(LAST))) || await loadChapter({ book: 0, chapter: 1 });
+  // Preview build: the last place is kept to the verse (resume where you left off), unless Settings turns that off.
+  const lastAddr = () => { const l = store(LAST) || ''; return S.resume ? l : l.replace(/^([^.]+\.\d+)\.\d+$/, '$1'); };
+  // A reload keeps the chapter in the address; the verse comes from the last place when it is the same chapter.
+  const sameCh = addr && /^[^.]+\.\d+$/.test(addr) && lastAddr().toLowerCase().startsWith(addr.toLowerCase() + '.') ? lastAddr() : addr;
+  let start = (await openAt(sameCh)) || (!addr && await openAt(lastAddr())) || await loadChapter({ book: 0, chapter: 1 });
   let cur = start;
   const addrOf = ch => ch.history ? `After.${ch.ref.after + 1}` : `${fileOf(ch.ref.book)}.${ch.ref.chapter}`;
   const titleOf = ch => ch.history ? `After the Word ${ch.ref.after + 1}` : `${ch.name} ${ch.ref.chapter}`;
   const here = ch => {
     cur = ch;
     document.title = `${titleOf(ch)} · Sonolumina`;
-    history.replaceState(null, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : ''));
+    history.replaceState(history.state, '', '?' + addrOf(ch) + (from && ch === start ? '&from=' + from : '') + (opts.includes('talktest') ? '&talktest' : ''));
     store(LAST, addrOf(ch));
     navTo(ch);
   };
@@ -164,18 +374,22 @@
     const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
     return [0, 8, 4].map(n => 255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
   };
-  createDish(el('dish'), engine, () => hsl(hue, 0.55, 0.78));
+  createDish(el('dish'), engine, () => hsl(hue, 0.55, 0.78), () => S.dish);
+  el('dish').hidden = S.dish === 'off';
   window.__sono = engine;   // for smoke tests
   window.__links = linkSets;
 
-  let spans = [];
+  let spans = [], shown = null, curVerse = 0;
   const p = el('verse');
   const showVerse = (ch, v, words, E, k) => {
+    curVerse = v;
     if (k) {
       hue = k.hue;
-      el('state').textContent = `${k.mode} · ${Math.round(k.bpm)} BPM · ${feeling(E)}`;
+      const sp = player ? player.speed : S.speed;
+      el('state').textContent = `${k.mode} · ${Math.round(k.bpm * sp)} BPM${sp !== 1 ? ` (${Math.round(k.bpm)} × ${sp})` : ''} · ${feeling(E)}`;
     }
     p.innerHTML = '';
+    shown = { ch, v }; paintMark();
     const add = (cls, text) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; p.append(s); return s; };
     let tied = p;
     if (ch.history) {
@@ -274,12 +488,15 @@
   nav.where.onclick = () => {
     const open = nav.picker.hidden;
     nav.picker.hidden = !open; nav.where.setAttribute('aria-expanded', open);
+    if (open) overlayOpened(); else overlayClosed();
     if (open) pick(cur.history ? 'after' : cur.ref.book);
   };
-  if (from) {
-    const r = parseRef(canon, from);
-    if (r) { const b = el('back'); b.hidden = false; b.href = '?' + from; b.textContent = `↩ back to ${canon[r.book][0]} ${r.chapter}:${r.verse || 1}`; }
-  }
+  const setBack = () => {
+    const r = from && parseRef(canon, from), b = el('back');
+    b.hidden = !r;
+    if (r) { b.href = '?' + from; b.textContent = `↩ back to ${canon[r.book][0]} ${r.chapter}:${r.verse || 1}`; }
+  };
+  setBack();
 
   // Day 4: lights for seasons. One thin band per chapter, coloured by its mean feeling with the light's hue rule;
   // the white mark is where you are. Tap to open that chapter.
@@ -300,21 +517,55 @@
   strip.onclick = e => {
     const r = strip.getBoundingClientRect();
     const at = refAt(canon, Math.min(1188, Math.max(0, Math.floor((e.clientX - r.left) / r.width * 1189))));
-    location.href = `?${fileOf(at.book)}.${at.chapter}`;
+    go(`${fileOf(at.book)}.${at.chapter}`);
   };
   addEventListener('resize', drawStrip);
   here(start);
   preview(start);
 
-  const narrator = createNarrator();
-  const voiceBtn = el('voice'), playBtn = el('play');
+  // ======================= Build 2026101817 =======================
+
+  // Talk: the companion is told the chapter on screen (a history entry: the chapter of the verse it grew from).
+  // While a call is live the reading cannot start or resume, so the two voices never overlap.
+  let talkLive = false;   // the new player bar, Read tab and verse sheet also wait while a call is live
+  const talk = createTalk({
+    mount: el('talkmount'), toggle: el('talkbtn'), test: opts.includes('talktest'),
+    context: async () => {
+      const ch = cur.history ? await loadChapter({ book: cur.ref.book, chapter: cur.ref.chapter }) : cur;
+      return { name: ch.name, chapter: ch.ref.chapter, verses: ch.text, verse: cur.history ? cur.history.ref[2] : curVerse };
+    },
+    onLive: on => {
+      talkLive = on;
+      if (on && state === 'playing') playBtn.click();   // the reading rests while you talk
+      playBtn.disabled = on;
+      playBtn.title = on ? 'End the Talk call to read on' : '';
+    },
+  });
+
+
+  // ---------- voice ----------
+  const narrator = createNarrator();   // the phone's own voice: the free default, and the fallback
+  narrator.on = S.voiceOn;
+  const eleven = createEleven(S, { onNotice: m => toast(m) });
+  const reader = createReader(narrator, eleven);   // ElevenLabs when set up and working, else the phone voice
+  reader.on = S.voiceOn;
+  narrator.voiceName = S.voiceName;
+  narrator.pitch = S.pitch;
+  const voiceRests = () => (player ? player.speed : S.speed) > MAX_RATE;   // above the speech max: words and tones only
+  const speaking = () => reader.on && !voiceRests();
+  // The phone voice past its top rate: held at the top and kept in step (each verse starts on time; an
+  // unfinished verse is cut off). Never with ElevenLabs, whose audio plays at any rate.
+  const inStep = () => !!(now && speaking() && reader.using !== 'eleven' && narrator.held(wpmOf(now.words, now.vs, player ? player.speed : S.speed), player ? player.speed : S.speed));
+  const stepNote = () => `Phone voice tops out at ${narrator.top}×: it keeps in step by starting each verse on time (ends of long verses are cut). ElevenLabs reads every word at any speed.`;
+  narrator.top = S.deviceTop;
   const setVoice = on => {
-    narrator.on = on;
-    voiceBtn.textContent = narrator.on ? 'Voice on' : 'Voice off';
-    voiceBtn.setAttribute('aria-pressed', narrator.on);
+    S.voiceOn = !!on; save();
+    reader.on = S.voiceOn;
+    paintBar();
+    if (sheetKind === 'voice') openSheet('voice');
   };
-  if (!narrator.available) { voiceBtn.disabled = true; voiceBtn.textContent = 'No voice'; }
-  voiceBtn.onclick = () => setVoice(!narrator.on);
+  if (!reader.available) el('voice').disabled = true;
+  el('voice').onclick = () => setVoice(!narrator.on);
 
   // Keep the screen awake while reading.
   let lock = null;
@@ -328,56 +579,541 @@
     if (document.visibilityState === 'visible' && player && !player.paused && state === 'playing') { lock = null; wake(true); }
   });
 
-  let player = null, state = 'ready';
-  playBtn.onclick = () => {
-    if (state === 'ready') {
-      state = 'playing';
-      playBtn.textContent = 'Pause';
-      el('ending').hidden = true;
-      el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, start.history ? HISTORY_SOURCE : LINK_SOURCE, LABELS.DISH].join('<br>');
-      player = createPlayer({
-        engine, lex: cb.lex, first: start, load,
-        narrating: () => narrator.on,
-        onChapter: ch => here(ch),
-        onVerse: (ch, v, words, E, k, vs) => {
-          showVerse(ch, v, words, E, k);
-          narrator.speak(words.join(' '), words.length / (vs.dur / 60));
-        },
-        linksFor,
-        onLink: (ch, v, l) => {
-          const a = el('links').querySelector(`a[data-k="${l.book}.${l.c}.${l.v}"]`);
-          if (a) { a.classList.add('lit'); setTimeout(() => a.classList.remove('lit'), 1300); }
-        },
-        onWord: (ch, v, i) => { spans.forEach((s, j) => s.className = j === i ? 'now' : ''); },
-        onClose: () => {
-          // Rest. The whole Bible has come home: the close on 110 Hz.
-          spans.forEach(x => x.className = '');
-          el('state').textContent = 'Amen · IV–I · home 110 Hz';
-        },
-        onEnd: async () => {
-          state = 'ready'; wake(false);
-          // Scripture has come home; after a rest, the history may follow (SPIRIT §11), only when asked.
-          if (!cur.history && cur.final) {
-            el('ending').hidden = false;
-            start = await loadAfter(0); here(start);
-            playBtn.textContent = 'After the Word ›';
-          } else {
-            start = cur.history ? await loadChapter({ book: 0, chapter: 1 }) : start;
-            here(start); preview(start);
-            playBtn.textContent = 'Begin again';
-          }
-        },
-      });
-      player.play();
-      wake(true);
-    } else if (state === 'playing') {
-      state = 'paused'; playBtn.textContent = 'Resume';
-      player.pause(); narrator.pause(); wake(false);
-    } else if (state === 'paused') {
-      state = 'playing'; playBtn.textContent = 'Pause';
-      player.resume(); narrator.resume(); wake(true);
+  // ---------- what is playing ----------
+  let now = null, wordAt = -1;   // now: { ch, v, words, vs, E, k }
+  const wpmOf = (words, vs, sp) => words.length / (vs.dur / sp / 60);
+  function speakRest() {   // after a speed change or a seek mid-verse: read the rest of the verse at the new rate
+    if (!now || state !== 'playing') return;
+    if (!speaking()) { reader.stop(); return; }
+    const rest = now.words.slice(Math.max(0, wordAt)).join(' ');
+    reader.restart(rest, wpmOf(now.words, now.vs, player.speed), player.speed);
+  }
+
+  // Up next: the queue first, then (with auto play) the next chapter; repeat chapter plays it again.
+  const loadNext = async ref => {
+    if (S.repeat === 'chapter') return ref.after !== undefined ? loadAfter(ref.after) : loadChapter({ book: ref.book, chapter: ref.chapter });
+    while (S.queue.length) {
+      const a = S.queue.shift(); save();
+      const ch = await openAt(a);
+      if (ch) { delete ch.at; return ch; }
     }
+    if (!S.autoplay) return null;
+    return load(ref);
   };
+
+  // Expressive reading markup (data/expression, the Scribe's files) with the plain-text hashes beside them
+  // (data/expression-meta/index.json). Only chapters in the index are fetched; a verse's markup is used
+  // only when its hash matches the plain text, and only by ElevenLabs v3 (form/eleven.js).
+  let exprIndex = null; const exprFiles = new Map();
+  const exprReady = json('./data/expression-meta/index.json').then(x => { exprIndex = x; }).catch(() => { exprIndex = {}; });
+  function exprEntry(ch, v, plain) {
+    if (!S.elExpressive || ch.history || !exprIndex) return null;
+    const id = `${fileOf(ch.ref.book)}.${ch.ref.chapter}`, h = exprIndex[id]?.[String(v)];
+    if (!h) return null;
+    if (!exprFiles.has(id)) { exprFiles.set(id, null); json(`./data/expression/${id}.json`).then(x => exprFiles.set(id, x)).catch(() => {}); }
+    const t = exprFiles.get(id)?.[String(v)];
+    return t ? { t, h } : null;
+  }
+  const exprWarm = ch => { if (S.elExpressive && !ch.history && exprIndex) exprEntry(ch, 1, ''); };
+
+  let sleepEnd = 0, sleepEoc = false, sleepFrom = null;
+  const playBtn = el('play');
+
+  // Start playing chapter ch from verse v (in a tap, so the phone lets the sound start).
+  function begin(ch = start, v = 1) {
+    if (talkLive) { toast('End the Talk call to read on'); return; }
+    engine.start();
+    if (player) player.stop(true);
+    reader.stop();
+    start = ch; here(ch);
+    state = 'playing';
+    playBtn.textContent = 'Pause';
+    el('ending').hidden = true;
+    el('labels').innerHTML = [LABELS.F0, LABELS.WORD, EMOTION_SOURCE, ch.history ? HISTORY_SOURCE : LINK_SOURCE, LABELS.DISH].join('<br>');
+    sleepFrom = ch; exprWarm(ch);
+    const p = createPlayer({
+      engine, lex: cb.lex, first: ch, load: loadNext, speed: S.speed, startVerse: v,
+      narrating: speaking, repeatVerse: () => S.repeat === 'verse',
+      onChapter: c => {
+        if (sleepEoc && c !== sleepFrom) { sleepEoc = false; here(c); preview(c); sleepPause('Sleep: stopped at the end of the chapter'); return; }
+        here(c); exprWarm(c); study.render(S.tab);
+      },
+      onVerse: (c, vn, words, E, k, vs) => {
+        now = { ch: c, v: vn, words, vs, E, k }; wordAt = -1;
+        showVerse(c, vn, words, E, k);
+        if (!c.history) store(LAST, `${addrOf(c)}.${vn}`);
+        if (speaking()) {
+          const plain = stripTags(c.text[vn - 1] || words.join(' '));
+          reader.speak(plain, wpmOf(words, vs, p.speed), p.speed, { dur: vs.dur, entry: exprEntry(c, vn, plain) });
+          // Fetch the next verse ahead (ElevenLabs only) so there is no gap.
+          let nx = vn; while (nx < c.text.length && !(c.text[nx] || '').trim()) nx++;
+          if (nx < c.text.length) { const t = stripTags(c.text[nx]); reader.prefetch(t, exprEntry(c, nx + 1, t)); }
+        }
+        paintBar(); study.markPlaying(); rsvpShow();
+        if (S.tab === 'origins') study.render('origins');
+      },
+      linksFor,
+      onLink: (c, vn, l) => {
+        window.__linkCount = (window.__linkCount || 0) + 1;
+        const a = el('links').querySelector(`a[data-k="${l.book}.${l.c}.${l.v}"]`);
+        if (a) { a.classList.add('lit'); setTimeout(() => a.classList.remove('lit'), 1300); }
+      },
+      onWord: (c, vn, i) => { wordAt = i; spans.forEach((s, j) => s.className = j === i ? 'now' : ''); rsvpShow(); },
+      onClose: () => {
+        spans.forEach(x => x.className = '');
+        el('state').textContent = 'Amen · IV–I · home 110 Hz';
+      },
+      onEnd: async () => {
+        if (player !== p) return;
+        state = 'ready'; wake(false); now = null;
+        if (S.repeat === 'chapter') { begin(cur, 1); return; }
+        if (!cur.history && cur.final) {
+          el('ending').hidden = false;
+          start = await loadAfter(0); here(start);
+          playBtn.textContent = 'After the Word ›';
+        } else if (!S.autoplay && !cur.history && next(canon, cur.ref)) {
+          start = await loadChapter(next(canon, cur.ref)); here(start); preview(start);
+          playBtn.textContent = 'Play next ›';
+        } else {
+          start = cur.history ? await loadChapter({ book: 0, chapter: 1 }) : start;
+          here(start); preview(start);
+          playBtn.textContent = 'Begin again';
+        }
+        paintBar();
+      },
+    });
+    player = p;
+    window.__player = p;
+    p.play();
+    wake(true);
+    paintBar();
+  }
+  const pauseAll = () => { if (state !== 'playing') return; state = 'paused'; playBtn.textContent = 'Resume'; player.pause(); reader.pause(); wake(false); paintBar(); };
+  const resumeAll = () => { if (state !== 'paused') return; if (talkLive) { toast('End the Talk call to read on'); return; } state = 'playing'; playBtn.textContent = 'Pause'; player.resume(); reader.resume(); wake(true); paintBar(); };
+  const toggle = () => {
+    if (state === 'ready') begin(start, start.history ? 1 : (start.at || 1));
+    else if (state === 'playing') pauseAll();
+    else resumeAll();
+  };
+  playBtn.onclick = toggle;
+
+  // Play a chapter (already loaded) from a verse, from anywhere in the app.
+  const playFrom = (ch, v = 1) => { engine.start(); begin(ch, v); show('listen'); };
+  const playKey = async key => {
+    engine.start();
+    const [b, c, v] = key.split('.').map(Number);
+    const ch = (!cur.history && cur.ref.book === b && cur.ref.chapter === c) ? cur : await loadChapter({ book: b, chapter: c });
+    if (ch === cur && player && state !== 'ready' && player.segments.includes(player.current?.seg) && player.current.seg.ch === ch) { seekTo(v); show('listen'); return; }
+    playFrom(ch, v);
+  };
+
+  // ---------- verse and chapter steps ----------
+  function seekTo(v) {
+    if (state === 'paused') resumeAll();
+    reader.stop();
+    player.seek(player.current.seg, v);
+  }
+  async function stepVerse(d) {
+    if (!player || state === 'ready' || !player.current) {   // not playing: move the verse that Begin will start from
+      if (cur.history) return;
+      const n = cur.text.length; let v = (start.at || 1) + d;
+      while (v >= 1 && v <= n && !cur.text[v - 1].trim()) v += d;
+      if (v < 1 || v > n) return stepChapter(d);
+      start.at = v; preview(start); store(LAST, `${addrOf(cur)}.${v}`); paintBar(); return;
+    }
+    const c = player.current, ch = c.seg.ch, n = ch.text.length;
+    let v = c.vs.verse + d;
+    while (v >= 1 && v <= n && !(ch.text[v - 1] || '').trim()) v += d;
+    if (v < 1) return stepChapter(-1, true);
+    if (v > n) return stepChapter(1);
+    seekTo(v);
+  }
+  async function stepChapter(d, atEnd = false) {
+    const a = (d < 0 ? el('prev') : el('next')).getAttribute('href');
+    if (!a) return;
+    const ch = await openAt(a.slice(1));
+    if (!ch) return;
+    if (state === 'ready') { go(a.slice(1)); return; }
+    playFrom(ch, atEnd && !ch.history ? ch.text.length : 1);
+  }
+  el('pv').onclick = () => stepVerse(-1);
+  el('nv').onclick = () => stepVerse(1);
+  el('pch').onclick = () => stepChapter(-1);
+  el('nch').onclick = () => stepChapter(1);
+  const REP = ['off', 'verse', 'chapter'];
+  el('rep').onclick = () => { S.repeat = REP[(REP.indexOf(S.repeat) + 1) % 3]; save(); paintBar(); toast(`Repeat: ${S.repeat}`); };
+
+  // ---------- speed ----------
+  let wasHeld = false;
+  function setSpeed(x) {
+    x = +(+x).toFixed(2);
+    if (!(x > 0)) return;
+    const was = S.speed; S.speed = x; save();
+    if (player) { player.setSpeed(x); speakRest(); }
+    const held = inStep();
+    if ((was > MAX_RATE) !== (x > MAX_RATE)) toast(x > MAX_RATE ? `The voice rests above ${MAX_RATE}×: words and tones only` : 'The voice reads again');
+    else if (held && !wasHeld) toast(stepNote());
+    wasHeld = held;
+    const n = el('spdVoiceNote'); if (n) n.textContent = held ? stepNote() : '';
+    if (now) el('state').textContent && showState();
+    paintBar(); dial?.draw(x);
+    if (sheetKind === 'speed') paintChips();
+    el('rsvpSpd').textContent = fmtSpeed(x);
+  }
+  const showState = () => { const { k, E } = now, sp = player.speed; el('state').textContent = `${k.mode} · ${Math.round(k.bpm * sp)} BPM${sp !== 1 ? ` (${Math.round(k.bpm)} × ${sp})` : ''} · ${feeling(E)}`; };
+  window.__setSpeed = setSpeed;
+
+  // ---------- bar ----------
+  function paintBar() {
+    const ch = now ? now.ch : cur, v = now ? now.v : (start.at || 1);
+    el('barRef').textContent = ch.history ? `After the Word ${ch.ref.after + 1}` : `${ch.name} ${ch.ref.chapter}:${v}`;
+    const n = ch.text.length;
+    el('barProg').style.width = (ch.history ? (now ? 100 : 0) : (state === 'ready' ? 0 : v / n * 100)) + '%';
+    const sp = player ? player.speed : S.speed;
+    el('barSub').textContent = [fmtSpeed(sp), S.repeat !== 'off' ? 'repeat ' + S.repeat : '', !S.autoplay ? 'auto play off' : '',
+      sleepEoc ? 'sleep at chapter end' : sleepEnd ? 'sleep ' + Math.max(0, Math.ceil((sleepEnd - Date.now()) / 60e3)) + ' min' : '',
+      state === 'ready' ? (ch.history ? '' : `verse ${v} of ${n}`) : state === 'paused' ? 'paused' : ''].filter(Boolean).join(' · ');
+    el('tbSpdV').textContent = fmtSpeed(sp);
+    el('tbSpd').classList.toggle('on', sp !== 1);
+    el('tbVoiceV').textContent = !reader.available ? 'none' : !S.voiceOn ? 'off' : voiceRests() ? 'rests' : reader.using === 'eleven' ? '11L' : inStep() ? 'in step' : 'on';
+    // Claude's Voice button, as built: "Voice on" / "Voice off" ("No voice" when the phone has none).
+    el('voice').textContent = !reader.available ? 'No voice' : S.voiceOn ? 'Voice on' : 'Voice off';
+    el('voice').disabled = !reader.available; el('voice').setAttribute('aria-pressed', S.voiceOn);
+    el('rep').classList.toggle('on', S.repeat !== 'off'); el('rep').title = `Repeat: ${S.repeat}`;
+    el('rep').textContent = S.repeat === 'verse' ? '🔂' : '🔁';
+    el('tbSlp').classList.toggle('on', !!(sleepEnd || sleepEoc));
+    el('tbSlpV').textContent = sleepEoc ? '⏹' : sleepEnd ? Math.max(0, Math.ceil((sleepEnd - Date.now()) / 60e3)) + 'm' : '⏾';
+    el('pch').disabled = !el('prev').getAttribute('href'); el('nch').disabled = !el('next').getAttribute('href');
+  }
+
+  // ---------- sleep ----------
+  function sleepPause(msg) { sleepEnd = 0; sleepEoc = false; pauseAll(); toast(msg); paintBar(); }
+  setInterval(() => { if (sleepEnd && Date.now() >= sleepEnd) sleepPause('Sleep timer: paused'); else if (sleepEnd) paintBar(); }, 5000);
+  const setSleep = m => { sleepEnd = m > 0 ? Date.now() + m * 60e3 : 0; sleepEoc = m === 'eoc'; sleepFrom = now ? now.ch : cur; paintBar(); openSheet('sleep'); };
+
+  // ---------- sheets ----------
+  let sheetKind = '', dial = null;
+  const sheet = el('sheet'), scrim = el('scrim'), sb = el('sheetB');
+  const closeSheet = (fromBack) => { if (sheet.hidden) return; sheet.hidden = scrim.hidden = true; sheetKind = ''; dial = null; if (fromBack !== true) overlayClosed(); };
+  scrim.onclick = closeSheet; el('sheetX').onclick = closeSheet;
+  const chips = (list, curV, attr) => `<div class="chips">${list.map(([v, t]) => `<button type="button" ${attr}="${v}" class="${String(v) === String(curV) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  function paintChips() { sb.querySelectorAll('[data-sp]').forEach(b => b.classList.toggle('on', +b.dataset.sp === S.speed)); }
+  const escH = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function voiceOptions() {
+    const vs = narrator.list(), curV = narrator.voice;
+    if (!vs.length) return '<option value="">(no voices yet)</option>';
+    let h = '', group = '';
+    for (const v of vs) {
+      const g = /^en/i.test(v.lang) ? 'English (most natural first)' : 'Other languages';
+      if (g !== group) { h += `${group ? '</optgroup>' : ''}<optgroup label="${g}">`; group = g; }
+      const q = narrator.quality(v);
+      h += `<option value="${escH(v.voiceURI)}" ${curV && v.voiceURI === curV.voiceURI ? 'selected' : ''}>${q >= 3 ? '★ ' : ''}${escH(v.name)} · ${escH(v.lang)}${v.localService ? '' : ' · online'}</option>`;
+    }
+    return h + '</optgroup>';
+  }
+  let elVoices = null, elModels = MODELS_FALLBACK, elErr = '';
+  const elStatus = () => !elevenKey.get() ? 'No key saved: the phone voice reads.' : !S.elVoice ? 'Choose a voice below.'
+    : eleven.ready() ? 'Ready: ElevenLabs reads, the phone voice steps in on any error.' : `Paused: ${escH(eleven.reason || 'unavailable')}. The phone voice reads; it tries again in a few minutes.`;
+  const sl = (id, label, v, hint) => `<h4>${label} <span id="${id}V">${(+v).toFixed(2)}</span></h4><input type="range" id="${id}" min="0" max="1" step="0.05" value="${v}"><div class="dim">${hint}</div>`;
+  function voiceBlock() {
+    const key = elevenKey.get(), eng = S.voiceEngine;
+    return `<div class="row"><label for="vOn">Read aloud</label><input type="checkbox" class="sw" id="vOn" ${S.voiceOn ? 'checked' : ''} ${reader.available ? '' : 'disabled'}></div>
+      <h4>Reading voice</h4><div class="seg"><button type="button" data-eng="device" class="${eng === 'device' ? 'on' : ''}">Phone voice (free)</button><button type="button" data-eng="eleven" class="${eng === 'eleven' ? 'on' : ''}">ElevenLabs</button></div>
+      ${eng === 'eleven' ? `<div class="card" style="margin-top:.6rem">
+        <div class="dim" id="elSt" style="opacity:.85">${elStatus()}</div>
+        <h4>ElevenLabs API key</h4>
+        ${key ? `<div class="row"><span>Key saved on this phone</span><button class="pill" type="button" id="elDel">Remove</button></div>`
+          : `<div style="display:flex;gap:.4rem"><input type="password" id="elKey" placeholder="Paste your ElevenLabs API key" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="pill gold" type="button" id="elSave">Save</button></div>`}
+        <div class="dim" style="margin-top:.35rem">The key stays on this phone only (this browser's own storage). It is never part of the app, never sent anywhere but ElevenLabs, and reading uses your ElevenLabs credits. Each verse is kept on the phone after its first reading, so replays are free.</div>
+        ${key ? `<h4>Voice</h4><div style="display:flex;gap:.4rem"><select id="elVoice">${elVoices ? elVoices.map(v => `<option value="${escH(v.id)}" ${v.id === S.elVoice ? 'selected' : ''}>${escH(v.name)}${v.category ? ' · ' + escH(v.category) : ''}</option>`).join('') : `<option value="${escH(S.elVoice)}">${S.elVoice ? escH(S.elVoiceName || S.elVoice) : 'loading your voices…'}</option>`}</select><button class="pill" type="button" id="elPrev" title="Play ElevenLabs' preview of this voice (no credits)">▶ Preview</button></div>
+          ${elErr ? `<div class="dim" style="color:#e9a">${escH(elErr)}</div>` : ''}
+          <h4>Model</h4><select id="elModel">${elModels.map(m => `<option value="${escH(m.model_id)}" ${m.model_id === S.elModel ? 'selected' : ''}>${escH(m.name || m.model_id)}</option>`).join('')}</select>
+          ${sl('elStab', 'Stability', S.elStability, 'Lower: more feeling and variety. Higher: steadier.')}
+          ${sl('elSim', 'Similarity', S.elSimilarity, 'How closely it keeps to the original voice.')}
+          ${sl('elStyle', 'Style', S.elStyle, 'Exaggerates the speaker\'s style; 0 is plainest and fastest.')}
+          <div class="row" style="margin-top:.8rem"><label for="elExpr">Expressive reading<br><span class="dim">ElevenLabs v3 audio tags ([softly], [solemn], pauses) where a chapter has checked markup (now Genesis 1–3). The words never change.</span></label><input type="checkbox" class="sw" id="elExpr" ${S.elExpressive ? 'checked' : ''}></div>
+          <p><button class="pill" type="button" id="elClear">Clear saved verse audio</button></p>` : ''}
+      </div>` : ''}
+      <h4>${eng === 'eleven' ? 'Phone voice (used when ElevenLabs cannot read)' : 'Phone voice'}</h4><select id="vSel">${voiceOptions()}</select>
+      <div class="dim" style="margin-top:.35rem">From your phone, English first, the most natural (★: Apple Enhanced/Premium, Siri, Microsoft Natural/Online, Google, Neural) at the top. If the list is empty, add a voice in your phone's speech settings and reopen the app.</div>
+      <h4>Pitch <span id="vPv">${narrator.pitch.toFixed(2)}</span></h4><input type="range" id="vPitch" min="0.5" max="1.5" step="0.05" value="${narrator.pitch}">
+      <p><button class="pill gold" type="button" id="vTest">Test voice</button></p>
+      <h4>Phone voice top rate</h4><div class="seg" id="vTop">${DEVICE_TOPS.map(t => `<button type="button" data-top="${t}" class="${t === narrator.top ? 'on' : ''}">${t}×</button>`).join('')}</div>
+      <div class="dim" style="margin-top:.35rem">How fast your phone's own voice really goes (many stop near 1.4×). Past it the voice keeps in step by starting each verse on time. Raise this if your voice keeps speeding up; press Test to hear it at the top rate.</div>
+      <div class="dim">The rate follows the Speed control from 0.5× to ${MAX_RATE}×; above ${MAX_RATE}× the voice rests and only the words and tones go on.</div>`;
+  }
+  async function loadEleven(root) {
+    if (!elevenKey.get() || S.voiceEngine !== 'eleven') return;
+    try {
+      const [vs, ms] = await Promise.all([eleven.voices(), eleven.models()]);
+      elVoices = vs; elModels = ms; elErr = '';
+      if (!S.elVoice && vs.length) { S.elVoice = vs[0].id; S.elVoiceName = vs[0].name; save(); }
+    } catch (e) { elErr = `Could not load your voices: ${e.message || 'error'}`; }
+    redrawVoice(root);
+  }
+  const redrawVoice = root => { if (!root.isConnected) return; root.innerHTML = voiceBlock(); wireVoice(root, false); };
+  function wireVoice(root, fetchEl = true) {
+    const q = s => root.querySelector(s);
+    q('#vOn') && (q('#vOn').onchange = e => setVoice(e.target.checked));
+    q('#vSel').onchange = e => { S.voiceName = e.target.value; save(); narrator.voiceName = S.voiceName; toast('Voice saved'); };
+    q('#vPitch').oninput = e => { narrator.pitch = +e.target.value; S.pitch = narrator.pitch; q('#vPv').textContent = narrator.pitch.toFixed(2); };
+    q('#vPitch').onchange = () => save();
+    q('#vTest').onclick = () => { reader.stop(); narrator.test(undefined, Math.min(narrator.top, Math.max(1, S.speed))); };
+    root.querySelectorAll('[data-top]').forEach(b => b.onclick = () => { S.deviceTop = narrator.top = +b.dataset.top; save(); root.querySelectorAll('[data-top]').forEach(x => x.classList.toggle('on', x === b)); speakRest(); paintBar(); toast(`Phone voice top rate ${narrator.top}×`); });
+    root.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => { S.voiceEngine = b.dataset.eng; save(); eleven.reset(); reader.stop(); redrawVoice(root); loadEleven(root); paintBar(); });
+    q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) return; elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
+    q('#elDel') && (q('#elDel').onclick = () => { if (!confirm('Remove the ElevenLabs key from this phone?')) return; elevenKey.set(''); reader.stop(); elVoices = null; toast('Key removed'); redrawVoice(root); });
+    q('#elVoice') && (q('#elVoice').onchange = e => { S.elVoice = e.target.value; S.elVoiceName = e.target.selectedOptions[0]?.textContent || ''; save(); eleven.reset(); toast('Voice saved'); redrawVoice(root); });
+    q('#elPrev') && (q('#elPrev').onclick = () => { const v = (elVoices || []).find(x => x.id === S.elVoice); if (v && v.preview) { const a = new Audio(v.preview); a.play().catch(() => toast('Preview could not play')); } else toast('No preview for this voice'); });
+    q('#elModel') && (q('#elModel').onchange = e => { S.elModel = e.target.value; save(); toast('Model saved'); });
+    for (const [id, k] of [['elStab', 'elStability'], ['elSim', 'elSimilarity'], ['elStyle', 'elStyle']]) {
+      const r = q('#' + id); if (!r) continue;
+      r.oninput = () => { S[k] = +r.value; q('#' + id + 'V').textContent = (+r.value).toFixed(2); };
+      r.onchange = () => save();
+    }
+    q('#elExpr') && (q('#elExpr').onchange = e => { S.elExpressive = e.target.checked; save(); toast(S.elExpressive ? 'Expressive reading on (v3, where markup exists)' : 'Expressive reading off'); });
+    q('#elClear') && (q('#elClear').onclick = async () => { await eleven.clearCache(); toast('Saved verse audio cleared'); });
+    if (fetchEl && !elVoices) loadEleven(root);
+  }
+  narrator.onvoices = () => { const s = document.getElementById('vSel'); if (s) s.innerHTML = voiceOptions(); };
+
+  function openSheet(kind, arg) {
+    if (sheet.hidden) overlayOpened();
+    sheetKind = kind; sheet.hidden = scrim.hidden = false;
+    const T = el('sheetT');
+    if (kind === 'speed') {
+      T.textContent = 'Playback speed';
+      sb.innerHTML = chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp') + '<h4>Dial</h4><div id="dialHost"></div>' +
+        `<div class="dim" style="margin-top:6px">Changes apply straight away: the music, the words and the reading voice keep one clock. From 0.5× to ${MAX_RATE}× the voice speeds up with them; above ${MAX_RATE}× it rests (words and tones only).</div><div class="dim" id="spdVoiceNote" style="margin-top:4px;color:#d9b65a">${inStep() ? stepNote() : ''}</div>`;
+      sb.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => setSpeed(+b.dataset.sp));
+      dial = mountDial(el('dialHost'), { get: () => S.speed, set: setSpeed, getMax: () => S.dialMax, setMax: m => { S.dialMax = m; save(); },
+        capFor: v => v > MAX_RATE ? `voice rests · tones ${+v.toFixed(2)}×` : '' });
+    } else if (kind === 'voice') {
+      T.textContent = 'Voice'; sb.innerHTML = voiceBlock(); wireVoice(sb);
+    } else if (kind === 'sleep') {
+      T.textContent = 'Sleep timer';
+      const curS = sleepEoc ? 'eoc' : sleepEnd ? 'on' : '0';
+      sb.innerHTML = chips([['0', 'Off'], ['15', '15 min'], ['30', '30 min'], ['45', '45 min'], ['60', '1 hour'], ['eoc', 'End of chapter']], curS, 'data-sl') +
+        `<div class="dim" style="margin-top:8px">${sleepEoc ? 'Pauses when this chapter ends.' : sleepEnd ? `Pauses at ${new Date(sleepEnd).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.` : 'Pauses the music and voice after the time you choose.'}</div>`;
+      sb.querySelectorAll('[data-sl]').forEach(b => b.onclick = () => setSleep(b.dataset.sl === 'eoc' ? 'eoc' : +b.dataset.sl));
+    } else if (kind === 'queue') {
+      T.textContent = 'Up next';
+      let h = `<div class="row"><label for="qAuto">Auto play the next chapter</label><input type="checkbox" class="sw" id="qAuto" ${S.autoplay ? 'checked' : ''}></div>`;
+      h += `<div class="row"><label>Repeat</label><span class="seg">${REP.map(r => `<button type="button" data-rp="${r}" class="${S.repeat === r ? 'on' : ''}">${r}</button>`).join('')}</span></div>`;
+      h += '<h4>Your queue</h4>' + (S.queue.length ? S.queue.map((a, i) => `<div class="qi"><span>${escH(a.replace(/\./g, ' ').replace(/^(\d)/, '$1 '))}</span><span><button class="pill" type="button" data-qup="${i}" aria-label="Move up">↑</button> <button class="pill" type="button" data-qrm="${i}" aria-label="Remove">✕</button></span></div>`).join('')
+        : '<div class="dim">Empty. Add chapters with "＋ Queue chapter" on any verse (Read, Notes, Search).</div>');
+      h += '<h4>Then</h4>';
+      const list = []; let r = cur.history ? null : cur.ref;
+      for (let i = 0; i < 5 && r && S.autoplay && S.repeat !== 'chapter'; i++) { r = next(canon, r); if (r) list.push(r); }
+      h += S.repeat === 'chapter' ? '<div class="dim">This chapter again (repeat chapter).</div>' : !S.autoplay ? '<div class="dim">Stops at the end of the chapter (auto play is off).</div>'
+        : list.map(r => `<div class="qi"><span>${canon[r.book][0]} ${r.chapter}</span><button class="pill" type="button" data-go="${fileOf(r.book)}.${r.chapter}">▶ Play</button></div>`).join('') || '<div class="dim">After Revelation 22: After the Word, only when asked.</div>';
+      sb.innerHTML = h;
+      el('qAuto').onchange = e => { S.autoplay = e.target.checked; save(); paintBar(); openSheet('queue'); };
+      sb.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { S.repeat = b.dataset.rp; save(); paintBar(); openSheet('queue'); });
+      sb.querySelectorAll('[data-qrm]').forEach(b => b.onclick = () => { S.queue.splice(+b.dataset.qrm, 1); save(); openSheet('queue'); });
+      sb.querySelectorAll('[data-qup]').forEach(b => b.onclick = () => { const i = +b.dataset.qup; if (i) { [S.queue[i - 1], S.queue[i]] = [S.queue[i], S.queue[i - 1]]; save(); } openSheet('queue'); });
+      sb.querySelectorAll('[data-go]').forEach(b => b.onclick = async () => { engine.start(); const ch = await openAt(b.dataset.go); if (ch) { closeSheet(); playFrom(ch, 1); } });
+    } else if (kind === 'verse') {
+      const key = arg, [b, c, v] = key.split('.').map(Number), m = marks[key] || {};
+      T.textContent = `${canon[b][0]} ${c}:${v}`;   // textContent: escaped
+      sb.innerHTML = `<p><button class="pill gold" type="button" id="vaPlay">▶ Play from here</button> <button class="pill" type="button" id="vaQ">＋ Queue chapter</button></p>
+        <h4>Highlight</h4><div style="display:flex;gap:.6rem;align-items:center">${['gold', 'rose', 'sky', 'sage'].map(h => `<button type="button" class="sw-c hl-${h} ${m.hl === h ? 'on' : ''}" data-hl="${h}" aria-label="${h}"></button>`).join('')}
+          <button class="pill" type="button" data-hl="">None</button></div>
+        <h4>Note</h4><textarea id="vaN" placeholder="Your note on this verse">${(m.note || '').replace(/</g, '&lt;')}</textarea>
+        <p><button class="pill gold" type="button" id="vaSave">Save note</button> ${m.note ? '<button class="pill" type="button" id="vaDel">Delete note</button>' : ''}</p>
+        <h4>Recall</h4><p><button class="pill" type="button" id="vaR">${recall[key] ? '✓ In your Recall deck · remove' : '＋ Add to Recall'}</button></p>`;
+      el('vaPlay').onclick = () => { closeSheet(); playKey(key); };
+      el('vaQ').onclick = () => { S.queue.push(`${fileOf(b)}.${c}`); save(); toast(`${canon[b][0]} ${c} added to Up next`); };
+      sb.querySelectorAll('[data-hl]').forEach(x => x.onclick = () => { mark(key, { hl: x.dataset.hl }); after(); openSheet('verse', key); });
+      el('vaSave').onclick = () => { mark(key, { note: el('vaN').value.trim() }); after(); toast('Note saved'); openSheet('verse', key); };
+      el('vaDel') && (el('vaDel').onclick = () => { mark(key, { note: '' }); after(); openSheet('verse', key); });
+      el('vaR').onclick = () => { recall[key] ? dropRecall(key) : addRecall(key); after(); toast(recall[key] ? 'Added to Recall' : 'Removed from Recall'); openSheet('verse', key); };
+    }
+  }
+  const after = () => { paintMark(); if (S.tab === 'read') study.rerenderRead(); else if (S.tab !== 'listen') study.render(S.tab); };
+  el('tbSpd').onclick = () => openSheet('speed');
+  el('tbVoice').onclick = () => openSheet('voice');
+  el('tbSlp').onclick = () => openSheet('sleep');
+  el('tbQ').onclick = () => openSheet('queue');
+
+  // The verse in Listen: its highlight, and the three actions under it.
+  function paintMark() {
+    const p = el('verse'), key = shown ? keyOf(shown.ch, shown.v) : '', m = key ? marks[key] || {} : {};
+    p.classList.remove('hl-gold', 'hl-rose', 'hl-sky', 'hl-sage');
+    if (m.hl) p.classList.add('hl-' + m.hl);
+    el('vact').hidden = !key;
+    if (key) {
+      el('vaHl').textContent = m.hl ? '★ Highlighted' : '☆ Highlight';
+      el('vaNote').textContent = m.note ? '✎ Note ✓' : '✎ Note';
+      el('vaRecall').textContent = recall[key] ? '✓ Recall' : '＋ Recall';
+    }
+  }
+  const shownKey = () => shown ? keyOf(shown.ch, shown.v) : '';
+  el('vaHl').onclick = () => { const k = shownKey(); if (!k) return; mark(k, { hl: (marks[k] || {}).hl ? '' : 'gold' }); after(); };
+  el('vaNote').onclick = () => { const k = shownKey(); if (k) openSheet('verse', k); };
+  el('vaRecall').onclick = () => { const k = shownKey(); if (!k) return; recall[k] ? dropRecall(k) : addRecall(k); after(); toast(recall[k] ? 'Added to Recall' : 'Removed from Recall'); };
+
+  // ---------- speed-read (RSVP), ported from Logos Theta build 2026101216 ----------
+  const rsvp = el('rsvp');
+  const focal = w => { const n = w.replace(/[^\p{L}\p{N}]/gu, '').length; return n <= 1 ? 0 : n <= 5 ? 1 : n <= 9 ? 2 : n <= 13 ? 3 : 4; };
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  function rsvpShow() {
+    if (rsvp.hidden) return;
+    el('rsvpSpd').textContent = fmtSpeed(player ? player.speed : S.speed);
+    el('rsvpPP').textContent = state === 'playing' ? 'Pause' : state === 'paused' ? 'Resume' : 'Begin';
+    el('rsvpNote').textContent = voiceRests() && narrator.on ? `Voice rests above ${MAX_RATE}×: words and tones only` : 'The words keep the music\'s clock.';
+    if (!now) { el('rsvpRef').textContent = ''; el('rsvpW').innerHTML = '<span class="dim" style="font-size:1rem">Press Begin: the words flash here in time with the music.</span>'; return; }
+    el('rsvpRef').textContent = now.ch.history ? `After the Word ${now.ch.ref.after + 1}` : `${now.ch.name} ${now.ch.ref.chapter}:${now.v}`;
+    const n = Math.max(1, Math.min(5, +S.rsvpChunk || 1)), i = Math.max(0, wordAt), c0 = Math.floor(i / n) * n;
+    const chunk = now.words.slice(c0, c0 + n), mid = Math.min(chunk.length - 1, i - c0);
+    el('rsvpW').innerHTML = '<span>' + chunk.map((w, j) => {
+      if (j !== mid) return esc(w);
+      const f = focal(w), letters = [...w]; let k = -1, at = 0;
+      for (let q = 0; q < letters.length; q++) if (/[\p{L}\p{N}]/u.test(letters[q])) { k++; if (k === f) { at = q; break; } }
+      return esc(letters.slice(0, at).join('')) + `<span class="f">${esc(letters[at] || '')}</span>` + esc(letters.slice(at + 1).join(''));
+    }).join(' ') + '</span>';
+  }
+  el('tbRsvp').onclick = () => { if (rsvp.hidden) overlayOpened(); rsvp.hidden = false; rsvpShow(); };
+  el('rsvpX').onclick = () => { if (!rsvp.hidden) { rsvp.hidden = true; overlayClosed(); } };
+  el('rsvpPP').onclick = () => { toggle(); rsvpShow(); };
+  const nudge = d => { const s = player ? player.speed : S.speed; setSpeed(Math.max(0.5, Math.min(Math.max(S.dialMax, 3), s + d * (s >= 3 ? 0.5 : 0.25)))); rsvpShow(); };
+  el('rsvpSlow').onclick = () => nudge(-1);
+  el('rsvpFast').onclick = () => nudge(1);
+
+  // ---------- settings ----------
+  const setEl = el('settings');
+  function openSettings() {
+    const opt = (v, cv, t) => `<option value="${v}" ${String(v) === String(cv) ? 'selected' : ''}>${t}</option>`;
+    setEl.innerHTML = `<div class="hd"><b>Settings</b><button class="ib" type="button" id="setX" aria-label="Close settings">✕</button></div>
+      <section><h4>Playback</h4>
+        <div class="set col"><div class="l">Speed <small>Music, words and voice together. Also on the player bar.</small></div>${chips(SPEEDS.map(s => [s, s + '×']), S.speed, 'data-sp')}</div>
+        <div class="set"><div class="l">Speed dial maximum <small>The dial runs from 1× to this, in 0.25 steps.</small></div><input type="number" id="stMax" min="1" step="0.25" value="${S.dialMax}" style="width:5rem"></div>
+        <div class="set"><label class="l" for="stAuto">Auto play <small>Go on to the next chapter.</small></label><input type="checkbox" class="sw" id="stAuto" ${S.autoplay ? 'checked' : ''}></div>
+        <div class="set"><div class="l">Repeat</div><select id="stRep" style="width:8rem">${REP.map(r => opt(r, S.repeat, r)).join('')}</select></div>
+        <div class="set"><label class="l" for="stRes">Start where I left off <small>Begin opens at the last verse heard (or a link's verse). Off: always from verse 1.</small></label><input type="checkbox" class="sw" id="stRes" ${S.resume ? 'checked' : ''}></div>
+      </section>
+      <section><h4>Voice</h4><div id="stVoice"></div></section>
+      <section><h4>Reading</h4>
+        <div class="set"><label class="l" for="stKjv">Show KJV in Read</label><input type="checkbox" class="sw" id="stKjv" ${S.showKJV ? 'checked' : ''}></div>
+        <div class="set"><label class="l" for="stOrig">Show Hebrew / Greek in Read <small>Hebrew: Westminster Leningrad Codex (OSHB). Greek: Scrivener 1894.</small></label><input type="checkbox" class="sw" id="stOrig" ${S.showOrig ? 'checked' : ''}></div>
+        <div class="set"><div class="l">Read text size</div><select id="stSize" style="width:8rem">${[[0.9, 'Small'], [1, 'Normal'], [1.15, 'Large'], [1.3, 'Larger']].map(([v, t]) => opt(v, S.textSize, t)).join('')}</select></div>
+        <div class="set"><div class="l">Speed-read words at a time</div><select id="stChunk" style="width:8rem">${[1, 2, 3, 4, 5].map(v => opt(v, S.rsvpChunk, v)).join('')}</select></div>
+      </section>
+      <section><h4>Light</h4>
+        <div class="set"><div class="l">Dish <small>Rings: the sounding tones as standing waves. Figure: the Chladni figure of the melody note. The glowing centre (the eye) is off unless you choose it.</small></div><select id="stDish" style="width:10rem">${[['both', 'Rings and figure'], ['full', 'As built, with the centre glow'], ['figure', 'Figure only'], ['rings', 'Rings only'], ['off', 'Off']].map(([v, t]) => opt(v, S.dish, t)).join('')}</select></div>
+      </section>
+      <section><h4>This phone</h4>
+        <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Nothing leaves the phone.</small></div></div>
+        <div class="set"><div class="l">Reset settings <small>Notes, highlights and Recall are kept.</small></div><button class="pill" type="button" id="stReset">Reset</button></div>
+        <div class="set"><div class="l">Build <small>${BUILD}</small></div></div>
+      </section>`;
+    if (setEl.hidden) overlayOpened();
+    setEl.hidden = false;
+    const q = s => setEl.querySelector(s);
+    q('#stVoice').innerHTML = voiceBlock(); wireVoice(q('#stVoice'));
+    q('#setX').onclick = () => { setEl.hidden = true; overlayClosed(); };
+    setEl.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { setSpeed(+b.dataset.sp); setEl.querySelectorAll('[data-sp]').forEach(x => x.classList.toggle('on', x === b)); });
+    const ok = () => toast(save() ? 'Saved' : 'Could not save (private browsing?)');
+    q('#stMax').onchange = e => { S.dialMax = Math.max(1, Math.round((+e.target.value || 1) * 4) / 4); e.target.value = S.dialMax; ok(); };
+    q('#stAuto').onchange = e => { S.autoplay = e.target.checked; ok(); paintBar(); };
+    q('#stRep').onchange = e => { S.repeat = e.target.value; ok(); paintBar(); };
+    q('#stRes').onchange = e => { S.resume = e.target.checked; ok(); };
+    q('#stKjv').onchange = e => { S.showKJV = e.target.checked; ok(); study.rerenderRead(); };
+    q('#stOrig').onchange = e => { S.showOrig = e.target.checked; ok(); study.rerenderRead(); };
+    q('#stSize').onchange = e => { S.textSize = +e.target.value; ok(); study.rerenderRead(); };
+    q('#stChunk').onchange = e => { S.rsvpChunk = +e.target.value; ok(); };
+    q('#stDish').onchange = e => { S.dish = e.target.value; el('dish').hidden = S.dish === 'off'; ok(); };
+    q('#stReset').onclick = () => { if (!confirm('Reset all settings to the defaults? Notes, highlights and Recall are kept.')) return; resetSettings(); location.reload(); };
+  }
+  el('gear').onclick = openSettings;
+  addEventListener('keydown', e => { if (e.key === 'Escape' && anyOverlay()) history.back(); });
+
+  // ---------- back button (as in Logos Theta build 2026101305) ----------
+  // Back closes an open menu first, then steps back through tabs and chapters opened in the app,
+  // and at the first screen stays in the app instead of leaving it.
+  let popping = false, ignorePop = 0, booted = false;
+  const anyOverlay = () => !sheet.hidden || !rsvp.hidden || !setEl.hidden || !nav.picker.hidden;
+  function overlayOpened() { if (booted) history.pushState({ sono: 1, tab: S.tab, overlay: 1 }, ''); }
+  function overlayClosed() { if (history.state && history.state.overlay) { ignorePop++; history.back(); } }
+  function closeTop() {
+    if (!sheet.hidden) { closeSheet(true); return true; }
+    if (!rsvp.hidden) { rsvp.hidden = true; return true; }
+    if (!setEl.hidden) { setEl.hidden = true; return true; }
+    if (!nav.picker.hidden) { nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false); return true; }
+    return false;
+  }
+  addEventListener('popstate', e => {
+    if (ignorePop) { ignorePop--; return; }
+    if (closeTop()) return;
+    const st = e.state;
+    if (st && st.sono && !st.root) {
+      popping = true;
+      try {
+        if (location.search !== shownSearch) go(location.search.slice(1), false);
+        show(st.tab || 'listen');
+      } finally { popping = false; }
+      return;
+    }
+    if (st && st.root) { popping = true; try { if (location.search !== shownSearch) go(location.search.slice(1), false); show(st.tab || 'listen'); } finally { popping = false; } }
+    history.pushState({ sono: 1, tab: S.tab }, '');   // at the first screen: stay in the app
+  });
+
+  // Open a chapter (or history entry) inside the app, without reloading. As in Claude's build,
+  // opening another chapter stops the music; Begin (or Play chapter) starts it again.
+  let shownSearch = location.search;
+  async function go(q, push = true) {
+    const [a, ...o] = String(q || '').replace(/^\?/, '').split('&');
+    const ch = await openAt(a);
+    if (!ch) { toast('That chapter could not be opened'); return; }
+    if (player) { player.stop(true); player = null; }
+    reader.stop(); state = 'ready'; now = null; wake(false);
+    playBtn.textContent = 'Begin';
+    el('ending').hidden = true; el('state').textContent = ''; el('links').innerHTML = '';
+    from = o.find(x => x.startsWith('from='))?.slice(5);
+    setBack();
+    if (push) history.pushState({ sono: 1, tab: S.tab }, '', '?' + a + (from ? '&from=' + from : ''));
+    start = ch; here(ch); preview(ch); shownSearch = location.search;
+    nav.picker.hidden = true; nav.where.setAttribute('aria-expanded', false);
+    paintBar(); paintMark();
+    if (S.tab === 'read') study.rerenderRead(); else study.render(S.tab);
+    scrollTo(0, 0);
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="?"]');
+    if (!a || a.target === '_blank' || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    go(a.getAttribute('href'));
+  });
+  // The first tap anywhere unlocks the sound (phones only allow audio to start inside a tap).
+  addEventListener('pointerdown', () => { try { engine.start(); } catch {} try { if (elevenKey.get() && S.voiceEngine === 'eleven') eleven.unlock(); } catch {} }, { once: true, capture: true });
+
+  // ---------- tabs ----------
+  const study = createStudy({
+    canon, book, sung, fileOf, lex: cb.lex, S, save, toast, parseRef,
+    kjv: b => kjvs.has(b) ? kjvs.get(b) : (kjvs.set(b, json('./data/kjv/' + canon[b][1])), kjvs.get(b)),
+    cur: () => cur, playing: () => now && { ch: now.ch, v: now.v }, nowVerse: () => now,
+    prevRef: r => prev(canon, r), nextRef: r => next(canon, r), loadedBooks: () => [...books.entries()],
+    playFrom, playKey, verseSheet: k => openSheet('verse', k), show: t => show(t), go: q => go(q),
+  });
+  const kjvs = new Map();
+  function show(t) {
+    if (!document.getElementById('tab-' + t)) t = 'listen';
+    if (!popping && t !== S.tab && booted) history.pushState({ sono: 1, tab: t }, '');
+    S.tab = t; save();
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.id === 'tab-' + t));
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    study.render(t);
+    if (t === 'listen') drawStrip();
+    scrollTo(0, 0);
+  }
+  document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => show(b.dataset.tab));
+  if (start.at && !start.history) { /* the resume / link verse is what Begin starts from */ }
+  paintMark(); paintBar();
+  show(S.tab || 'listen');
+  history.replaceState({ sono: 1, tab: S.tab, root: 1 }, '');
+  history.pushState({ sono: 1, tab: S.tab }, '');
+  booted = true;
+  window.__app = { go, begin, setSpeed, show, openSheet, openSettings, stepVerse, toggle, get state() { return state; }, get now() { return now; } };
 </script>
 </body>
 </html>

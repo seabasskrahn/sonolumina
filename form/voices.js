@@ -126,6 +126,8 @@ export function createVoices(engine) {
 
   function brightness(hz, t) { tone.frequency.setTargetAtTime(Math.min(2400, hz), t, 1.5); }
   function loudness(x, t) { music.gain.setTargetAtTime(x, t, 1.2); }
+  // Preview build: set level and brightness at once (a fresh set of voices after a speed change or seek starts where the old one was).
+  function settle(x, hz) { music.gain.value = x; tone.frequency.value = Math.min(2400, hz); }
 
-  return { cello, strings, epiano, celesta, swell, brightness, loudness, bus };
+  return { cello, strings, epiano, celesta, swell, brightness, loudness, settle, bus };
 }

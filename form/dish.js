@@ -5,8 +5,14 @@
 import { dishProfile, chladniMode, chladni } from '../law/home.js';
 
 const STEPS = 256;
+// Weight that removes the centre disc (0 inside r 0.20, rising smoothly to 1 at r 0.30).
+const PUPIL = Float32Array.from({ length: STEPS }, (_, i) => { const r = i / (STEPS - 1), x = Math.min(1, Math.max(0, (r - 0.2) / 0.1)); return x * x * (3 - 2 * x); });
 
-export function createDish(canvas, engine, colour = () => [255, 235, 190]) {
+// show() → 'both' (rings and figure, without the glowing centre disc: the "eye" Seabass asked to remove),
+// 'full' (exactly as built, with the centre), 'figure' (Chladni figure only) or 'rings' (rings only). Preview build setting.
+// The centre disc is the home note's own ring inside its first node (J0 first zero, r = 2.405 / 9 ≈ 0.27 of the radius);
+// with the rings around it and the almond Chladni line it read as a pupil and iris.
+export function createDish(canvas, engine, colour = () => [255, 235, 190], show = () => 'both') {
   let rgb = colour();
   const g = canvas.getContext('2d');
   let level = 0, key = '', profile = new Float32Array(STEPS);
@@ -52,10 +58,10 @@ export function createDish(canvas, engine, colour = () => [255, 235, 190]) {
     // Perceived brightness: the square root of loudness, so the light stays
     // visible while the music dips under the voice.
     const lv = Math.sqrt(level);
-    const d = img.data;
+    const d = img.data, sh = show(), wr = sh === 'figure' ? 0 : 0.75, wf = sh === 'rings' ? 0 : 0.6, eye = sh === 'full';
     for (let i = 0, p = 0; i < rIdx.length; i++, p += 4) {
       const ri = rIdx[i];
-      const v = ri < 0 ? 0 : (profile[ri] * 0.75 + (sand[i] * mix + old[i] * (1 - mix)) * sandLevel * 0.6) * lv;
+      const v = ri < 0 ? 0 : (profile[ri] * wr * (eye ? 1 : PUPIL[ri]) + (sand[i] * mix + old[i] * (1 - mix)) * sandLevel * wf) * lv;
       d[p] = cr * Math.min(1, v * 1.6);
       d[p + 1] = cg * Math.min(1, v * 1.5);
       d[p + 2] = cb * Math.min(1, v * 1.3);

@@ -8,7 +8,8 @@ export function createEngine(given = null) {
 
   function start() {
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
+    // An offline context (tests/mix.html) cannot be resumed before it renders; only a live one is.
+    if (ctx.state === 'suspended' && !(window.OfflineAudioContext && ctx instanceof OfflineAudioContext)) ctx.resume().catch(() => {});
     if (!out) {
       out = ctx.createGain();
       out.gain.value = 0.8;
@@ -55,6 +56,9 @@ export function createEngine(given = null) {
     return item;
   }
 
+  // Forget every tracked tone (the player re-tracks what it schedules again after a speed change or a seek).
+  function forget() { sounding.clear(); }
+
   // Tones sounding at this instant (for the dish).
   function now() {
     if (!ctx) return [];
@@ -85,7 +89,7 @@ export function createEngine(given = null) {
   }
 
   return {
-    start, tone, track, now, level, peakHz,
+    start, tone, track, forget, now, level, peakHz,
     get ctx() { return ctx; },
     get out() { return out; },
     get time() { return ctx ? ctx.currentTime : 0; },
