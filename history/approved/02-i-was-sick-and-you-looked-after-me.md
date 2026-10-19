@@ -1,6 +1,6 @@
 # After the Word, thread 2: "I was sick and you looked after Me"
 
-**Status: proposed. Nothing here is in the app.** Each entry waits for Seabass to approve it, change it or cut it (SPIRIT §11).
+**Status: approved by Seabass on 2026-10-18 ("Keep all").** Built into data/history.json by tools/build_history.py (SPIRIT §11).
 
 **How this was made:** Claude researched it on 2026-10-18. Facts come from the sources listed under each entry. Where sources disagree, the entry says so rather than choosing. The verse each entry is tied to is **Claude's suggestion**, and none of these people is claimed to have quoted it unless a source says so. Benedict is the exception: his Rule quotes it. Verse text is BSB, copied from the app's own data.
 

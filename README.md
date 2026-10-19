@@ -16,7 +16,7 @@ Built in the order of the creation days, first on Genesis 1 (all seven done), th
 6. Man: previous and next, a picker of books and chapters, a link opens at its verse with a way back, and the last place is remembered on the phone. **(done)**
 7. Rest: the whole Bible comes home. Every sung verse ends V–I, every chapter ends on the major IV–I "Amen", and only Revelation 22 closes on 110 Hz itself. **(done)**
 
-After the Word (SPIRIT §11): when Revelation 22 has come home, "Here Scripture ends. What follows is history, not Scripture." The history is shown and never sounded; only the verse each entry grew from sings, by the same Law, and the last entry closes on 110 Hz. Entries are researched by Claude, approved by Seabass, kept in `history/approved/` and built into `data/history.json` by `tools/build_history.py`, which checks every quoted verse against the BSB. Open one with `?After.1`.
+After the Word (SPIRIT §11): when Revelation 22 has come home, "Here Scripture ends. What follows is history, not Scripture." The history is shown and never sounded; only the verse each entry grew from sings, by the same Law, and the last entry closes on 110 Hz. Entries are researched by Claude, approved by Seabass, kept in `history/approved/` and built into `data/history.json` by `tools/build_history.py`, which checks every quoted verse against the BSB. Entries are grouped into threads (1: the Word in every tongue; 2: "I was sick and you looked after Me"), each in date order, played one after another. Open one with `?After.1`.
 
 ## Sources and credits
 - Text: Berean Standard Bible (BSB), public domain.
