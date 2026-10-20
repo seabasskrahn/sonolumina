@@ -18,6 +18,8 @@ Built in the order of the creation days, first on Genesis 1 (all seven done), th
 
 After the Word (SPIRIT §11): when Revelation 22 has come home, "Here Scripture ends. What follows is history, not Scripture." The history is shown and never sounded; only the verse each entry grew from sings, by the same Law, and the last entry closes on 110 Hz. Entries are researched by Claude, approved by Seabass, kept in `history/approved/` and built into `data/history.json` by `tools/build_history.py`, which checks every quoted verse against the BSB. Entries are grouped into threads (1: the Word in every tongue; 2: "I was sick and you looked after Me"), each in date order, played one after another. Open one with `?After.1`.
 
+The World (form/world.js; ☰ → World): every chapter, Genesis to Revelation, as a light standing in 3D. Its height is the verse count and its colour is the seasons strip's, and the history entries stand faint and white beyond Revelation. It comes as a spiral or a road, follows the music, and is drawn on plain canvas.
+
 Talk (prototype, branch `voice-chat`): a live voice conversation about the chapter on screen, straight from the phone to Google's Gemini Live API with the reader's own key (kept only in that phone's localStorage; no server). The voice is an AI, not Scripture, and is labelled so; it is given the chapter's BSB text and told to quote it word for word with references, and to say when it does not know. Tap **Talk**; with no key, **Try the demo** plays a mock reply. Tests: `python3 tools/run_canon.py tests/talk.html 60` (24 checks) and `python3 tools/talk_e2e.py` (the panel end to end in headless Chrome with a fake microphone: overlap, background, Back, errors, timeout, echo guard, mic denied).
 
 ## Sources and credits

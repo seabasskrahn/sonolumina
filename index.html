@@ -46,6 +46,18 @@
   #picker .on { background: #3a3020; }
   #picker .after, #picker .thread { grid-column: 1 / -1; }
   #picker .thread { font-size: .7rem; opacity: .6; padding-top: .3rem; }
+  /* The World: the whole Word as lights in 3D (form/world.js) */
+  #tab-world.on { padding-top: .5rem; }
+  #wstage { position: relative; width: min(100%, 34rem); aspect-ratio: 3 / 4; max-height: calc(100vh - var(--chrome, 120px) - 9rem); border-radius: 12px; overflow: hidden; border: 1px solid #2e2a21; background: #000; touch-action: none; }
+  #wcv { display: block; width: 100%; height: 100%; cursor: grab; }
+  #whud { position: absolute; left: .7rem; right: .7rem; top: .6rem; font: .8rem/1.4 system-ui, sans-serif; text-shadow: 0 0 6px #000; pointer-events: none; display: flex; justify-content: space-between; gap: .5rem; align-items: flex-start; }
+  #whud b { font: 400 1.05rem Georgia, serif; display: block; }
+  #wopen { pointer-events: auto; font: .8rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 2rem; padding: .4rem .8rem; white-space: nowrap; flex-shrink: 0; }
+  #wshape { display: flex; gap: .5rem; justify-content: center; }
+  #wshape button { font: .82rem system-ui, sans-serif; color: #e9e2cf; background: #15130f; border: 1px solid #3a352a; border-radius: 2rem; padding: .5rem 1rem; }
+  #wshape button[aria-pressed="true"] { background: #3a3020; border-color: #5a4a2c; }
+  #tab-world .note, #toWorld { font: .7rem/1.45 system-ui, sans-serif; opacity: .55; text-align: center; max-width: 30rem; }
+  #toWorld { display: block; margin: .5rem auto 0; background: none; border: 0; color: #e9e2cf; text-decoration: underline; opacity: .7; }
   /* Day 4: lights for seasons */
   #seasons { width: min(100%, 32rem); }
   #strip { display: block; width: 100%; height: 26px; border-radius: 4px; cursor: pointer; }
@@ -425,7 +437,14 @@
   </div>
   <div id="talkmount"></div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
-    <div class="note">1,189 chapters, Genesis to Revelation, each ranked against the rest: blue most sorrowful, gold most joyful</div></div>
+    <div class="note">1,189 chapters, Genesis to Revelation, each ranked against the rest: blue most sorrowful, gold most joyful</div>
+    <button id="toWorld" type="button">See the whole Word as a world ›</button></div>
+  </section>
+  <section id="tab-world" class="tab">
+    <div id="wstage"><canvas id="wcv" aria-label="Every chapter of the Bible as a light in a 3D space. Drag to turn, tap a light to name it."></canvas>
+      <div id="whud"><div><b id="wname"></b><span id="winfo"></span></div><button id="wopen" type="button" hidden>Open ›</button></div></div>
+    <div id="wshape" role="group" aria-label="Shape"><button id="wA" type="button" aria-pressed="true">Spiral</button><button id="wB" type="button" aria-pressed="false">Road</button></div>
+    <div class="note">Each light is one chapter, Genesis to Revelation. Its height is the number of verses and its colour is the strip's: blue for the most sorrowful, gold for the most joyful. Bright dots at the base mark where each book begins. Faint white lights past Revelation are history, not Scripture. While the music plays, the chapter that is sounding rises with its verses. Drag to turn, pinch to come closer, tap a light to name it.</div>
   </section>
   <section id="tab-read" class="tab page ui"></section>
   <section id="tab-recall" class="tab page ui"></section>
@@ -495,13 +514,14 @@
   import { loadSettings, saveSettings, resetSettings, SPEEDS, marks, mark, recall, addRecall, dropRecall } from './page/store.js';
   import { mountDial } from './page/dial.js';
   import { createStudy } from './page/study.js';
+  import { createWorld } from './form/world.js';
   import { createTalk } from './form/talk.js';
 
   const S = loadSettings();
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026101819';
+  const BUILD = '2026102001';
   const toastEl = document.getElementById('toast'); let toastT = 0;
   // Toasts sit just above the player bar; while a sheet, Settings or the menu is open they move to the top, clear of its controls.
   const toast = msg => {
@@ -592,8 +612,9 @@
   const replaceScreen = () => histRun(() => history.replaceState({ ...(history.state || {}), sono: 1, tab: S.tab }, '', urlOf(cur)));
   const pushScreen = () => histRun(() => history.pushState({ sono: 1, tab: S.tab }, '', urlOf(cur)));
   // mode: 'push' when the user chose this chapter (Back returns to the one before), 'replace' when it played on by itself.
+  let worldSync = null;   // set once the World exists (below); keeps its lit chapter with the one on screen
   const here = (ch, mode = 'replace') => {
-    cur = ch;
+    cur = ch; worldSync?.(ch, 1);
     document.title = `${titleOf(ch)} · Sonolumina`;
     if (mode === 'push' && booted) histRun(() => { if (location.search !== urlOf(cur)) history.pushState({ sono: 1, tab: S.tab }, '', urlOf(cur)); else history.replaceState({ ...(history.state || {}), sono: 1, tab: S.tab }, '', urlOf(cur)); });
     else replaceScreen();
@@ -761,6 +782,24 @@
     go(`${fileOf(at.book)}.${at.chapter}`);
   };
   addEventListener('resize', drawStrip);
+
+  // The World (form/world.js): the same chapters as the strip, standing in 3D. A tap names a light; Open goes there.
+  const bookStarts = canon.map((b, i) => chapterIndex(canon, { book: i, chapter: 1 }));
+  const chIdx = ch => ch.history ? 1189 + ch.ref.after : chapterIndex(canon, ch.ref);
+  const addrAt = i => i >= 1189 ? `After.${i - 1189 + 1}` : (r => `${fileOf(r.book)}.${r.chapter}`)(refAt(canon, i));
+  function worldName(i) {
+    if (i >= 1189) { const e = H[i - 1189]; el('wname').textContent = `After the Word ${i - 1189 + 1}`; el('winfo').textContent = `${e.title} (${e.date}) · history, not Scripture`; }
+    else { const r = refAt(canon, i); el('wname').textContent = `${canon[r.book][0]} ${r.chapter}`;
+      el('winfo').textContent = `${canon[r.book][2][r.chapter - 1]} verses · ${rank[i] < 1 / 3 ? 'among the more sorrowful' : rank[i] > 2 / 3 ? 'among the more joyful' : 'in the middle'} of all 1,189`; }
+    el('wopen').hidden = i === chIdx(cur);
+    el('wopen').onclick = () => { go(addrAt(i)); show('listen'); };
+  }
+  const world = createWorld(el('wcv'), { counts: canon.flatMap(b => b[2]), rank, hue: seasonHue, starts: bookStarts, after: H, onPick: worldName });
+  const setWorldShape = s => { world.setShape(s); S.worldShape = world.shape; save(); el('wA').setAttribute('aria-pressed', world.shape === 'A'); el('wB').setAttribute('aria-pressed', world.shape === 'B'); };
+  el('wA').onclick = () => setWorldShape('A'); el('wB').onclick = () => setWorldShape('B');
+  setWorldShape(S.worldShape || 'A');
+  el('toWorld').onclick = () => show('world');
+  worldSync = (ch, frac) => world.setCurrent(chIdx(ch), frac);
   here(start);
   preview(start);
 
@@ -880,7 +919,7 @@
         here(c, 'replace'); exprWarm(c); study.render(S.tab);
       },
       onVerse: (c, vn, words, E, k, vs) => {
-        now = { ch: c, v: vn, words, vs, E, k }; wordAt = -1;
+        now = { ch: c, v: vn, words, vs, E, k }; wordAt = -1; worldSync?.(c, vn / c.text.length);
         if (seekGoal && (seekGoal.v === vn || seekGoal.seg !== p.current?.seg)) seekGoal = null;
         showVerse(c, vn, words, E, k);
         if (!c.history) store(LAST, `${addrOf(c)}.${vn}`);
@@ -1362,6 +1401,7 @@
     ['read', '☰', 'Read', () => show('read')],
     ['recall', '↻', 'Recall', () => show('recall')],
     ['notes', '✎', 'Notes', () => show('notes')],
+    ['world', '✦', 'World', () => show('world')],
     ['search', '⌕', 'Search', () => show('search')],
     ['origins', '∿', 'Origins', () => show('origins')],
     ['agent', '◇', 'Agent', () => show('agent')],
@@ -1444,6 +1484,7 @@
     document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
     study.render(t);
     if (t === 'listen') { drawStrip(); fitListen(); }
+    world.show(t === 'world'); if (t === 'world') worldName(cur.history ? 1189 + cur.ref.after : chapterIndex(canon, cur.ref));
     scrollTo(0, 0);
   }
   // Build 2026101818: nothing on Listen sits under the fixed player bar. The page keeps room below for the bar and tabs

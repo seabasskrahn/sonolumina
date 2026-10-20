@@ -1,3 +1,21 @@
+# Build 2026102001: the World, and the strip ranked
+
+Kept as built: everything in 2026101819.
+
+## New
+1. The World (☰ menu → World, or "See the whole Word as a world ›" under the strip). Every chapter, Genesis to
+   Revelation, is a light standing in 3D. Its height is the number of verses, its colour is the strip's, bright dots
+   mark where each book begins, and faint white lights past Revelation are the approved history entries. Two
+   shapes: Spiral (Genesis at the centre) and Road (walk through the chapters). While the music plays, the chapter
+   that is sounding rises with its verses. Drag to turn, pinch to come closer, tap a light to name it, and Open goes
+   there. Drawn on plain canvas (form/world.js), with no library and no install. It runs only while the screen is
+   open.
+2. The seasons strip is ranked (variant B): each chapter is coloured by where its mean feeling falls among all 1,189,
+   so the whole range from blue to gold shows. The light itself is unchanged.
+
+## Proposed, not built
+- History thread 3, "To proclaim liberty to the captives" (history/proposed/), is waiting for Seabass.
+
 # Build 2026101818: audit fixes and the ☰ menu
 
 Kept as built: Claude's Law and harmonics, the Begin / Voice on buttons, Talk, the tab bar, every feature of 2026101817.
