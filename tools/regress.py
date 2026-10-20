@@ -258,6 +258,59 @@ async def body(t):
     check('three instant ↻ taps move three verses', v1 == v0 + 3, (v0, v1))
     await t.js('__app.toggle()')
 
+    # ---- Settings: Back to an earlier chapter, mid-play (build 2026102002) ----
+    await t.js('localStorage.setItem("sonolumina.settings", JSON.stringify({speed:1, resume:true, voiceOn:true}))')
+    await t.open('?Genesis.1', clear=False)
+    check('settings: a saved phone with no Back choice still keeps playing', await t.js('__S.backMid') == 'play')
+    await t.tap('#gear'); await asyncio.sleep(0.5)
+    seg = await t.js('''(()=>{const bs=[...document.querySelectorAll("#settings [data-back]")];
+      return {n:bs.length, on:bs.filter(b=>b.classList.contains("on")).map(b=>b.dataset.back),
+        pressed:bs.filter(b=>b.getAttribute("aria-pressed")==="true").map(b=>b.dataset.back),
+        labels:bs.map(b=>b.textContent), saved:__S.backMid}})()''')
+    check('settings: Back mid-play shows Stop audio and Keep playing, Keep playing on',
+          seg == {'n': 2, 'on': ['play'], 'pressed': ['play'], 'labels': ['Stop audio', 'Keep playing'], 'saved': 'play'}, seg)
+    await t.tap('#settings [data-back="stop"]'); await asyncio.sleep(0.3)
+    saved = await t.js('''(()=>{const raw=JSON.parse(localStorage.getItem("sonolumina.settings")||"{}");
+      return {mem:__S.backMid, disk:raw.backMid, on:[...document.querySelectorAll("#settings [data-back].on")].map(b=>b.dataset.back)}})()''')
+    check('settings: choosing Stop audio is saved on this phone', saved == {'mem': 'stop', 'disk': 'stop', 'on': ['stop']}, saved)
+    await t.tap('#setX'); await asyncio.sleep(0.4)
+    await t.tap('#play'); await asyncio.sleep(1.4)
+    await t.tap('#nch'); await asyncio.sleep(1.0)
+    h = json.loads(await t.js('JSON.stringify({cur:__hist().cur, state:__app.state})'))
+    check('Back mid-play setup: the next chapter is playing', h['cur'] == 'Genesis.2' and h['state'] == 'playing', h)
+    await t.back(1.4)
+    s = json.loads(await t.js('''JSON.stringify({cur:__hist().cur, search:__hist().search, state:__app.state,
+      play:document.getElementById("play").textContent, bar:document.getElementById("barRef").textContent,
+      where:document.getElementById("where").textContent, now:__app.now})'''))
+    check('Back mid-play Stop: the reading ends on the earlier chapter',
+          s['state'] == 'ready' and s['play'] == 'Begin' and s['cur'] == 'Genesis.1' and s['now'] is None
+          and s['search'].startswith('?Genesis.1') and s['bar'].startswith('Genesis 1:') and s['where'].startswith('Genesis 1'), s)
+    await t.shot('09_back_stop.png')
+    # Begin can sit under the fixed player bar once the links are on screen. The sound is already
+    # unlocked, so this press uses the button's own handler (the same one a tap runs).
+    begun = await t.js('document.getElementById("play").textContent')
+    check('Back mid-play Stop: the play control reads Begin', begun == 'Begin', begun)
+    await t.js('document.getElementById("play").click()'); await asyncio.sleep(1.4)
+    playing = json.loads(await t.js('JSON.stringify({state:__app.state, v:__app.now&&__app.now.v})'))
+    check('Back mid-play Stop: Begin starts the earlier chapter again', playing['state'] == 'playing' and playing['v'] == 1, playing)
+    await t.tap('#tabs [data-tab=read]'); await asyncio.sleep(0.6)
+    await t.back(0.9)
+    s2 = json.loads(await t.js('JSON.stringify({tab:__S.tab, state:__app.state, cur:__hist().cur, v:__app.now&&__app.now.v})'))
+    check('Back mid-play Stop: a screen change on the same chapter leaves the reading playing',
+          s2['state'] == 'playing' and s2['tab'] == 'listen' and s2['cur'] == 'Genesis.1' and s2['v'] == 1, s2)
+    await t.tap('#gear'); await asyncio.sleep(0.4)
+    await t.tap('#settings [data-back="play"]'); await asyncio.sleep(0.3)
+    kept = await t.js('JSON.parse(localStorage.getItem("sonolumina.settings")).backMid')
+    check('settings: choosing Keep playing is saved', kept == 'play' and await t.js('__S.backMid') == 'play', kept)
+    await t.tap('#setX'); await asyncio.sleep(0.4)
+    await t.tap('#nch'); await asyncio.sleep(1.0)
+    await t.back(1.4)
+    s3 = json.loads(await t.js('''JSON.stringify({cur:__hist().cur, state:__app.state, v:__app.now&&__app.now.v,
+      bar:document.getElementById("barRef").textContent})'''))
+    check('Back mid-play Keep playing: still playing verse 1 of the earlier chapter',
+          s3['state'] == 'playing' and s3['cur'] == 'Genesis.1' and s3['v'] == 1 and s3['bar'].startswith('Genesis 1:1'), s3)
+    await t.shot('10_back_keep.png')
+
 asyncio.run(run())
 n, ok = len(results), sum(results)
 print(f'{ok}/{n} passed'); sys.exit(0 if ok == n else 1)

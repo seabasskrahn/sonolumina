@@ -521,7 +521,7 @@
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026102001';
+  const BUILD = '2026102002';
   const toastEl = document.getElementById('toast'); let toastT = 0;
   // Toasts sit just above the player bar; while a sheet, Settings or the menu is open they move to the top, clear of its controls.
   const toast = msg => {
@@ -1309,6 +1309,7 @@
         <div class="set"><label class="l" for="stAuto">Auto play <small>Go on to the next chapter.</small></label><input type="checkbox" class="sw" id="stAuto" ${S.autoplay ? 'checked' : ''}></div>
         <div class="set"><div class="l">Repeat</div><select id="stRep" style="width:8rem">${REP.map(r => opt(r, S.repeat, r)).join('')}</select></div>
         <div class="set"><label class="l" for="stRes">Start where I left off <small>Begin opens at the last verse heard (or a link's verse). Off: always from verse 1.</small></label><input type="checkbox" class="sw" id="stRes" ${S.resume ? 'checked' : ''}></div>
+        <div class="set col"><div class="l">Back to an earlier chapter <small>While the reading is playing. Keep playing starts again at verse 1 of the chapter Back returns to. Stop ends the reading and shows that chapter.</small></div><div class="seg" role="group" aria-label="What Back does to an earlier chapter while playing">${[['stop', 'Stop audio'], ['play', 'Keep playing']].map(([v, t]) => `<button type="button" data-back="${v}" aria-pressed="${S.backMid === v}" class="${S.backMid === v ? 'on' : ''}">${t}</button>`).join('')}</div></div>
       </section>
       <section><h4>Voice</h4><div id="stVoice"></div></section>
       <section><h4>Reading</h4>
@@ -1344,6 +1345,14 @@
     q('#stAuto').onchange = e => { S.autoplay = e.target.checked; ok(); paintBar(); };
     q('#stRep').onchange = e => { S.repeat = e.target.value; ok(); paintBar(); };
     q('#stRes').onchange = e => { S.resume = e.target.checked; ok(); };
+    setEl.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+      S.backMid = b.dataset.back === 'stop' ? 'stop' : 'play';
+      setEl.querySelectorAll('[data-back]').forEach(x => {
+        const on = x.dataset.back === S.backMid;
+        x.classList.toggle('on', on); x.setAttribute('aria-pressed', on);
+      });
+      ok();
+    });
     q('#stKjv').onchange = e => { S.showKJV = e.target.checked; ok(); study.rerenderRead(); };
     q('#stOrig').onchange = e => { S.showOrig = e.target.checked; ok(); study.rerenderRead(); };
     q('#stSize').onchange = e => { S.textSize = +e.target.value; ok(); study.rerenderRead(); };
@@ -1356,8 +1365,8 @@
 
   // ---------- back button (as in Logos Theta build 2026101305; reworked in build 2026101818) ----------
   // Back closes an open sheet or menu first, then steps back through the screens (tabs) and chapters opened in the app,
-  // and at the first screen stays in the app instead of leaving it. Whatever step Back lands on, the screen and the
-  // player are made to match its address (a chapter that was playing goes on playing the chapter Back returns to).
+  // and at the first screen stays in the app instead of leaving it. The screen always matches the address.
+  // Mid-play, Back to a different chapter keeps playing from verse 1, unless Settings says Stop audio.
   let popping = false;
   const menuEl = el('menu'), menuScrim = el('menuScrim'), menuBtn = el('menuBtn');
   const anyOverlay = () => !menuEl.hidden || !sheet.hidden || !rsvp.hidden || !setEl.hidden || !nav.picker.hidden;
@@ -1377,13 +1386,13 @@
     const q = location.search, tok = ++restoreTok;
     popping = true;
     try { show(st.tab || 'listen'); } finally { popping = false; }
-    if (addrPart(q) === addrOf(cur).toLowerCase()) return;
-    if (state === 'playing') {   // keep listening, now to the chapter Back returned to
+    if (addrPart(q) === addrOf(cur).toLowerCase()) return;   // same chapter (a screen only): the reading is left as it is
+    if (state === 'playing' && S.backMid !== 'stop') {   // keep listening, from verse 1 of the chapter Back returned to
       const ch = await openAt(q.slice(1).split('&')[0]);
       if (tok !== restoreTok || !ch) return;
       delete ch.at; begin(ch, 1, 'replace'); return;
     }
-    await go(q, false);
+    await go(q, false);   // not playing, or Settings: Stop audio
   }
   addEventListener('popstate', e => {
     if (backPending) { backPending--; if (!backPending) histQ.splice(0).forEach(f => f()); return; }

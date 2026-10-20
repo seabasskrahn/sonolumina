@@ -1,3 +1,14 @@
+# Build 2026102002: Back during playback
+
+Kept as built: everything in 2026102001.
+
+## New
+Settings → Playback → "Back to an earlier chapter".
+- **Keep playing** (the default, and how Back already worked): while the reading is playing, Back to a different chapter keeps going, from verse 1 of the chapter it returns to.
+- **Stop audio**: that same Back ends the reading and shows the chapter. Begin starts it again.
+
+A Back that stays on the same chapter (only the screen changes) does not stop the reading, in either choice. A phone that never saved this setting keeps playing.
+
 # Build 2026102001: the World, and the strip ranked
 
 Kept as built: everything in 2026101819.

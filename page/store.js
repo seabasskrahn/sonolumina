@@ -5,6 +5,9 @@ const KEYS = { settings: 'sonolumina.settings', marks: 'sonolumina.marks', recal
 export const SPEEDS = ['0.5', '0.75', '1', '1.25', '1.5', '2', '2.5', '3'];   // the Logos Theta speed menu
 export const DEFAULTS = {
   speed: 1, dialMax: 10, deviceTop: 1.4, autoplay: true, repeat: 'off', resume: true,
+  // What Back does to an earlier chapter while the reading is playing.
+  // 'play' (default): keep playing from verse 1. 'stop': end the reading.
+  backMid: 'play',
   voiceOn: true, voiceName: '', pitch: 1,
   voiceEngine: 'device', elVoice: '', elVoiceName: '', elModel: 'eleven_multilingual_v2', elStability: 0.5, elSimilarity: 0.75, elStyle: 0.2, elExpressive: false,
   rsvpChunk: 1, showKJV: true, showOrig: false, dish: 'full', textSize: 1,
@@ -17,6 +20,7 @@ export function loadSettings() {
   const S = { ...DEFAULTS, ...read(KEYS.settings, {}) };
   S.speed = +S.speed > 0 ? +S.speed : 1;
   S.dialMax = Math.max(1, +S.dialMax || 10);
+  if (S.backMid !== 'play' && S.backMid !== 'stop') S.backMid = 'play';
   if (!Array.isArray(S.queue)) S.queue = [];
   return S;
 }
