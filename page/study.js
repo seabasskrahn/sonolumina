@@ -202,7 +202,7 @@ export function createStudy(X) {
   const bare = w => String(w || '').replace(/[‘’]/g, "'").replace(/[“”]/g, '').replace(/[^\p{L}\p{N}'-]/gu, '').replace(/^['-]+|['-]+$/g, '');
   function renderOrigins() {
     const T = el('tab-origins'), n = X.nowVerse();
-    let now = '<div class="dim">Press Begin and the verse now sounding is explained here.</div>';
+    let now = '<div class="dim">Press Begin. The verse that’s playing is explained here.</div>';
     if (n && n.vs && n.vs.melody) {
       const { k, E } = n.vs, sp = X.S.speed;
       const mel = n.vs.melody.filter(m => Number.isInteger(m.word) && n.words[m.word]).slice(0, 12);

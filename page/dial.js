@@ -21,7 +21,7 @@ export function mountDial(host, { get, set, getMax, setMax, capFor, min = 1, max
   <text class="cap" x="100" y="128" text-anchor="middle" fill="#a8a291" font-size="9.5" font-family="system-ui, sans-serif"></text></svg>
   <button class="ib step" type="button" data-d="1" aria-label="Faster">+</button>
   <div class="dmax"><label class="dim">Max <input type="number" class="mx" min="1" ${Number.isFinite(maxLimit) ? `max="${maxLimit}"` : ''} step="0.25" inputmode="decimal" aria-label="Speed maximum"></label>
-  <button class="pill" type="button" data-m="set">Set max</button><button class="pill" type="button" data-m="now" title="Use current speed as max">Max = now</button></div></div>`;
+  <button class="pill" type="button" data-m="set">Set max</button><button class="pill" type="button" data-m="now" title="Set max to current speed">Set max to current speed</button></div></div>`;
   const q = s => host.querySelector(s), dial = q('#dial');
   const max = () => Math.max(1, getMax());
   const v2a = v => max() <= min ? A0 : A0 + (Math.min(max(), Math.max(min, v)) - min) / (max() - min) * (A1 - A0);

@@ -181,7 +181,7 @@ async def body(t):
     check('bug 6: ElevenLabs shows Forget key, disabled, when no key is saved', d and d[0] is True and d[1] == 'Forget key', d)
     await t.tap('#stVoice #elSave'); await asyncio.sleep(0.2)
     msg = await t.js('document.querySelector("#stVoice #elMsg").textContent')
-    check('bug 6: saving an empty key field shows a message', 'empty' in msg, msg)
+    check('bug 6: saving an empty key field shows a message', 'key first' in msg, msg)
     await t.shot('05_settings_eleven_forget_disabled.png')
     await t.js('localStorage.setItem("sonolumina.settings", JSON.stringify(Object.assign(JSON.parse(localStorage.getItem("sonolumina.settings")), {voiceEngine:"device"})))')
     await t.back()

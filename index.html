@@ -521,7 +521,7 @@
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026102002';
+  const BUILD = '2026102003';
   const toastEl = document.getElementById('toast'); let toastT = 0;
   // Toasts sit just above the player bar; while a sheet, Settings or the menu is open they move to the top, clear of its controls.
   const toast = msg => {
@@ -1045,7 +1045,7 @@
   function setSpeed(x) {
     x = +(+x).toFixed(2);
     if (!(x > 0)) return;
-    if (x > S.dialMax) toast(`Your maximum is ${fmtSpeed(S.dialMax)}: raise it under the dial or in Settings to go faster`);
+    if (x > S.dialMax) toast(`Capped at ${fmtSpeed(S.dialMax)}. Raise the maximum under the dial or in Settings.`);
     x = +clampSpeed(x).toFixed(2);
     const was = S.speed; S.speed = x; save();
     if (player) { player.setSpeed(x); speakRest(); }
@@ -1176,7 +1176,7 @@
     q('#vTest').onclick = () => { reader.stop(); narrator.test(undefined, Math.min(narrator.top, Math.max(1, S.speed))); };
     root.querySelectorAll('[data-top]').forEach(b => b.onclick = () => { S.deviceTop = narrator.top = +b.dataset.top; save(); root.querySelectorAll('[data-top]').forEach(x => x.classList.toggle('on', x === b)); speakRest(); paintBar(); toast(`Phone voice top rate ${narrator.top}×`); });
     root.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => { S.voiceEngine = b.dataset.eng; save(); eleven.reset(); reader.stop(); redrawVoice(root); loadEleven(root); paintBar(); });
-    q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) { q('#elMsg').textContent = 'Paste your ElevenLabs API key first: the field is empty.'; toast('Nothing to save: the key field is empty'); q('#elKey').focus(); return; } elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
+    q('#elSave') && (q('#elSave').onclick = () => { const k = q('#elKey').value.trim(); if (!k) { q('#elMsg').textContent = 'Paste your ElevenLabs API key first.'; toast('Paste your ElevenLabs API key first.'); q('#elKey').focus(); return; } elevenKey.set(k); eleven.reset(); toast('Key saved on this phone'); redrawVoice(root); loadEleven(root); });
     q('#elDel') && (q('#elDel').onclick = () => { if (!elevenKey.get()) return; if (!confirm('Remove the ElevenLabs key from this phone?')) return; elevenKey.set(''); reader.stop(); elVoices = null; toast('Key removed'); redrawVoice(root); });
     q('#elVoice') && (q('#elVoice').onchange = e => { S.elVoice = e.target.value; S.elVoiceName = e.target.selectedOptions[0]?.textContent || ''; save(); eleven.reset(); toast('Voice saved'); redrawVoice(root); });
     q('#elPrev') && (q('#elPrev').onclick = () => { const v = (elVoices || []).find(x => x.id === S.elVoice); if (v && v.preview) { const a = new Audio(v.preview); a.play().catch(() => toast('Preview could not play')); } else toast('No preview for this voice'); });
@@ -1323,6 +1323,7 @@
       </section>
       <section><h4>This phone</h4>
         <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Nothing leaves the phone.</small></div></div>
+        <div class="set"><div class="l">Privacy <small>No account, and no Sonolumina server. Reading with the phone's own voice stays on this phone. Two optional features connect to outside services, using your own key, and only when you use them: the ElevenLabs reader sends verse text to ElevenLabs, and Talk sends your voice and the chapter to Google's Gemini.</small></div></div>
         <div class="set"><div class="l">Reset settings <small>Notes, highlights and Recall are kept.</small></div><button class="pill" type="button" id="stReset">Reset</button></div>
         <div class="set"><div class="l">Build <small>${BUILD}</small></div></div>
       </section>`;

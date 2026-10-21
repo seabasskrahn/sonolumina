@@ -74,7 +74,7 @@ export function createTalk({ mount, toggle, context, onLive, test = false }) {
   const setup = $('details', { className: 'tsetup' }, $('summary', { textContent: 'Setup: your own free Gemini key' }),
     $('div', { className: 'tlabel', textContent: 'Gemini API key' }),
     $('div', { className: 'tkey' }, keyIn, save), $('div', { className: 'tforget' }, forget),
-    $('p', { className: 'tkeynote', innerHTML: lock + '<span>Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. It is kept only on this phone (localStorage) and sent only to Google. On the free tier there is no charge, and Google may use the conversation to improve its products. Use a project with no billing account and it can never be charged.</span>' }),
+    $('p', { className: 'tkeynote', innerHTML: lock + '<span>Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. It is kept only on this phone and sent only to Google. On the free tier there is no charge, and Google may use the conversation to improve its products. If the project has no billing account, Google can’t charge it.</span>' }),
     $('label', { className: 'tmodel' }, $('span', { className: 'tlabel', textContent: 'Model' }), model));
   const panel = $('section', { id: 'talk', hidden: true },
     $('div', { className: 'thead' }, $('span', { className: 'tkick', textContent: 'Talk' }), ' ',
