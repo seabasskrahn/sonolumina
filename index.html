@@ -1327,7 +1327,7 @@
         <div class="set"><div class="l">Dish <small>Rings: the sounding tones as standing waves. Figure: the Chladni figure of the melody note. The glowing centre (the eye) is off unless you choose it.</small></div><select id="stDish" style="width:10rem">${[['both', 'Rings and figure'], ['full', 'As built, with the centre glow'], ['figure', 'Figure only'], ['rings', 'Rings only'], ['off', 'Off']].map(([v, t]) => opt(v, S.dish, t)).join('')}</select></div>
       </section>
       <section><h4>This phone</h4>
-        <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Nothing leaves the phone.</small></div></div>
+        <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Your notes stay on this phone.</small></div></div>
         <div class="set"><div class="l">Privacy <small>No account, and no Sonolumina server. Reading with the phone's own voice stays on this phone. Two optional features connect to outside services, using your own key, and only when you use them: the ElevenLabs reader sends verse text to ElevenLabs, and Talk sends your voice and the chapter to Google's Gemini.</small></div></div>
         <div class="set"><div class="l">Reset settings <small>Notes, highlights and Recall are kept.</small></div><button class="pill" type="button" id="stReset">Reset</button></div>
         <div class="set"><div class="l">Build <small>${BUILD}</small></div></div>
