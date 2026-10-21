@@ -6,6 +6,8 @@ Kept as built: everything in 2026102001.
 - Reduced motion: when the phone asks for less motion (prefers-reduced-motion), all animations and transitions site-wide finish instantly (flash, verse fade, toast, progress, chips, switches, Talk dish). The static current-word glow stays; it marks the word and isn't motion.
 - Following the reading scrolls with a jump instead of a glide under reduced motion.
 - Settings › Saved here: "Nothing leaves the phone." now reads "Your notes stay on this phone."
+- Writing Bot proof (Oct 21): Back setting note rewritten as one sentence; World note now "the chapter that’s playing rises, verse by verse"; strip legend "blue for the most sorrowful, gold for the most joyful"; World link now "See the whole Bible as a world ›" to match its aria-label ("the Bible").
+- Checked, unchanged: "795 languages" (United Bible Societies, as of 1 January 2026); concept/world.html is not linked from the app.
 
 ## Build 2026102003
 - APK download: not shown on this site (this repo had no APK link; nothing removed).

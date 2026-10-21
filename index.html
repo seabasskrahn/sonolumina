@@ -442,14 +442,14 @@
   </div>
   <div id="talkmount"></div>
   <div id="seasons"><canvas id="strip" aria-label="All 1,189 chapters, coloured by feeling. Tap to open one."></canvas>
-    <div class="note">1,189 chapters, Genesis to Revelation, each ranked against the rest: blue most sorrowful, gold most joyful</div>
-    <button id="toWorld" type="button">See the whole Word as a world ›</button></div>
+    <div class="note">1,189 chapters, Genesis to Revelation, each ranked against the rest: blue for the most sorrowful, gold for the most joyful</div>
+    <button id="toWorld" type="button">See the whole Bible as a world ›</button></div>
   </section>
   <section id="tab-world" class="tab">
     <div id="wstage"><canvas id="wcv" aria-label="Every chapter of the Bible as a light in a 3D space. Drag to turn, tap a light to name it."></canvas>
       <div id="whud"><div><b id="wname"></b><span id="winfo"></span></div><button id="wopen" type="button" hidden>Open ›</button></div></div>
     <div id="wshape" role="group" aria-label="Shape"><button id="wA" type="button" aria-pressed="true">Spiral</button><button id="wB" type="button" aria-pressed="false">Road</button></div>
-    <div class="note">Each light is one chapter, Genesis to Revelation. Its height is the number of verses and its colour is the strip's: blue for the most sorrowful, gold for the most joyful. Bright dots at the base mark where each book begins. Faint white lights past Revelation are history, not Scripture. While the music plays, the chapter that is sounding rises with its verses. Drag to turn, pinch to come closer, tap a light to name it.</div>
+    <div class="note">Each light is one chapter, Genesis to Revelation. Its height is the number of verses and its colour is the strip's: blue for the most sorrowful, gold for the most joyful. Bright dots at the base mark where each book begins. Faint white lights past Revelation are history, not Scripture. While the music plays, the chapter that’s playing rises, verse by verse. Drag to turn, pinch to come closer, tap a light to name it.</div>
   </section>
   <section id="tab-read" class="tab page ui"></section>
   <section id="tab-recall" class="tab page ui"></section>
@@ -1314,7 +1314,7 @@
         <div class="set"><label class="l" for="stAuto">Auto play <small>Go on to the next chapter.</small></label><input type="checkbox" class="sw" id="stAuto" ${S.autoplay ? 'checked' : ''}></div>
         <div class="set"><div class="l">Repeat</div><select id="stRep" style="width:8rem">${REP.map(r => opt(r, S.repeat, r)).join('')}</select></div>
         <div class="set"><label class="l" for="stRes">Start where I left off <small>Begin opens at the last verse heard (or a link's verse). Off: always from verse 1.</small></label><input type="checkbox" class="sw" id="stRes" ${S.resume ? 'checked' : ''}></div>
-        <div class="set col"><div class="l">Back to an earlier chapter <small>While the reading is playing. Keep playing starts again at verse 1 of the chapter Back returns to. Stop ends the reading and shows that chapter.</small></div><div class="seg" role="group" aria-label="What Back does to an earlier chapter while playing">${[['stop', 'Stop audio'], ['play', 'Keep playing']].map(([v, t]) => `<button type="button" data-back="${v}" aria-pressed="${S.backMid === v}" class="${S.backMid === v ? 'on' : ''}">${t}</button>`).join('')}</div></div>
+        <div class="set col"><div class="l">Back to an earlier chapter <small>If you go back to an earlier chapter while a reading is playing, Keep playing restarts that chapter at verse 1 and Stop ends the reading and shows the chapter.</small></div><div class="seg" role="group" aria-label="What Back does to an earlier chapter while playing">${[['stop', 'Stop audio'], ['play', 'Keep playing']].map(([v, t]) => `<button type="button" data-back="${v}" aria-pressed="${S.backMid === v}" class="${S.backMid === v ? 'on' : ''}">${t}</button>`).join('')}</div></div>
       </section>
       <section><h4>Voice</h4><div id="stVoice"></div></section>
       <section><h4>Reading</h4>
