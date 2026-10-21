@@ -265,7 +265,12 @@
   #talk[data-state=live] .tdish::before { opacity: .8; }
   #talk[data-state=live]:has(.hush:not(:disabled)) .tdish::before { opacity: 1; animation: tbreathe 1.1s ease-in-out infinite; }
   @keyframes tbreathe { 50% { opacity: .9; transform: scale(1.04); } }
-  @media (prefers-reduced-motion: reduce) { #talk .tdish::before { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important; scroll-behavior: auto !important;
+    }
+  }
   #talk button.call { position: relative; width: 112px; height: 112px; border-radius: 50%; padding: 34px 6px 0; background: #3a3020; border-color: var(--tied);
     font-size: .78rem; line-height: 1.2; display: grid; place-items: center; }
   #talk button.call::before { content: ''; position: absolute; left: 50%; top: 22px; width: 32px; height: 32px; margin-left: -16px; background: var(--glow);
@@ -521,7 +526,7 @@
   const save = () => saveSettings(S);
   let player = null, state = 'ready';
   window.__S = S;   // for smoke tests
-  const BUILD = '2026102003';
+  const BUILD = '2026102101';
   const toastEl = document.getElementById('toast'); let toastT = 0;
   // Toasts sit just above the player bar; while a sheet, Settings or the menu is open they move to the top, clear of its controls.
   const toast = msg => {
@@ -737,7 +742,7 @@
     const af = document.createElement('button'); af.type = 'button'; af.className = 'after' + (bk === 'after' ? ' on' : '');
     af.textContent = 'After the Word · history, not Scripture'; af.onclick = () => pick('after', true); g.append(af);
     if (!cs.isConnected) g.append(cs);
-    if (scroll) requestAnimationFrame(() => cs.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+    if (scroll) { const RM = matchMedia('(prefers-reduced-motion: reduce)').matches; requestAnimationFrame(() => cs.scrollIntoView({ block: 'nearest', behavior: RM ? 'auto' : 'smooth' })); }
     const items = bk === 'after' ? H.map((e, i) => [`After.${i + 1}`, String(e.year), i === 0 || e.thread !== H[i - 1].thread ? hist.threads[e.thread] : ''])
       : canon[bk][2].map((_, c) => [`${fileOf(bk)}.${c + 1}`, String(c + 1)]);
     for (const [addr, label, thread] of items) {

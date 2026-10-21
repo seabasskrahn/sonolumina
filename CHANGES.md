@@ -2,6 +2,10 @@
 
 Kept as built: everything in 2026102001.
 
+## Build 2026102101
+- Reduced motion: when the phone asks for less motion (prefers-reduced-motion), all animations and transitions site-wide finish instantly (flash, verse fade, toast, progress, chips, switches, Talk dish). The static current-word glow stays; it marks the word and isn't motion.
+- Following the reading scrolls with a jump instead of a glide under reduced motion.
+
 ## Build 2026102003
 - APK download: not shown on this site (this repo had no APK link; nothing removed).
 - Copy (Writing Bot items 2–7): dropped "(localStorage)" from the Talk key note; billing line now "If the project has no billing account, Google can’t charge it."; one empty-key message, "Paste your ElevenLabs API key first."; Begin hint "Press Begin. The verse that’s playing is explained here."; speed cap toast "Capped at 2×. Raise the maximum under the dial or in Settings."; one label "Set max to current speed".
