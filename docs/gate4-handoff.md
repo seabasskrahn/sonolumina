@@ -85,3 +85,7 @@ and schedules; no missing cross-references; no console errors.
 More verses and cross-references (a growing link graph); people humming
 or speaking verses; Gate 5 daily life (eating, tending, the deer) with
 its own verses.
+
+## Home note
+
+The home note is now **110 Hz (A2)**, unified with the main SonoLumina app (`ROOT=45` in MIDI, A=440 equal temperament unchanged). Gate 4 previously used D3 (about 147 Hz, `ROOT=50`). All modes and chords derive from the new root.

@@ -681,7 +681,7 @@ $('word').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('w
 const MODES={ionian:[0,2,4,5,7,9,11],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10]};
 const PHASES={dawn:{mode:'lydian',tempo:64},day:{mode:'ionian',tempo:80},evening:{mode:'mixolydian',tempo:68},night:{mode:'ionian',tempo:52},rest:{mode:'ionian',tempo:60}};
 const NEXT_CHORD={0:[3,4,5,3],1:[4,4,3],2:[5,3],3:[4,0,1,0],4:[0,0,5,3],5:[3,1,4]};
-const ROOT=50,midiHz=m=>440*Math.pow(2,(m-69)/12);
+const ROOT=45 /* A2 = 110 Hz, the home note shared with the main app (was 50 = D3) */,midiHz=m=>440*Math.pow(2,(m-69)/12);
 const music={ctx:null,master:null,send:null,on:false,nextTime:0,step:0,chord:0,tempo:72,callMotif:false};
 const dayPhase=()=>isNight()?'night':isRestDay()?'rest':world.minutes<8*60?'dawn':world.minutes>=18*60?'evening':'day';
 const pitch=(degree,octave=0)=>{const mode=MODES[PHASES[dayPhase()].mode],d=Math.floor(degree);return ROOT+12*(octave+Math.floor(d/7))+mode[((d%7)+7)%7];};
