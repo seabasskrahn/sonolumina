@@ -12,36 +12,38 @@ Musically, gratitude is resolution. Every tone in Sonolumina is measured from on
 
 Gratitude is the key that turns the lock. It closes the endless loop.
 
-## 3. Spirit, Law, Form
+## 3. Spirit, Craft, Form
 God formed man from the dust of the ground and breathed into him the breath of life, and man became a living soul (Genesis 2:7). Three things meet there:
 
 - **Spirit:** the breath, the purpose, the why.
-- **Law:** the order the body is built by, the how.
+- **Craft:** the skill the body is shaped with, the how. Like a musician's theory, it is not a fixed program but a way of thinking that has been learned and is brought to every moment.
 - **Form:** the living body itself, the what.
 
-Sonolumina is built the same way, in three documents: The Spirit (this one), The Law (the equation) and The Form (what is heard and seen). The Spirit governs the Law, and the Law gives rise to the Form.
+Sonolumina is built the same way: The Spirit (this document), The Craft (the skill that reads Scripture and makes music of it) and The Form (what is heard and seen). The Spirit governs the Craft, and the Craft gives rise to the Form.
+
+The Craft was first called the Law, and its rules first lived as one fixed equation (the code still keeps them in `law/`). Seabass renamed it, because it is meant to be a form of thought and not a static algorithm. The Craft is still being worked out.
 
 ## 4. The Code and the Body
 DNA is code: extremely dense, rich in context, and small. Yet run in the right environment, it grows into a whole human body. The body is not the code. The body is what the code grows into when it is run.
 
-Sonolumina's equation is code of this kind. It was written in the spirit of the user, Seabass Krahn, as a seed. It is not the app. Planted in the right environment, it grows into the app: the music, the light, the experience. So the seed must be pure. A seed carries everything the tree will become, and it will grow whatever it is given. Nothing foreign is planted in it.
+Sonolumina's Craft is a seed of this kind. It was written in the spirit of the user, Seabass Krahn, as a seed. It is not the app. Planted in the right environment, it grows into the app: the music, the light, the experience. So the seed must be pure. A seed carries everything the tree will become, and it will grow whatever it is given. Nothing foreign is planted in it.
 
-## 5. One Network, One Equation
+## 5. One Network, One Craft
 The Bible is a network. Its words recur, gather companions, and echo across books and centuries. Its verses quote, allude to, and fulfil one another. Scripture interprets Scripture.
 
-Sonolumina has one equation, applied to the whole Bible, that reads this network as it is:
+Sonolumina brings one Craft to the whole Bible, and it reads this network as it is:
 
 - A word's tone comes only from how Scripture itself uses that word.
 - A verse's feeling comes from its own words, in Scripture's own sense.
 - Linked verses sound together as harmonies, one rising as the other fades.
 - Everything resolves to the one home note.
 
-Nothing is imposed from outside. The structure is already in the Word; the equation only lets it be heard.
+Nothing is imposed from outside. The structure is already in the Word; the Craft only lets it be heard.
 
-## 6. Feeling Under Law
+## 6. Feeling Under the Craft
 The music follows the story. Lament sounds like lament; praise sounds like praise. Stillness slows it and intensity drives it. Humility lowers it and majesty raises it.
 
-This emotional life is not improvised. It is governed by the same law for every verse, from Genesis to Revelation. The feeling is real because the rule is faithful: the same equation, applied everywhere, lets the Word's own emotion come through without being invented.
+This emotional life is not invented. The same Craft is brought to every verse, from Genesis to Revelation. Like a musician who knows the theory by heart, it may make live choices in the moment, so a passage need not sound the same every time it is heard. But every choice stays inside what keeps it faithful: the Word is the only source, everything comes home, and nothing is claimed that is not true. The feeling is real because the Craft is faithful.
 
 ## 7. Honest Sound
 Truth comes before beauty. Every tone and frequency in Sonolumina is labelled with where it really comes from. Nothing claims to be from God unless Scripture says so.

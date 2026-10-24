@@ -1,9 +1,10 @@
 # Sonolumina
 
 Scripture heard and seen: the Word taking form in sound and light.
-Governed by [SPIRIT.md](SPIRIT.md) (Spirit > Law > Form).
+Governed by [SPIRIT.md](SPIRIT.md) (Spirit > Craft > Form). The Craft was first called the Law; the code still keeps its rules in `law/`.
 
-- `law/`: the Law. Pure data and math, with no sound and no screen.
+- `law/`: the Craft's rules as written so far (once called the Law). Pure data and math, with no sound and no screen.
+- `docs/CONDUCTOR.md`: the plan for the live conductor, the Craft played in the moment.
 - `form/`: the Form. Sound, light and what you touch.
 - `data/`: Scripture and reference data, never typed by hand.
 
@@ -41,7 +42,7 @@ No frequency is named in Scripture. Sonolumina makes no medical or spiritual cla
 
 ## Checks
 - `python3 -I tools/verify_codebook.py <dir with kjv/ and bsb/>` rebuilds the codebook from the Law and compares it.
-- Open `tests/law.html` in a browser to run the Law tests (77 checks, including every resolution rule on Genesis 1 as heard).
-- `python3 -I tools/run_canon.py` runs `tests/canon.html`: the whole Bible, every chapter cold and as one walk (25 checks).
+- Open `tests/law.html` in a browser to run the Law tests (84 checks, including every resolution rule on Genesis 1 as heard).
+- `python3 -I tools/run_canon.py` runs `tests/canon.html`: the whole Bible, every chapter cold and as one walk (30 checks).
 - Open `tests/mix.html` to measure the balance of the four sections.
 - `python3 tools/smoke.py <url> <seconds> <shot.png> [js expression] [tap|notap]` drives headless Chrome at phone size.
