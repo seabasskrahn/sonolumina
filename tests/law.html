@@ -13,7 +13,7 @@
   import { parseRef, next, prev, isFinal, sung, gIndex, chapterIndex, refAt } from '../law/canon.js';
   import { meanV, seasonHue, ranks } from '../law/seasons.js';
   import { afterText } from '../law/after.js';
-  import { links, signature, swells } from '../law/links.js';
+  import { links, signature, swells, orchestra, ORCH } from '../law/links.js';
   const results = [];
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -154,6 +154,13 @@
   check('signature: at most 3 tones, every one in the mode', sig.length === 3 && sig.every(f => MODES.Dorian.some(m => near(pc(f / 110), m, 1e-9)) || near(pc(f / 110), 1, 1e-9)), sig.join());
   const sw = swells([{ alpha: 1 }, { alpha: 0.5 }, { alpha: 0.25 }], 8);
   check('swells: evenly spread, 2 s then 1.2 s, gain 0.4 + 0.6α', sw.map(x => x.t).join() === '2,4,6' && sw[0].len === 2 && sw[1].len === 1.2 && near(sw[1].gain, 0.7, 1e-12));
+
+  const orc = orchestra([{ alpha: 1, dir: -0.7, theirs: [110, 165] }, { alpha: 0.5, dir: 0.7, theirs: [137.5] }, { alpha: 0.3, dir: 0.7, theirs: [] }], [220], 10);
+  check('orchestra: links with tones are seated, strongest first, entering at 0 and 2 s', orc.seats.length === 2 && orc.seats[0].t === 0 && near(orc.seats[1].t, 2, 1e-12));
+  check('orchestra: earlier Scripture low and left, later an octave up and right', orc.seats[0].pan === -0.7 && orc.seats[0].tones[0].freq === 110 && orc.seats[1].pan === 0.7 && orc.seats[1].tones[0].freq === 275);
+  check('orchestra: all hold together to 82% and are silent by 94% of the verse', orc.seats.every(x => near(x.hold, 8.2, 1e-9) && near(x.out, 9.4, 1e-9)) && near(orc.centre[0].out, 9.4, 1e-9));
+  check('orchestra: level 0.1/√voices × (0.4 + 0.6α); the centre is this verse, an octave up', near(orc.seats[1].tones[0].gain, 0.1 / 2 * 0.7, 1e-12) && orc.centre[0].freq === 440 && near(orc.centre[0].gain, 0.05, 1e-12));
+  check('orchestra: no links, no seats', orchestra([], [220], 10).seats.length === 0);
 
   // Navigation (Day 6): a verse in the address, and a chapter's place among all 1,189.
   const j11 = parseRef(canon, 'John.1.1');

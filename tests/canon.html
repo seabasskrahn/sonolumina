@@ -14,7 +14,7 @@
   import { scoreChapter } from '../law/chapter.js';
   import { pivot, pc, AMEN_IV } from '../law/harmony.js';
   import { sung, gIndex } from '../law/canon.js';
-  import { links, signature, swells, MAX_LINKS } from '../law/links.js';
+  import { links, signature, swells, orchestra, MAX_LINKS } from '../law/links.js';
 
   const out = document.getElementById('out');
   const checks = new Map();   // name -> { n, fails: [] }
@@ -90,6 +90,14 @@
         ok('links: every swell starts inside its verse', sw.every(x => x.t > 0 && x.t < vs.dur), at);
         const sig = signature(lex, text[vs.verse - 1], vs.mode);
         ok('signature: at most 3 tones, each in the verse mode', sig.length <= 3 && sig.every(f => inSet(f, MODES[vs.mode])), at);
+        // The orchestra, on the real links of every verse (each link given its own verse's signature, in this verse's mode).
+        const seated = ls.map(l => ({ ...l, theirs: sung(books[l.book].bsb, l.c, l.v).text ? signature(lex, sung(books[l.book].bsb, l.c, l.v).text, vs.mode) : [] }));
+        const o = orchestra(seated, sig, vs.dur);
+        const allT = o.seats.flatMap(x => x.tones).concat(o.centre);
+        ok('orchestra: every seat enters in the first 40% of the verse, strongest first', o.seats.every((x, i) => x.t >= 0 && x.t < 0.4 * vs.dur + 1e-9 && (!i || x.t > o.seats[i - 1].t && x.link.votes <= o.seats[i - 1].link.votes)), at);
+        ok('orchestra: all voices silent before the verse ends (it still comes home on V–I)', o.seats.concat(o.centre).every(x => x.out < vs.dur && x.hold < x.out), at);
+        ok('orchestra: every tone in the verse mode', allT.every(x => inSet(x.freq, MODES[vs.mode])), at);
+        ok('orchestra: total level never above one full voice (Σ gain² ≤ 0.1²)', allT.reduce((q, x) => q + x.gain * x.gain, 0) <= 0.01 + 1e-12, at);
         totals.links += ls.length;
       }
       totals.melodyNotes += vs.melody.length;
