@@ -74,3 +74,7 @@ tending the garden, caring for the deer).
 
 GitHub: the live repo is seabasskrahn/sonolumina (logos-theta is
 retired). Gate 3 still needs to be committed there.
+
+## Names
+
+The two people are named **Sono** (person one) and **Lumina** (person two). These are the default names; the player can still rename them, and older saves with no name for a person load as Sono / Lumina.

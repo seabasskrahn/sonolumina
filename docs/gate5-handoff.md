@@ -28,3 +28,14 @@ Four in-game days at 3×: shared meals, tending, regrowth, deer trust reaching 1
 
 ## Ideas for Gate 6
 Seasons and planting (sowing seed, Genesis 8:22); the people speaking or singing a verse at meals; more creatures to name and care for.
+
+## Names and home note
+Uses **Sono** and **Lumina** as the default names (same as Gates 3–4 on main), and the **110 Hz (A2) home note** (`ROOT=45`).
+
+## Differences from the draft plan (docs/gates-5-10-plan.md) — for the owner to decide
+This Gate 5 was built before the draft plan was written, so they differ:
+- **Meals:** two a day (morning, evening) here; the plan has three (dawn, noon, evening). Here they are eaten at the hearth table once the house stands.
+- **Hunger:** a gentle "· hungry" word and a "Nourished / Hungry" line in the Day book here; the plan says no hunger meter.
+- **Deer:** one deer, with its trust shown as a word (Wary / Curious / Trusting / Close); the plan has a small herd and keeps trust hidden.
+- **Not built yet from the plan:** seed beds that grow in stages, clearing paths, the day planner, the evening resolution of the music to A at 18:00, and a seventh-day walk together by the river.
+- **Matches the plan:** watering from the river, fruit that grows back, care that builds trust, the seventh day kept (meals and deer care continue, no tending), and Gen 1:29, Ps 104:14, Prov 12:10 and Ps 42:1. All verses are checked against data/kjv.

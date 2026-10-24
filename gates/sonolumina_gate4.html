@@ -58,13 +58,13 @@ dialog{border:1px solid var(--line);border-radius:12px;background:var(--paper);c
 </div>
 <footer>
 <div class="people" role="group" aria-label="Select a person">
-<button class="person active" id="person0" aria-pressed="true"><span class="portrait" style="--shirt:#b68c53" aria-hidden="true"></span><span><strong id="personName0">Person 1</strong><small id="activity0">Exploring</small></span></button>
-<button class="person" id="person1" aria-pressed="false"><span class="portrait" style="--shirt:#6d8e82" aria-hidden="true"></span><span><strong id="personName1">Person 2</strong><small id="activity1">Exploring</small></span></button>
+<button class="person active" id="person0" aria-pressed="true"><span class="portrait" style="--shirt:#b68c53" aria-hidden="true"></span><span><strong id="personName0">Sono</strong><small id="activity0">Exploring</small></span></button>
+<button class="person" id="person1" aria-pressed="false"><span class="portrait" style="--shirt:#6d8e82" aria-hidden="true"></span><span><strong id="personName1">Lumina</strong><small id="activity1">Exploring</small></span></button>
 </div>
 <button class="follow" id="follow" aria-pressed="false">Follow</button>
 <div class="clockGroup"><div class="clock"><strong id="clock">Day 1 · 07:00</strong><small id="dayPhase">Morning light</small></div><div class="time" role="group" aria-label="Time controls"><button id="pause" aria-label="Pause the world" aria-pressed="false">Ⅱ</button><button id="normal" class="active" aria-label="Normal speed" aria-pressed="true">1×</button><button id="fast" aria-label="Three times speed" aria-pressed="false">3×</button></div></div>
 </footer>
-<div class="statusline"><span id="selectionHint">Person 1 selected · tap ground to guide a walk</span><span>Single player · browser-local names · no outside connections</span></div>
+<div class="statusline"><span id="selectionHint">Sono selected · tap ground to guide a walk</span><span>Single player · browser-local names · no outside connections</span></div>
 </div>
 <dialog id="namingDialog" aria-labelledby="namingTitle">
 <div class="dialogHeading"><div><small>The first work</small><h2 id="namingTitle">Give a name</h2></div><button id="closeNaming" type="button" aria-label="Close naming">×</button></div>
@@ -149,8 +149,8 @@ const inHouse = (x,y,m=6) => x>HOUSE.x0-m&&x<HOUSE.x1+m&&y>HOUSE.y0-m&&y<HOUSE.y
 function createWorld() {
   // Each person's inward foundation precedes creation of their surroundings.
   const people = [
-    {id:'person-1',name:null,x:-144,y:-64,color:'#b68c53',skin:'#d6ae86',hair:'#4c3c2b',heart:FOUNDATION},
-    {id:'person-2',name:null,x:-32,y:-16,color:'#6d8e82',skin:'#c49776',hair:'#493629',heart:FOUNDATION}
+    {id:'person-1',name:'Sono',x:-144,y:-64,color:'#b68c53',skin:'#d6ae86',hair:'#4c3c2b',heart:FOUNDATION},
+    {id:'person-2',name:'Lumina',x:-32,y:-16,color:'#6d8e82',skin:'#c49776',hair:'#493629',heart:FOUNDATION}
   ].map(p=>({...p,path:[],wait:0,travel:0,intent:'walk',directed:false,angle:0,pendingName:null,speech:null,task:null,carrying:null,inside:false}));
   return {id:'first-world',galaxy:'Sonolumina',people,trees,stones,
     river:{id:'river-1',name:null,kind:'river',x:180,y:0},animal:{id:'deer-1',name:null,kind:'deer',x:40,y:170},
@@ -162,11 +162,12 @@ function createWorld() {
 }
 const world = createWorld();
 const ui = {selected:0,following:false,toastUntil:0,lastHud:0,namingMode:false,namingOpen:false,inspected:'person-1'};
-const personLabel = i => world.people[i].name || 'Person '+(i+1);
+const DEFAULT_NAMES = ['Sono','Lumina'];
+const personLabel = i => world.people[i].name || DEFAULT_NAMES[i];
 const entities = [...world.people,...world.trees,...world.stones,world.river,world.animal,...world.hills,world.garden,world.homeSite];
 const byId = new Map(entities.map(e=>[e.id,e]));
 const description = e => {
-  if(world.people.includes(e))return 'Person '+(world.people.indexOf(e)+1);
+  if(world.people.includes(e))return DEFAULT_NAMES[world.people.indexOf(e)];
   if(e.kind==='tree')return 'Tree '+(world.trees.indexOf(e)+1);
   if(e.kind==='stone')return 'Stone '+(world.stones.indexOf(e)+1);
   if(e.kind==='hill')return 'Hill '+(world.hills.indexOf(e)+1);
@@ -322,7 +323,7 @@ function restoreSavedWorld(){
   }
   // Only apply after the entire save has passed validation.
   Object.assign(world.dwelling,{stage:data.dwelling.stage,wood:data.dwelling.wood,stone:data.dwelling.stone,working:data.dwelling.working});
-  data.names.forEach(row=>{byId.get(row.id).name=row.name;});
+  data.names.forEach(row=>{const e=byId.get(row.id),pi=world.people.indexOf(e);e.name=row.name===null&&pi>=0?DEFAULT_NAMES[pi]:row.name;});
   data.people.forEach(row=>{const person=byId.get(row.id);Object.assign(person,{x:row.x,y:row.y,path:row.path.map(q=>({...q})),wait:row.wait,travel:row.travel,angle:row.angle,intent:row.intent,directed:row.directed,pendingName:row.pendingName?{...row.pendingName}:null,task:row.task,carrying:row.carrying,inside:row.inside});});
   for(const key of ['day','minutes','ticks','speed','paused'])world[key]=data[key];
   ui.selected=data.selected;ui.following=data.following;ui.inspected=world.people[ui.selected].id;
@@ -680,7 +681,7 @@ $('word').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('w
 const MODES={ionian:[0,2,4,5,7,9,11],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10]};
 const PHASES={dawn:{mode:'lydian',tempo:64},day:{mode:'ionian',tempo:80},evening:{mode:'mixolydian',tempo:68},night:{mode:'ionian',tempo:52},rest:{mode:'ionian',tempo:60}};
 const NEXT_CHORD={0:[3,4,5,3],1:[4,4,3],2:[5,3],3:[4,0,1,0],4:[0,0,5,3],5:[3,1,4]};
-const ROOT=50,midiHz=m=>440*Math.pow(2,(m-69)/12);
+const ROOT=45 /* A2 = 110 Hz, the home note shared with the main app (was 50 = D3) */,midiHz=m=>440*Math.pow(2,(m-69)/12);
 const music={ctx:null,master:null,send:null,on:false,nextTime:0,step:0,chord:0,tempo:72,callMotif:false};
 const dayPhase=()=>isNight()?'night':isRestDay()?'rest':world.minutes<8*60?'dawn':world.minutes>=18*60?'evening':'day';
 const pitch=(degree,octave=0)=>{const mode=MODES[PHASES[dayPhase()].mode],d=Math.floor(degree);return ROOT+12*(octave+Math.floor(d/7))+mode[((d%7)+7)%7];};
