@@ -26,31 +26,22 @@ dialog{border:1px solid var(--line);border-radius:12px;background:var(--paper);c
 @media(max-width:700px){#namingBar{padding:7px 12px 0;gap:4px}#namingBar button{font-size:10px;padding:5px 9px;min-height:38px}#saveStatus{max-width:110px}.person strong{max-width:105px}dialog{padding:17px}.dialogHeading h2{font-size:22px}.dialogActions{flex-wrap:wrap}.dialogActions button{min-width:135px}#nameDescription{margin:8px 0}}
 @media(max-height:480px){#namingBar{padding-top:4px}#namingBar button{min-height:30px}dialog{max-height:calc(100dvh - 16px)}}
 #stageList{list-style:none;padding:0;margin:0 0 4px}#stageList li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}#stageList li.done{color:var(--muted)}#stageList li.current strong{color:var(--green)}#stageList li.current{font-weight:600}#stageList em{font-style:normal;color:var(--muted);font-size:11px;text-align:right;font-weight:400}#dwellingNote{font-size:11px;color:var(--muted);margin-bottom:0}#toggleWork[hidden]{display:none}
-#toast{top:14px;bottom:auto}
-#soundToggle{position:absolute;right:72px;top:18px;width:44px;padding:0;font:20px Georgia,serif;background:var(--paper);color:var(--muted)}#soundToggle.active{background:var(--green);color:var(--paper)}
-#word{position:absolute;left:22px;right:200px;max-width:560px;bottom:52px;padding:9px 13px;cursor:pointer;transition:opacity .7s}#word.fade{opacity:.15}
-#wordText{font:13px/1.45 Georgia,serif;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#word.open #wordText{display:block}
-#word small{display:block;margin-top:4px;font-size:10px;color:var(--muted);line-height:1.4}#word b{color:var(--ink);font-weight:600}#wordThemes{display:block;letter-spacing:.6px;text-transform:uppercase;font-size:8.5px;margin-top:2px;color:#8a7a4e}
-@media(max-width:700px){#soundToggle{right:64px;top:12px}#word{left:12px;right:12px;bottom:74px;padding:8px 11px}#wordText{font-size:12px}}
-@media(max-height:480px) and (min-width:600px){#word{bottom:44px}#wordThemes{display:none}}
 @media(max-width:420px){#namingBar{flex-wrap:wrap}#saveStatus{min-height:24px;padding:0 4px;margin-left:auto}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <div id="app">
-<header><div class="brand"><span class="seal" aria-hidden="true">∿</span><div><h1>SONOLUMINA</h1><small>The first garden</small></div></div><div class="edition"><strong>A world within a world</strong>GATE 4 · SOUND &amp; LIGHT</div></header>
+<header><div class="brand"><span class="seal" aria-hidden="true">∿</span><div><h1>SONOLUMINA</h1><small>The first garden</small></div></div><div class="edition"><strong>A world within a world</strong>GATE 3 · THE DWELLING</div></header>
 <nav aria-label="Nested world scales" id="scales"></nav>
 <main id="viewport">
 <canvas id="world" tabindex="0" aria-label="The garden and its two people. Select a person below, tap dry ground to walk, and use the scale buttons to explore."></canvas>
 <div id="place" class="glass"><small id="scaleLabel">Town scale</small><strong id="placeTitle">The first garden</strong><span id="placeDetail">Two people. A beginning.</span></div>
 <button id="helpToggle" aria-label="How to play" aria-expanded="false" title="How to play">?</button>
-<aside id="help" class="glass" hidden><h2>Near and far</h2><p>Select either person below. Tap dry garden ground to guide their walk. Otherwise, both explore on their own.</p><p>Use the scale ribbon to travel from the universe down to one person. These are nested views of the same world.</p><p>Drag to look around. Pinch or scroll to zoom. Use − / + for one scale at a time, and ⌖ to return to the garden.</p><p>“Follow” keeps the selected person in view. Pause stops life, not the camera.</p><p>Choose <b>Name</b> and tap creation, or open the <b>Names</b> book. Give either person a name, or let the selected person walk to creation and speak its name.</p><p>Names and unfinished naming walks save in this browser at this same address or file. Private browsing, clearing browser data, or changing addresses can lose access to that save. No data leaves the game.</p><p>Open <b>Home</b> to begin the dwelling. Together they gather fallen branches and loose river stones and raise the house in five stages. They work in daylight, rest at night, and keep the seventh day as rest.</p><p>The <b>Building</b> scale shows the house from outside. The <b>Home</b> scale looks inside.</p><p><b>Sound &amp; light.</b> The card at the bottom shows the Scripture for this moment and the verses read with it. The music and the motes of light follow what those words are about: water, light, growth, work, rest, the home. Tap ♪ for sound. Tap the verse to read it in full.</p><button id="helpClose">Back to the garden</button></aside>
+<aside id="help" class="glass" hidden><h2>Near and far</h2><p>Select either person below. Tap dry garden ground to guide their walk. Otherwise, both explore on their own.</p><p>Use the scale ribbon to travel from the universe down to one person. These are nested views of the same world.</p><p>Drag to look around. Pinch or scroll to zoom. Use − / + for one scale at a time, and ⌖ to return to the garden.</p><p>“Follow” keeps the selected person in view. Pause stops life, not the camera.</p><p>Choose <b>Name</b> and tap creation, or open the <b>Names</b> book. Give either person a name, or let the selected person walk to creation and speak its name.</p><p>Names and unfinished naming walks save in this browser at this same address or file. Private browsing, clearing browser data, or changing addresses can lose access to that save. No data leaves the game.</p><p>Open <b>Home</b> to begin the dwelling. Together they gather fallen branches and loose river stones and raise the house in five stages. They work in daylight, rest at night, and keep the seventh day as rest.</p><p>The <b>Building</b> scale shows the house from outside. The <b>Home</b> scale looks inside.</p><button id="helpClose">Back to the garden</button></aside>
 <div id="worldHint">Drag to explore · tap dry ground to walk</div>
 <div id="zoom" class="glass" role="group" aria-label="Camera controls"><button id="zoomOut" aria-label="Zoom out one scale" title="Zoom out">−</button><button id="zoomIn" aria-label="Zoom in one scale" title="Zoom in">+</button><span class="divider"></span><button id="recenter" aria-label="Return to the garden" title="Return to the garden">⌖</button></div>
 <div id="toast" class="glass" role="status" aria-live="polite" hidden></div>
-<button id="soundToggle" aria-label="Turn sound on" aria-pressed="false" title="Sound">♪</button>
-<div id="word" class="glass" role="button" tabindex="0" aria-label="Scripture for this moment. Tap to read in full."><p id="wordText"></p><small><b id="wordRef"></b><span id="wordWith"></span><span id="wordThemes"></span></small></div>
 </main>
 <div id="namingBar" role="group" aria-label="Walking, naming, and local saving">
 <div class="modeButtons"><button id="walkMode" class="active" aria-pressed="true">Walk</button><button id="nameMode" aria-pressed="false">Name</button><button id="namesBook" aria-label="Open the book of names">Names · 0/26</button><button id="homeBook" aria-label="Open the dwelling">Home · 0/5</button></div>
@@ -396,7 +387,6 @@ function approachRoute(person,entity){
 function announceName(person,entity,value){
   entity.name=value;
   const isPerson=world.people.includes(entity);
-  hearMoment('Genesis 2:19');music.callMotif=true;
   person.speech={text:isPerson?'I am '+value+'.':value,until:performance.now()+5200};
   ui.inspected=entity.id;refreshBook();
   const saved=saveWorld();notify(isPerson?value+' has a name.'+(saved?' Saved here.':' Session only.'):personLabel(world.people.indexOf(person))+' named '+description(entity).toLowerCase()+' “'+value+'”.'+(saved?' Saved here.':' Session only.'));
@@ -544,7 +534,6 @@ function deposit(p){
     const stage=STAGES[d.stage],before=d.stage;
     d.wood-=stage.wood;d.stone-=stage.stone;d.stage++;
     stageRaised(before,d.stage);notify(stage.done);
-    hearMoment(houseDone()?'Genesis 1:31':'Psalm 127:1');
   }
   if(houseDone()){d.working=false;}
   refreshDwelling();saveWorld();
@@ -581,219 +570,6 @@ function simulate(dt){
       else {p.x+=(target.x-p.x)/d*step;p.y+=(target.y-p.y)/d*step;}
     }else{p.wait-=dt;if(p.wait<=0)decide(p);}
   });
-}
-// GATE 4 · SOUND & LIGHT — Scripture heard and seen.
-// The words are the King James text (public domain), carried inside this file.
-// Nothing here turns letters into numbers or gives any frequency a meaning of its own:
-// tuning is ordinary A=440 equal temperament. What the conductor follows is MEANING —
-// the themes of the verse for this moment and of the verses read together with it.
-// The pairing of words to themes is an interpretation, written by hand, open to revision.
-const SCRIPTURE = Object.freeze({
-  'Genesis 1:3':{text:'And God said, Let there be light: and there was light.',themes:['light'],with:['John 1:5','Psalm 119:105','Psalm 19:1']},
-  'Genesis 1:5':{text:'And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.',themes:['light','rest','name'],with:['Psalm 30:5','Genesis 1:16']},
-  'Genesis 1:16':{text:'And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.',themes:['heavens','light'],with:['Psalm 19:1','Psalm 147:4']},
-  'Genesis 1:31':{text:'And God saw every thing that he had made, and, behold, it was very good. And the evening and the morning were the sixth day.',themes:['praise','growth','home'],with:['Psalm 127:1','Psalm 90:17','Genesis 2:2']},
-  'Genesis 2:2':{text:'And on the seventh day God ended his work which he had made; and he rested on the seventh day from all his work which he had made.',themes:['rest'],with:['Genesis 2:3','Exodus 20:11','Matthew 11:28']},
-  'Genesis 2:3':{text:'And God blessed the seventh day, and sanctified it: because that in it he had rested from all his work which God created and made.',themes:['rest','praise'],with:['Exodus 20:11','Genesis 2:2']},
-  'Genesis 2:8':{text:'And the LORD God planted a garden eastward in Eden; and there he put the man whom he had formed.',themes:['growth','home'],with:['Genesis 2:15','Psalm 1:3']},
-  'Genesis 2:9':{text:'And out of the ground made the LORD God to grow every tree that is pleasant to the sight, and good for food; the tree of life also in the midst of the garden, and the tree of knowledge of good and evil.',themes:['growth'],with:['Psalm 1:3','Revelation 22:2']},
-  'Genesis 2:10':{text:'And a river went out of Eden to water the garden; and from thence it was parted, and became into four heads.',themes:['water','growth'],with:['Psalm 46:4','Revelation 22:1','Psalm 1:3']},
-  'Genesis 2:15':{text:'And the LORD God took the man, and put him into the garden of Eden to dress it and to keep it.',themes:['work','growth'],with:['Psalm 104:23','Psalm 90:17','Genesis 2:8']},
-  'Genesis 2:19':{text:'And out of the ground the LORD God formed every beast of the field, and every fowl of the air; and brought them unto Adam to see what he would call them: and whatsoever Adam called every living creature, that was the name thereof.',themes:['name','growth'],with:['Psalm 147:4','Genesis 1:5']},
-  'Exodus 20:11':{text:'For in six days the LORD made heaven and earth, the sea, and all that in them is, and rested the seventh day: wherefore the LORD blessed the sabbath day, and hallowed it.',themes:['rest','praise','heavens'],with:['Genesis 2:3']},
-  'Psalm 1:3':{text:'And he shall be like a tree planted by the rivers of water, that bringeth forth his fruit in his season; his leaf also shall not wither; and whatsoever he doeth shall prosper.',themes:['growth','water'],with:['Genesis 2:9']},
-  'Psalm 4:8':{text:'I will both lay me down in peace, and sleep: for thou, LORD, only makest me dwell in safety.',themes:['rest','peace','home'],with:['Psalm 127:2','Matthew 11:28']},
-  'Psalm 19:1':{text:'The heavens declare the glory of God; and the firmament sheweth his handywork.',themes:['heavens','praise'],with:['Genesis 1:16','Psalm 147:4','Psalm 150:3']},
-  'Psalm 30:5':{text:'For his anger endureth but a moment; in his favour is life: weeping may endure for a night, but joy cometh in the morning.',themes:['light','peace'],with:['Lamentations 3:22–23']},
-  'Psalm 46:4':{text:'There is a river, the streams whereof shall make glad the city of God, the holy place of the tabernacles of the most High.',themes:['water','praise','peace'],with:['Revelation 22:1']},
-  'Psalm 90:17':{text:'And let the beauty of the LORD our God be upon us: and establish thou the work of our hands upon us; yea, the work of our hands establish thou it.',themes:['work','praise'],with:['Psalm 127:1','Genesis 2:15']},
-  'Psalm 104:23':{text:'Man goeth forth unto his work and to his labour until the evening.',themes:['work'],with:['Genesis 1:5']},
-  'Psalm 119:105':{text:'Thy word is a lamp unto my feet, and a light unto my path.',themes:['light','peace'],with:['John 1:5']},
-  'Psalm 127:1':{text:'Except the LORD build the house, they labour in vain that build it: except the LORD keep the city, the watchman waketh but in vain.',themes:['home','work'],with:['Proverbs 24:3','Matthew 7:24','Psalm 90:17']},
-  'Psalm 127:2':{text:'It is vain for you to rise up early, to sit up late, to eat the bread of sorrows: for so he giveth his beloved sleep.',themes:['rest','peace'],with:['Psalm 4:8','Matthew 11:28']},
-  'Psalm 147:4':{text:'He telleth the number of the stars; he calleth them all by their names.',themes:['heavens','name'],with:['Genesis 1:16','Psalm 19:1','Genesis 2:19']},
-  'Psalm 150:3':{text:'Praise him with the sound of the trumpet: praise him with the psaltery and harp.',themes:['praise'],with:['Psalm 19:1']},
-  'Proverbs 24:3':{text:'Through wisdom is an house builded; and by understanding it is established:',themes:['home'],with:['Psalm 127:1','Matthew 7:24']},
-  'Lamentations 3:22–23':{text:'It is of the LORD’s mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness.',themes:['light','peace'],with:['Psalm 30:5','Genesis 1:3']},
-  'Matthew 7:24':{text:'Therefore whosoever heareth these sayings of mine, and doeth them, I will liken him unto a wise man, which built his house upon a rock:',themes:['home','work'],with:['Psalm 127:1']},
-  'Matthew 11:28':{text:'Come unto me, all ye that labour and are heavy laden, and I will give you rest.',themes:['rest','peace'],with:['Psalm 4:8','Genesis 2:2']},
-  'John 1:5':{text:'And the light shineth in darkness; and the darkness comprehended it not.',themes:['light'],with:['Genesis 1:3','Psalm 119:105']},
-  'Revelation 22:1':{text:'And he shewed me a pure river of water of life, clear as crystal, proceeding out of the throne of God and of the Lamb.',themes:['water','light','praise'],with:['Revelation 22:2','Psalm 46:4']},
-  'Revelation 22:2':{text:'In the midst of the street of it, and on either side of the river, was there the tree of life, which bare twelve manner of fruits, and yielded her fruit every month: and the leaves of the tree were for the healing of the nations.',themes:['growth','water'],with:['Genesis 2:9','Revelation 22:1']}
-});
-const THEMES = ['light','water','growth','work','rest','name','home','heavens','peace','praise'];
-const word = {ref:'Genesis 1:3',candidate:null,since:0,event:null,target:{},live:Object.fromEntries(THEMES.map(t=>[t,0])),lastTarget:0};
-// Which words belong to this moment: an event, then the scale, then the hour and what is happening.
-function momentVerse(){
-  const now=performance.now();
-  if(word.event&&now<word.event.until)return word.event.ref;
-  const lv=currentLevel(),hr=world.minutes/60;
-  if(lv===0)return 'Psalm 147:4';
-  if(lv===1)return 'Psalm 19:1';
-  if(isNight())return houseDone()?'Psalm 4:8':hr>=21?'Psalm 127:2':'Matthew 11:28';
-  if(isRestDay())return hr<12?'Genesis 2:2':hr<18?'Genesis 2:3':'Exodus 20:11';
-  if(hr<8)return world.day===1?'Genesis 1:3':'Lamentations 3:22–23';
-  if(hr>=18)return 'Genesis 1:5';
-  const p=world.people[ui.selected];
-  if(world.people.some(q=>(q.task&&q.task!=='rest')||q.intent==='gather'||q.intent==='build'))return lv>=3?'Psalm 90:17':'Genesis 2:15';
-  if(Math.abs(p.x-riverX(p.y))<85)return 'Genesis 2:10';
-  if(lv>=3&&world.dwelling.stage>0)return houseDone()?'Proverbs 24:3':'Psalm 127:1';
-  return hr<12?'Genesis 2:8':'Genesis 2:9';
-}
-// The verse and everything read with it, gathered into one sense of what this moment is about.
-function hearVerse(ref){
-  const w=Object.fromEntries(THEMES.map(t=>[t,0])),add=(r,k)=>SCRIPTURE[r]?.themes.forEach(t=>w[t]+=k);
-  add(ref,1);SCRIPTURE[ref].with.forEach(r=>add(r,.45));
-  // Time is part of the hearing: night leans toward rest, the sky, and quiet.
-  if(isNight()){w.rest+=.3;w.heavens+=.25;w.work*=.3;}
-  if(world.paused){THEMES.forEach(t=>w[t]*=.4);w.rest+=.4;}
-  const top=Math.max(...Object.values(w),.001);THEMES.forEach(t=>w[t]=Math.min(1,w[t]/top));
-  return w;
-}
-function showWord(){
-  const v=SCRIPTURE[word.ref],card=$('word');
-  card.classList.add('fade');
-  setTimeout(()=>{
-    $('wordText').textContent=v.text;$('wordRef').textContent=word.ref;
-    $('wordWith').textContent=v.with.length?' · read with '+v.with.join(', '):'';
-    $('wordThemes').textContent=THEMES.filter(t=>word.target[t]>.32).sort((a,b)=>word.target[b]-word.target[a]).join(' · ');
-    card.classList.remove('fade');
-  },reducedMotion?0:450);
-}
-function setVerse(ref){word.ref=ref;word.target=hearVerse(ref);word.lastTarget=performance.now();showWord();}
-function hearMoment(ref){word.event={ref,until:performance.now()+30000};setVerse(ref);}
-function updateWord(now,dt){
-  const next=momentVerse();
-  if(next!==word.ref){
-    if(next!==word.candidate){word.candidate=next;word.since=now;}
-    else if(now-word.since>2200)setVerse(next);
-  } else word.candidate=null;
-  if(now-word.lastTarget>1500){word.target=hearVerse(word.ref);word.lastTarget=now;}
-  // The orchestra turns gradually toward the new meaning rather than switching.
-  const ease=1-Math.exp(-dt*.6);THEMES.forEach(t=>word.live[t]=mix(word.live[t],word.target[t]||0,ease));
-}
-$('word').onclick=()=>$('word').classList.toggle('open');
-$('word').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('word').classList.toggle('open');}};
-// THE CONDUCTOR — a live arrangement, never the same twice: the hour sets the mode and
-// pace, the themes decide which voices play and how strongly, and each bar's harmony is
-// chosen in the moment.
-const MODES={ionian:[0,2,4,5,7,9,11],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10]};
-const PHASES={dawn:{mode:'lydian',tempo:64},day:{mode:'ionian',tempo:80},evening:{mode:'mixolydian',tempo:68},night:{mode:'ionian',tempo:52},rest:{mode:'ionian',tempo:60}};
-const NEXT_CHORD={0:[3,4,5,3],1:[4,4,3],2:[5,3],3:[4,0,1,0],4:[0,0,5,3],5:[3,1,4]};
-const ROOT=50,midiHz=m=>440*Math.pow(2,(m-69)/12);
-const music={ctx:null,master:null,send:null,on:false,nextTime:0,step:0,chord:0,tempo:72,callMotif:false};
-const dayPhase=()=>isNight()?'night':isRestDay()?'rest':world.minutes<8*60?'dawn':world.minutes>=18*60?'evening':'day';
-const pitch=(degree,octave=0)=>{const mode=MODES[PHASES[dayPhase()].mode],d=Math.floor(degree);return ROOT+12*(octave+Math.floor(d/7))+mode[((d%7)+7)%7];};
-const clockNow=()=>music.on&&music.ctx&&music.ctx.state==='running'?music.ctx.currentTime:performance.now()/1000;
-function startAudio(){
-  if(!music.ctx){
-    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
-    const c=new AC();music.ctx=c;
-    const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;comp.connect(c.destination);
-    music.master=c.createGain();music.master.gain.value=.8;music.master.connect(comp);
-    // A small room made in code: a few seconds of softly fading air.
-    const len=Math.floor(c.sampleRate*2.6),buffer=c.createBuffer(2,len,c.sampleRate);
-    for(let ch=0;ch<2;ch++){const data=buffer.getChannelData(ch);for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.4);}
-    const verb=c.createConvolver();verb.buffer=buffer;music.send=c.createGain();music.send.gain.value=.32;music.send.connect(verb);verb.connect(music.master);
-  }
-  music.ctx.resume();return true;
-}
-function tone(when,midi,{type='sine',gain=.04,attack=.01,hold=.2,release=.6,filter=0,detune=0,pan=0}={}){
-  const c=music.ctx,o=c.createOscillator(),g=c.createGain();
-  o.type=type;o.frequency.value=midiHz(midi);o.detune.value=detune;
-  let node=o;if(filter){const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=filter;o.connect(f);node=f;}
-  if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;node.connect(p);node=p;}
-  node.connect(g);g.connect(music.master);g.connect(music.send);
-  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(gain,when+attack);g.gain.setTargetAtTime(0,when+attack+hold,release/3);
-  o.start(when);o.stop(when+attack+hold+release*2.5);
-}
-// Every sounded note is also a light: the voice of water glints on the river, growth on the trees.
-function voice(theme,when,midi,opts){
-  if(music.on&&music.ctx&&music.ctx.state==='running')tone(when,midi,opts);
-  spawnMote(theme,performance.now()+Math.max(0,(when-clockNow())*1000),midi);
-}
-function playStep(step,when){
-  const L=word.live,stepDur=60/music.tempo/2,bar=stepDur*8,c=music.chord,triad=[c,c+2,c+4],rnd=Math.random;
-  if(step===0){
-    const options=NEXT_CHORD[c]||[0];music.chord=options[Math.floor(rnd()*options.length)];
-    const k=music.chord,chord=[k,k+2,k+4];
-    music.tempo=Math.max(48,PHASES[dayPhase()].tempo+L.work*10-L.rest*6+(rnd()-.5)*4);
-    if(L.rest>.1)[0,4].forEach((d,i)=>voice('rest',when,pitch(d,-2),{type:'sine',gain:.07*L.rest,attack:1.2,hold:bar,release:2,pan:i?.2:-.2}));
-    if(L.growth>.1)chord.forEach((d,i)=>voice('growth',when,pitch(d,-1),{type:'sawtooth',gain:.018*L.growth,attack:1.4,hold:bar*.8,release:1.6,filter:850,detune:(i-1)*7,pan:(i-1)*.4}));
-    if(L.home>.1)[k,k+2].forEach(d=>voice('home',when,pitch(d,-2),{type:'triangle',gain:.05*L.home,attack:.5,hold:bar*.7,release:1.4,filter:520}));
-    if(L.praise>.1&&rnd()<.7)chord.forEach((d,i)=>voice('praise',when+i*.04,pitch(d,1),{type:'triangle',gain:.022*L.praise,attack:.7,hold:bar*.4,release:1.5,filter:2600,pan:(i-1)*.5}));
-    if(music.callMotif||(L.name>.15&&rnd()<.35*L.name)){
-      // A call, and an answer: something spoken, and something named.
-      [k+4,k+5,k+7,null,k+7,k+5,k+4].forEach((d,i)=>{if(d!==null)voice('name',when+i*stepDur,pitch(d,1),{type:'sine',gain:.05*Math.max(.5,L.name),attack:.02,hold:stepDur*.8,release:.5,pan:i<3?-.3:.3});});
-      music.callMotif=false;
-    }
-  }
-  if(L.peace>.1&&step%4===0)[c+2,c+4].forEach(d=>voice('peace',when,pitch(d,0),{type:'sine',gain:.022*L.peace,attack:.6,hold:bar*.4,release:1.2}));
-  if(L.water>.1&&rnd()<.9){const arp=[0,1,2,3,2,1,2,3][step],d=arp===3?c+7:triad[arp];voice('water',when,pitch(d,0),{type:'triangle',gain:.032*L.water,attack:.008,hold:stepDur*.5,release:.5,pan:Math.sin(step)*.5});}
-  if(L.work>.1&&[1,0,0,1,1,0,1,0][step])voice('work',when,pitch(step%3?c+4:c,-1),{type:'triangle',gain:.045*L.work,attack:.004,hold:.05,release:.18,filter:1800});
-  if(L.light>.1&&rnd()<.24*L.light)voice('light',when,pitch(triad[Math.floor(rnd()*3)],2),{type:'sine',gain:.03*L.light,attack:.005,hold:.05,release:1.6,pan:rnd()-.5});
-  if(L.heavens>.1&&rnd()<.12*L.heavens)voice('heavens',when,pitch(triad[Math.floor(rnd()*3)]+7,2),{type:'sine',gain:.014*L.heavens,attack:.4,hold:.3,release:2.4,pan:rnd()*1.4-.7});
-}
-function conduct(){
-  const now=clockNow();
-  if(world.paused||ui.namingOpen||document.hidden){music.nextTime=now+.08;return;}
-  if(music.nextTime<now-.5)music.nextTime=now+.05;
-  while(music.nextTime<now+.3){
-    playStep(music.step,music.nextTime);
-    music.nextTime+=60/music.tempo/2;music.step=(music.step+1)%8;
-  }
-}
-setInterval(conduct,60);
-function setSound(on){
-  if(on&&!startAudio()){notify('Sound is not available in this browser.');return;}
-  music.on=on;music.nextTime=clockNow()+.05;
-  if(!on&&music.ctx)music.ctx.suspend();
-  $('soundToggle').classList.toggle('active',on);$('soundToggle').setAttribute('aria-pressed',String(on));
-  $('soundToggle').setAttribute('aria-label',on?'Turn sound off':'Turn sound on');
-  notify(on?'Sound on. The music follows the words of this moment.':'Sound off. The light still follows the words.');
-}
-$('soundToggle').onclick=()=>setSound(!music.on);
-// LUMINA — each note becomes a short-lived mote of light where its meaning lives in the world.
-const LIGHT_COLORS={light:'255,241,184',water:'191,232,242',growth:'214,240,168',work:'242,207,143',rest:'201,195,240',name:'255,224,138',home:'255,199,122',heavens:'232,240,255',peace:'230,220,255',praise:'255,246,214'};
-const motes=[],pendingMotes=[];
-function spawnMote(theme,at,midi){if(pendingMotes.length<200)pendingMotes.push({theme,at,midi});}
-function moteHome(theme){
-  const pick=a=>a[Math.floor(Math.random()*a.length)],jit=r=>(Math.random()-.5)*r;
-  const anyPoint=()=>{for(let i=0;i<12;i++){const x=range(-380,380),y=range(-330,330);if(Math.hypot(x/1.1,y)<400)return {x,y};}return {x:0,y:0};};
-  switch(theme){
-    case 'water':{const y=range(-380,400);return {x:riverX(y)+jit(30),y};}
-    case 'growth':{const t=pick(world.trees);return {x:t.x+jit(t.radius*1.4),y:t.y-t.radius*.6+jit(t.radius)};}
-    case 'work':return {x:DELIVER.x+jit(60),y:DELIVER.y+jit(50)};
-    case 'home':return {x:-150+jit(120),y:(houseDone()?HOUSE.y1-20:-100)+jit(60)};
-    case 'rest':case 'peace':{const p=pick(world.people);return {x:p.x+jit(70),y:p.y-6+jit(50)};}
-    case 'name':{const named=entities.filter(e=>e.name&&e.kind!=='hill'&&e.kind!=='garden');const e=named.length?pick(named):pick(world.people);return {x:e.x+jit(24),y:e.y-10+jit(16)};}
-    default:{const p=anyPoint();return {x:p.x,y:p.y-(theme==='heavens'?60:20)};}
-  }
-}
-function paintLight(now){
-  for(let i=pendingMotes.length-1;i>=0;i--){
-    const m=pendingMotes[i];if(m.at>now)continue;pendingMotes.splice(i,1);
-    const far=camera.z<.02,spot=far?null:moteHome(m.theme);
-    motes.push({theme:m.theme,born:now,life:m.theme==='rest'||m.theme==='heavens'||m.theme==='growth'?3200:1900,
-      x:spot?.x,y:spot?.y,sx:Math.random()*W,sy:Math.random()*H,far,size:m.theme==='rest'||m.theme==='home'?16:m.theme==='light'||m.theme==='heavens'?7:10});
-    if(motes.length>(reducedMotion?40:140))motes.shift();
-  }
-  const L=word.live;
-  ctx.save();
-  // A wash of the moment's meaning over the whole scene, very faint.
-  const wash=[['light',.07],['water',.04],['growth',.04],['home',.05],['praise',.05]].reduce((best,[t,k])=>L[t]*k>best[1]?[t,L[t]*k]:best,['light',0]);
-  if(wash[1]>.005&&camera.z>.015){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(${LIGHT_COLORS[wash[0]]},${wash[1]})`);g.addColorStop(1,`rgba(${LIGHT_COLORS[wash[0]]},0)`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
-  ctx.globalCompositeOperation='lighter';
-  for(let i=motes.length-1;i>=0;i--){
-    const m=motes[i],t=(now-m.born)/m.life;
-    if(t>=1){motes.splice(i,1);continue;}
-    const q=m.far?{x:m.sx,y:m.sy}:screen(m.x,m.y-t*(reducedMotion?0:14)),r=m.far?3+m.size*.25:clamp(m.size*camera.z,6,26);
-    if(q.x<-30||q.x>W+30||q.y<-30||q.y>H+30)continue;
-    const a=Math.sin(Math.PI*Math.min(1,t*1.15))*(isNight()?.95:.75),g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,r);
-    g.addColorStop(0,`rgba(${LIGHT_COLORS[m.theme]},${a})`);g.addColorStop(.35,`rgba(${LIGHT_COLORS[m.theme]},${a*.45})`);g.addColorStop(1,`rgba(${LIGHT_COLORS[m.theme]},0)`);
-    ctx.fillStyle=g;ctx.fillRect(q.x-r,q.y-r,r*2,r*2);
-  }
-  ctx.restore();
 }
 // CAMERA — independent of the simulation and never rebuilds the world.
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1004,7 +780,6 @@ function paint(){
   if(camera.z>.04){const hr=world.minutes/60,night=hr<5||hr>20?.16:hr<7||hr>18?.07:0;if(night){ctx.fillStyle=`rgba(21,43,55,${night})`;ctx.fillRect(0,0,W,H);
     if(houseDone()&&night>.1&&camera.z>.15){const inside=camera.z>=interiorZ(),c=screen(inside?-150:-150,inside?-124:HOUSE.y1-21),r=(inside?40:70)*camera.z;
       const g=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,Math.max(1,r));g.addColorStop(0,'#ffd27a40');g.addColorStop(1,'#ffd27a00');ctx.fillStyle=g;ctx.fillRect(c.x-r,c.y-r,r*2,r*2);}}}
-  paintLight(performance.now());
   if(world.paused&&W>=700){ctx.fillStyle='#f6f3e9';roundedRect(W/2-37,16,74,26,6);ctx.fill();caption('PAUSED',W/2,34,'#284d3d',10);}
 }
 function notify(text){$('toast').textContent=text;$('toast').hidden=false;ui.toastUntil=performance.now()+3400;}
@@ -1157,14 +932,13 @@ canvas.addEventListener('keydown',event=>{
   if(delta){ui.following=false;camera.tx=clamp(camera.tx+delta[0]*65/camera.z,-3000000,3000000);camera.ty=clamp(camera.ty+delta[1]*65/camera.z,-3000000,3000000);}
 });
 window.addEventListener('resize',resize);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)saveWorld();frameTime=0;
-  if(music.ctx&&music.on){if(document.hidden)music.ctx.suspend();else music.ctx.resume().then(()=>{music.nextTime=clockNow()+.05;});}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveWorld();frameTime=0;});
 window.addEventListener('pagehide',saveWorld);
 window.addEventListener('storage',event=>{if((event.key===SAVE_KEY||event.key===null)&&event.newValue!==storage.expectedRaw){storage.mode='conflict';storage.message='Another tab changed this garden’s save. This tab will not overwrite it. Reload to continue from that save.';updateSaveStatus();}});
 setInterval(()=>saveWorld(),3000);
 function frame(now){
   const dt=frameTime?Math.min((now-frameTime)/1000,.05):0;frameTime=now;
-  simulate(dt);updateCamera(dt);updateWord(now,dt);paint();
+  simulate(dt);updateCamera(dt);paint();
   if(now-ui.lastHud>200){updateHud();ui.lastHud=now;}
   if(ui.toastUntil&&now>ui.toastUntil){$('toast').hidden=true;ui.toastUntil=0;}
   requestAnimationFrame(frame);
@@ -1179,15 +953,11 @@ Object.defineProperty(window,'SonoLumina',{value:Object.freeze({snapshot:()=>({
   viewport:{width:W,height:H},walkable:world.people.every(p=>walkable(p.x,p.y)),
   entities:entities.map(e=>({id:e.id,name:e.name,description:description(e),x:e.x,y:e.y})),
   naming:{mode:ui.namingMode,open:ui.namingOpen,inspected:ui.inspected},
-  storage:{key:SAVE_KEY,mode:storage.mode,message:storage.message},
-  word:{ref:word.ref,text:SCRIPTURE[word.ref].text,with:[...SCRIPTURE[word.ref].with],themes:Object.fromEntries(THEMES.map(t=>[t,+word.live[t].toFixed(2)]))},
-  music:{on:music.on,phase:dayPhase(),mode:PHASES[dayPhase()].mode,tempo:+music.tempo.toFixed(1),chord:music.chord,motes:motes.length},
-  scripture:{verses:Object.keys(SCRIPTURE).length,missingLinks:Object.values(SCRIPTURE).flatMap(v=>v.with).filter(r=>!SCRIPTURE[r])}
+  storage:{key:SAVE_KEY,mode:storage.mode,message:storage.message}
 })}),writable:false});
 resize();
 const restored=restoreSavedWorld(),migrated=restored&&storage.expectedRaw===null;
 if(!restored)world.people.forEach(decide);
-setVerse(momentVerse());Object.assign(word.live,word.target);
 refreshBook();updateHud();saveWorld();requestAnimationFrame(frame);
 if(migrated)notify('Your names came with you into Gate 3. Open Home to begin building.');
 else if(world.dwelling.stage===0&&!world.dwelling.working)notify('Gate 3 · Open Home to begin building together.');
