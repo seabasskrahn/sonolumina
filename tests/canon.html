@@ -150,6 +150,10 @@
   ok('canon shape: 1,189 chapters, 31,102 slots, 16 omitted', cold.chapters === 1189 && cold.slots === 31102 && cold.omitted === 16,
      JSON.stringify({ chapters: cold.chapters, slots: cold.slots, omitted: cold.omitted }));
 
+  ok('ranked bands: each of the five modes sounds 19–21% of sung verses (tools/build_bands.py)',
+     ['Aeolian', 'Dorian', 'Mixolydian', 'Ionian', 'Lydian'].every(m => Math.abs((totals.modes[m] || 0) / totals.sung - 0.2) <= 0.01),
+     JSON.stringify(totals.modes));
+
   const failures = [...checks].filter(([, c]) => c.fails.length)
     .map(([name, c]) => ({ name, detail: `${c.fails.length} of ${c.n} failed, e.g. ${c.fails.slice(0, 5).join('; ')}` }));
   const total = checks.size, pass = total - failures.length;
