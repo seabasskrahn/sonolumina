@@ -918,7 +918,7 @@
     sleepFrom = ch; exprWarm(ch);
     const p = createPlayer({
       engine, lex: cb.lex, first: ch, load: loadNext, speed: S.speed, startVerse: v,
-      narrating: speaking, repeatVerse: () => S.repeat === 'verse',
+      narrating: speaking, repeatVerse: () => S.repeat === 'verse', linkStyle: () => S.links,
       onChapter: c => {
         if (sleepEoc && c !== sleepFrom) { sleepEoc = false; here(c, 'replace'); preview(c); sleepPause('Sleep: stopped at the end of the chapter'); return; }
         here(c, 'replace'); exprWarm(c); study.render(S.tab);
@@ -1325,6 +1325,7 @@
       </section>
       <section><h4>Light</h4>
         <div class="set"><div class="l">Dish <small>Rings: the sounding tones as standing waves. Figure: the Chladni figure of the melody note. The glowing centre (the eye) is off unless you choose it.</small></div><select id="stDish" style="width:10rem">${[['both', 'Rings and figure'], ['full', 'As built, with the centre glow'], ['figure', 'Figure only'], ['rings', 'Rings only'], ['off', 'Off']].map(([v, t]) => opt(v, S.dish, t)).join('')}</select></div>
+        <div class="set"><div class="l">Linked verses <small>Orchestra: every linked verse is a voice, coming in one by one and then sounding together, earlier Scripture low on the left, later Scripture high on the right. One by one: each link swells alone, as before.</small></div><select id="stLinks" style="width:10rem">${[['orchestra', 'Orchestra'], ['swells', 'One by one']].map(([v, t]) => opt(v, S.links, t)).join('')}</select></div>
       </section>
       <section><h4>This phone</h4>
         <div class="set"><div class="l">Saved here <small>${Object.keys(marks).length} highlights and notes · ${Object.keys(recall).length} Recall verses. Your notes stay on this phone.</small></div></div>
@@ -1363,6 +1364,7 @@
     q('#stOrig').onchange = e => { S.showOrig = e.target.checked; ok(); study.rerenderRead(); };
     q('#stSize').onchange = e => { S.textSize = +e.target.value; ok(); study.rerenderRead(); };
     q('#stChunk').onchange = e => { S.rsvpChunk = +e.target.value; ok(); };
+    q('#stLinks').onchange = e => { S.links = e.target.value; ok(); };
     q('#stDish').onchange = e => { S.dish = e.target.value; el('dish').hidden = S.dish === 'off'; ok(); };
     q('#stReset').onclick = () => { if (!confirm('Reset all settings to the defaults? Notes, highlights and Recall are kept.')) return; resetSettings(); location.reload(); };
   }

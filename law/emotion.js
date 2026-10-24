@@ -9,6 +9,8 @@
 // It is not from Scripture itself; a Scripture-only source is still to come.
 // Research/non-commercial use with credit; only per-verse scores are shipped.
 
+import { BANDS } from './bands.js';
+
 export const EMOTION_SOURCE = 'verse feeling: NRC VAD word list (modern English), not from Scripture';
 
 // Stored as one string per chapter, 6 digits VVAADD per verse, each 0..99.
@@ -35,11 +37,16 @@ export const MODES = {
   Aeolian:    [1, 9/8, 6/5, 4/3, 3/2, 8/5, 9/5],
 };
 
-// mode(v) = M[⌊V·|M|⌋], dark to bright, by valence alone (the Law, thesis §3.7).
-// V = 1 exactly would give index 5; it is clamped to Lydian (Q9). (Seabass: "Five even bands (Law)")
+// mode(v): dark to bright, by valence alone (thesis §3.7), in five RANKED bands (build 2026102401,
+// proposed): the cuts are the 20/40/60/80th percentiles of the feeling as heard (law/bands.js, built
+// by tools/build_bands.py), the same idea as the seasons strip's variant B. Even bands (0.2, 0.4, …)
+// left Aeolian on 0.4% of the Bible, so lament rarely sounded minor. EVEN_BANDS keeps the old rule.
 export const M = ['Aeolian', 'Dorian', 'Mixolydian', 'Ionian', 'Lydian'];
-export function modeOf(E) {
-  return M[Math.min(M.length - 1, Math.floor(E.v * M.length))];
+export const EVEN_BANDS = [0.2, 0.4, 0.6, 0.8];
+export function modeOf(E, cuts = BANDS) {
+  let i = 0;
+  while (i < cuts.length && E.v >= cuts[i]) i++;
+  return M[i];
 }
 
 // Words for what the music is doing, shown on screen (pace and stance thresholds as in logos-theta emoLabel).

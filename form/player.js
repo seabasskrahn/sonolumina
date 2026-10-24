@@ -16,6 +16,7 @@
 import { F0, HARMONICS } from '../law/home.js';
 import { scoreChapter } from '../law/chapter.js';
 import { createVoices } from './voices.js';
+import { orchestra } from '../law/links.js';
 
 // The music dips about 8 dB while the voice reads, and swells in the gaps.
 const DUCK = 0.4;
@@ -31,7 +32,7 @@ const FADE = 0.15;
 // speed: playback multiplier (1 = the Law's tempo). startVerse: begin at this verse of the first chapter.
 // repeatVerse() → true to loop the verse now playing.
 export function createPlayer({ engine, lex, first, load, linksFor, onVerse, onWord, onChapter, onLink, onClose, onEnd,
-  narrating = () => false, speed = 1, startVerse = 1, repeatVerse = () => false }) {
+  narrating = () => false, linkStyle = () => 'orchestra', speed = 1, startVerse = 1, repeatVerse = () => false }) {
   const segs = [];        // { ch, score, t0, next, closed }: chapters in play order (t0 in score seconds)
   const timeline = [];    // page events, in score time order
   let cursor = 0, timer = 0, paused = false, gen = null, asked = false, ended = false, cur = null;
@@ -110,6 +111,23 @@ export function createPlayer({ engine, lex, first, load, linksFor, onVerse, onWo
     // Linked verses: each swell is sounded only if its tones are ready before it is due; never late.
     linksFor?.(seg.ch, vs).then(ls => {
       if (ended || !gen || gen.id !== gid) return;   // a speed change or seek has scheduled it again
+      if (linkStyle() === 'orchestra' && ls.length) {
+        // The orchestra: every link a seat, all sounding together (law/links.js orchestra).
+        const o = orchestra(ls, ls[0].mine || [], vs.dur);
+        const play = (tones, pan, t, hold, out) => {
+          const at = A(S(vs.at + t)), h = A(S(vs.at + hold)), e = A(S(vs.at + out));
+          if (S(vs.at + out) < from || e < engine.time + 0.3) return false;
+          gen.voices.seat(tones, pan, Math.max(at, engine.time + 0.05), Math.max(h, engine.time + 0.1), e);
+          return true;
+        };
+        if (o.centre.length) play(o.centre, 0, 0, o.centre[0].hold, o.centre[0].out);
+        for (const st of o.seats) {
+          if (!play(st.tones, st.pan, st.t, st.hold, st.out)) continue;
+          pending.push({ s: Math.max(S(vs.at + st.t), from), link: st.link, seg, vs });
+        }
+        pending.sort((a, b) => a.s - b.s);
+        return;
+      }
       for (const l of ls) {
         const s = S(vs.at + l.t), at = A(s);
         if (s < from || at < engine.time + 0.05 || !l.theirs.length) continue;

@@ -54,3 +54,28 @@ export function signature(lex, text, mode, home = F0) {
 export function swells(ls, dur) {
   return ls.map((l, j) => ({ ...l, t: (j + 1) * dur / (ls.length + 1), len: j ? 1.2 : 2, gain: 0.4 + 0.6 * l.alpha }));
 }
+
+// The orchestra (build 2026102401, proposed): the linked verses sound TOGETHER, not one swell after another.
+// Each link is a seat. Seats come in strongest first, one after another across the first 40% of the verse,
+// then all hold together and fade out as one before the cadence, so the verse still comes home on its own V–I.
+// Earlier Scripture sits low and to the left; later Scripture sits an octave up and to the right
+// (Claude's voicing choice, labelled; it is not from Scripture). Tones many links share add up and
+// sound louder: that build-up is what the verse's links have in common. Level ∝ 1/√(voices), so a verse
+// with eight links is fuller but no louder than a verse with one.
+// mine: this verse's signature (Hz). ls: links with .theirs (Hz) and .alpha, .dir. dur: verse seconds.
+export const ORCH = { enter: 0.4, hold: 0.82, out: 0.94, level: 0.1 };
+export function orchestra(ls, mine, dur) {
+  const seated = ls.filter(l => l.theirs && l.theirs.length);
+  if (!seated.length) return { seats: [], centre: [] };
+  const voices = mine.length + seated.reduce((s, l) => s + l.theirs.length, 0);
+  const g = ORCH.level / Math.sqrt(voices);
+  const hold = ORCH.hold * dur, out = ORCH.out * dur;
+  const seats = seated.map((l, j) => ({
+    link: l, t: ORCH.enter * dur * j / seated.length, hold, out,
+    pan: l.dir, octave: l.dir < 0 ? 1 : 2,
+    tones: l.theirs.map(f => ({ freq: f * (l.dir < 0 ? 1 : 2), gain: g * (0.4 + 0.6 * l.alpha) })),
+  }));
+  // This verse's own signature holds the centre from the start, an octave up, under all the seats.
+  const centre = mine.map(f => ({ freq: f * 2, gain: g, t: 0, hold, out }));
+  return { seats, centre };
+}

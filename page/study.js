@@ -220,11 +220,11 @@ export function createStudy(X) {
         ['Home note · 110 Hz', LABELS.F0 + '. Every tone is a whole-number ratio of it, and every verse comes home to it.'],
         ['Overtones', LABELS.HARMONICS + '. They let phone speakers, which cannot play 110 Hz well, still carry the home note.'],
         ['Word tones R(w)', LABELS.WORD + '. Each word stem has a step in the 12-step just scale (1/1, 16/15, 9/8 … 15/8) and an octave, from how often and where Scripture uses it; two companion words add soft partials at a consonance (1/1, 5/4, 4/3, 3/2, 2/1).'],
-        ['Feeling', EMOTION_SOURCE + '. Valence picks the mode (Aeolian, Dorian, Mixolydian, Ionian, Lydian in five even bands); arousal sets the tempo, 54 + 30A BPM; dominance sets loudness, register and brightness.'],
+        ['Feeling', EMOTION_SOURCE + '. Valence picks the mode (Aeolian, Dorian, Mixolydian, Ionian, Lydian in five ranked bands, each about a fifth of Scripture); arousal sets the tempo, 54 + 30A BPM; dominance sets loudness, register and brightness.'],
         ['Harmony', 'Bars are fitted to each verse; the chords move through the mode and every verse ends V–I. Each chapter ends on the Amen, major IV–I. Only Revelation 22 closes on 110 Hz.'],
         ['Linked verses', LINK_SOURCE + '. Each swell blends this verse\'s three rarest words with the linked verse\'s, meeting over the home note.'],
         ['Light', LABELS.DISH + '. The hue follows valence: cool blue at sorrow, warm gold at joy.'],
-        ['Playback speed (preview)', 'Speed multiplies the whole score on the way out: tempo, word timing, swells and the reading voice together. The Law\'s notes and intervals do not change.'],
+        ['Playback speed (preview)', 'Speed multiplies the whole score on the way out: tempo, word timing, swells and the reading voice together. The Craft\'s notes and intervals do not change.'],
         ['Reading voice', 'Your phone\'s own speech voice, no network and no AI. Its rate follows the music\'s reading pace.'],
       ].map(([t, d]) => `<div class="card"><div class="orig-t">${esc(t)}</div><div class="dim" style="opacity:.75">${esc(d)}</div></div>`).join('')}`;
     el('oForm').onsubmit = e => {

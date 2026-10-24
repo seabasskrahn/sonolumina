@@ -124,10 +124,35 @@ export function createVoices(engine) {
     for (const f of theirs) voice(f, dir, true);
   }
 
+  // The orchestra (law/links.js orchestra): one seat of linked-verse tones, bowed and sustained.
+  // It rises over `rise` s from t, holds to `hold`, and is silent by `out` (all audio seconds), panned to its side.
+  function seat(tones, pan, t, hold, out, rise = 1.2) {
+    if (!tones.length || out <= t + 0.2) return;
+    const p = ctx.createStereoPanner(), lp = ctx.createBiquadFilter(), a = ctx.createGain();
+    p.pan.value = pan; lp.type = 'lowpass'; lp.frequency.value = 1000; lp.Q.value = 0.4;
+    const up = Math.min(rise, Math.max(0.1, (hold - t) * 0.6));
+    a.gain.setValueAtTime(0, t);
+    a.gain.linearRampToValueAtTime(1, t + up);
+    a.gain.setValueAtTime(1, Math.max(t + up, hold));
+    a.gain.linearRampToValueAtTime(0, out);
+    const os = [];
+    for (const { freq, gain } of tones) for (const cents of [-6, 6]) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = freq; o.detune.value = cents;
+      g.gain.value = gain / 2;
+      o.connect(g).connect(lp); os.push(o, g);
+      engine.track(freq, gain / 2, t, out, 'link');
+    }
+    lp.connect(a).connect(p).connect(bus.links);
+    const oscs = os.filter(n => n instanceof OscillatorNode);
+    for (const o of oscs) { o.start(t); o.stop(out + 0.05); }
+    done([...os, lp, a, p], oscs[0]);
+  }
+
   function brightness(hz, t) { tone.frequency.setTargetAtTime(Math.min(2400, hz), t, 1.5); }
   function loudness(x, t) { music.gain.setTargetAtTime(x, t, 1.2); }
   // Preview build: set level and brightness at once (a fresh set of voices after a speed change or seek starts where the old one was).
   function settle(x, hz) { music.gain.value = x; tone.frequency.value = Math.min(2400, hz); }
 
-  return { cello, strings, epiano, celesta, swell, brightness, loudness, settle, bus };
+  return { cello, strings, epiano, celesta, swell, seat, brightness, loudness, settle, bus };
 }

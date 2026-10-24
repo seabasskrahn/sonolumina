@@ -8,6 +8,8 @@ export const DEFAULTS = {
   // What Back does to an earlier chapter while the reading is playing.
   // 'play' (default): keep playing from verse 1. 'stop': end the reading.
   backMid: 'play',
+  // How linked verses sound. 'orchestra' (proposed default): all together as seats. 'swells': one after another, as before.
+  links: 'orchestra',
   voiceOn: true, voiceName: '', pitch: 1,
   voiceEngine: 'device', elVoice: '', elVoiceName: '', elModel: 'eleven_multilingual_v2', elStability: 0.5, elSimilarity: 0.75, elStyle: 0.2, elExpressive: false,
   rsvpChunk: 1, showKJV: true, showOrig: false, dish: 'full', textSize: 1,
@@ -21,6 +23,7 @@ export function loadSettings() {
   S.speed = +S.speed > 0 ? +S.speed : 1;
   S.dialMax = Math.max(1, +S.dialMax || 10);
   if (S.backMid !== 'play' && S.backMid !== 'stop') S.backMid = 'play';
+  if (S.links !== 'orchestra' && S.links !== 'swells') S.links = 'orchestra';
   if (!Array.isArray(S.queue)) S.queue = [];
   return S;
 }
