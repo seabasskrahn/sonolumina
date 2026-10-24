@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#284d3d">
+<title>SonoLumina — The First Garden</title>
+<style>
+:root{color-scheme:light;--paper:#f6f3e9;--ink:#243d32;--muted:#6d7669;--line:#d8ddce;--green:#284d3d;--gold:#c6a967}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;min-height:44px;padding:8px 13px;touch-action:manipulation}button:hover{background:#e9eddf}button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}button:disabled{opacity:.38;cursor:default}button.active{background:var(--green);color:var(--paper);border-color:var(--green)}
+#app{height:100%;height:100dvh;display:flex;flex-direction:column}header{padding:15px 24px 10px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:11px}.seal{width:35px;height:35px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--green);font:26px Georgia,serif}.brand h1{font:22px Georgia,serif;letter-spacing:3px;margin:0}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px;margin-top:3px;text-transform:uppercase}.edition{font-size:11px;letter-spacing:1.1px;color:var(--muted);text-align:right}.edition strong{display:block;color:var(--ink);font-weight:500;margin-bottom:3px}
+nav{display:flex;align-items:center;gap:6px;padding:0 24px 12px;overflow-x:auto;flex-shrink:0;scrollbar-width:thin}nav button{min-height:36px;font-size:12px;padding:6px 12px;white-space:nowrap;border-radius:5px}nav .sep{color:#a5b09a;font-size:12px}
+#viewport{position:relative;flex:1;min-height:140px;overflow:hidden;background:#142621;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}.glass{background:rgba(246,243,233,.95);border:1px solid rgba(86,105,70,.2);box-shadow:0 2px 9px #15291d12;border-radius:9px}
+#place{position:absolute;top:18px;left:22px;padding:12px 15px;pointer-events:none;max-width:calc(100% - 100px)}#place small{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);display:block}#place strong{font:22px Georgia,serif;display:block;margin:4px 0}#place span{font-size:11px;color:var(--muted)}
+#helpToggle{position:absolute;right:20px;top:18px;width:44px;padding:0;font:20px Georgia,serif;background:var(--paper)}#help{position:absolute;right:20px;top:72px;width:280px;padding:16px;z-index:3}#help h2{font:19px Georgia,serif;margin:0 0 10px}#help{max-height:calc(100% - 90px);overflow-y:auto}#help p{font-size:12px;line-height:1.65;margin:7px 0}#help button{font-size:12px;width:100%;margin-top:7px}#help[hidden]{display:none}
+#zoom{position:absolute;right:20px;bottom:18px;display:flex;align-items:center;gap:4px;padding:5px}#zoom button{padding:0;width:44px;border:0;font-size:22px}#zoom #recenter{font-size:18px}#zoom .divider{width:1px;height:22px;background:var(--line)}#worldHint{position:absolute;left:22px;bottom:22px;color:#f8f5e8;font-size:11px;text-shadow:0 1px 3px #14271c;pointer-events:none;max-width:calc(100% - 190px)}#toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 16px;font-size:12px;max-width:85%;text-align:center;z-index:4;pointer-events:none}#toast[hidden]{display:none}
+footer{padding:14px 24px max(14px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:center;gap:18px;flex-shrink:0}.people{display:flex;gap:8px}.person{display:flex;align-items:center;gap:10px;text-align:left;min-width:136px;padding:9px 12px}.portrait{width:28px;height:32px;position:relative;display:inline-block;flex-shrink:0}.portrait:before{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:#d4ab83;left:9px;top:1px}.portrait:after{content:"";position:absolute;width:20px;height:18px;border-radius:8px 8px 3px 3px;background:var(--shirt);left:4px;top:13px}.person strong{display:block;font-size:12px;font-weight:600}.person small{display:block;font-size:10px;margin-top:2px;opacity:.75}.person.active .portrait:after{box-shadow:0 0 0 1px #f6f3e955}
+.follow{font-size:12px;min-width:90px}.clockGroup{display:flex;align-items:center;gap:12px}.clock{text-align:right;min-width:90px}.clock strong{display:block;font-size:13px;font-weight:500}.clock small{font-size:10px;color:var(--muted)}.time{display:flex;gap:4px}.time button{width:44px;padding:0;font-size:12px}.time #pause{font-size:17px}.statusline{padding:0 24px 8px;color:var(--muted);font-size:10px;display:flex;justify-content:space-between;gap:10px}.statusline span:last-child{font-style:italic}
+@media(max-width:700px){header{padding:10px 14px 8px}.brand h1{font-size:18px;letter-spacing:2px}.brand small{font-size:8px}.seal{width:30px;height:30px;font-size:23px}.edition{font-size:9px;letter-spacing:.5px}nav{padding:0 14px 9px;gap:4px}nav button{font-size:11px;padding:6px 9px;min-height:34px}#place{top:12px;left:12px;padding:9px 12px}#place strong{font-size:18px}#place span{font-size:10px}#helpToggle{top:12px;right:12px}#help{right:12px;top:64px;width:min(280px,calc(100% - 24px))}#zoom{right:12px;bottom:12px}#worldHint{left:12px;bottom:17px;font-size:10px;max-width:calc(100% - 175px)}footer{padding:10px 12px max(10px,env(safe-area-inset-bottom));gap:8px;flex-wrap:wrap}.people{flex:1;gap:6px}.person{flex:1;min-width:0;padding:7px 9px;gap:6px}.person strong{font-size:11px}.person small{font-size:9px}.follow{min-width:73px;padding:7px 9px;font-size:11px}.clockGroup{width:100%;justify-content:space-between;border-top:1px solid var(--line);padding-top:8px;gap:8px}.clock{text-align:left;display:flex;align-items:center;gap:7px}.clock strong{font-size:11px}.statusline{padding:0 12px 6px;font-size:9px}.statusline span:last-child{display:none}}
+@media(max-height:480px) and (min-width:600px){header{padding:6px 16px}.brand small,.edition{display:none}nav{padding:0 16px 6px}footer{padding:6px 16px}.statusline{display:none}#place{top:10px;padding:7px 12px}#place strong{font-size:17px}#place span{display:none}}
+#namingBar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 24px 0;flex-shrink:0}.modeButtons{display:flex;gap:5px}#namingBar button{font-size:11px;min-height:38px;padding:6px 12px}#saveStatus{border:0;color:var(--muted);max-width:220px;text-align:right}#saveStatus.warning{color:#8a5729;font-weight:600}
+.person>span:last-child{min-width:0}.person strong{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);width:min(460px,calc(100% - 24px));max-height:calc(100dvh - 32px);padding:22px;overflow-y:auto;box-shadow:0 18px 60px #13281d55}dialog::backdrop{background:#10251f99}.dialogHeading{display:flex;align-items:center;justify-content:space-between;gap:12px}.dialogHeading small{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}.dialogHeading h2{font:24px Georgia,serif;margin:5px 0}.dialogHeading button{width:44px;flex-shrink:0;font-size:24px;padding:0}dialog p{font-size:12px;line-height:1.6}.dialogIntro{color:var(--muted);margin:10px 0 18px}dialog label{font-size:12px;display:block;margin:12px 0 7px;font-weight:600}dialog select,dialog input{font:16px system-ui,sans-serif;min-height:46px;border:1px solid #b8c5ae;border-radius:7px;padding:10px;background:#fffdf5;color:var(--ink);width:100%;min-width:0}dialog input:focus,dialog select:focus{outline:2px solid var(--gold);outline-offset:1px}#nameDescription{min-height:36px;overflow-wrap:anywhere}#nameLimit{font-size:10px;color:var(--muted);margin-top:7px}#nameError{color:#8c4d29;min-height:18px;margin:8px 0}#nameError:empty{display:none}.dialogActions{display:flex;gap:8px;margin:15px 0}.dialogActions button{flex:1;font-size:12px}#saveNote{font-size:11px;color:var(--muted);margin-bottom:0}#cancelNamingWalk{width:100%;font-size:12px}#cancelNamingWalk[hidden],#reloadSaved[hidden]{display:none}#storageDialog>button{margin-top:8px;width:100%}
+@media(max-width:700px){#namingBar{padding:7px 12px 0;gap:4px}#namingBar button{font-size:10px;padding:5px 9px;min-height:38px}#saveStatus{max-width:110px}.person strong{max-width:105px}dialog{padding:17px}.dialogHeading h2{font-size:22px}.dialogActions{flex-wrap:wrap}.dialogActions button{min-width:135px}#nameDescription{margin:8px 0}}
+@media(max-height:480px){#namingBar{padding-top:4px}#namingBar button{min-height:30px}dialog{max-height:calc(100dvh - 16px)}}
+#stageList{list-style:none;padding:0;margin:0 0 4px}#stageList li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}#stageList li.done{color:var(--muted)}#stageList li.current strong{color:var(--green)}#stageList li.current{font-weight:600}#stageList em{font-style:normal;color:var(--muted);font-size:11px;text-align:right;font-weight:400}#dwellingNote{font-size:11px;color:var(--muted);margin-bottom:0}#toggleWork[hidden]{display:none}
+#toast{top:14px;bottom:auto}
+#soundToggle{position:absolute;right:72px;top:18px;width:44px;padding:0;font:20px Georgia,serif;background:var(--paper);color:var(--muted)}#soundToggle.active{background:var(--green);color:var(--paper)}
+#word{position:absolute;left:22px;right:200px;max-width:560px;bottom:52px;padding:9px 13px;cursor:pointer;transition:opacity .7s}#word.fade{opacity:.15}
+#wordText{font:13px/1.45 Georgia,serif;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#word.open #wordText{display:block}
+#word small{display:block;margin-top:4px;font-size:10px;color:var(--muted);line-height:1.4}#word b{color:var(--ink);font-weight:600}#wordThemes{display:block;letter-spacing:.6px;text-transform:uppercase;font-size:8.5px;margin-top:2px;color:#8a7a4e}
+@media(max-width:700px){#soundToggle{right:64px;top:12px}#word{left:12px;right:12px;bottom:74px;padding:8px 11px}#wordText{font-size:12px}}
+@media(max-height:480px) and (min-width:600px){#word{bottom:44px}#wordThemes{display:none}}
+@media(max-width:420px){#namingBar{flex-wrap:wrap}#saveStatus{min-height:24px;padding:0 4px;margin-left:auto}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand"><span class="seal" aria-hidden="true">∿</span><div><h1>SONOLUMINA</h1><small>The first garden</small></div></div><div class="edition"><strong>A world within a world</strong>GATE 4 · SOUND &amp; LIGHT</div></header>
+<nav aria-label="Nested world scales" id="scales"></nav>
+<main id="viewport">
+<canvas id="world" tabindex="0" aria-label="The garden and its two people. Select a person below, tap dry ground to walk, and use the scale buttons to explore."></canvas>
+<div id="place" class="glass"><small id="scaleLabel">Town scale</small><strong id="placeTitle">The first garden</strong><span id="placeDetail">Two people. A beginning.</span></div>
+<button id="helpToggle" aria-label="How to play" aria-expanded="false" title="How to play">?</button>
+<aside id="help" class="glass" hidden><h2>Near and far</h2><p>Select either person below. Tap dry garden ground to guide their walk. Otherwise, both explore on their own.</p><p>Use the scale ribbon to travel from the universe down to one person. These are nested views of the same world.</p><p>Drag to look around. Pinch or scroll to zoom. Use − / + for one scale at a time, and ⌖ to return to the garden.</p><p>“Follow” keeps the selected person in view. Pause stops life, not the camera.</p><p>Choose <b>Name</b> and tap creation, or open the <b>Names</b> book. Give either person a name, or let the selected person walk to creation and speak its name.</p><p>Names and unfinished naming walks save in this browser at this same address or file. Private browsing, clearing browser data, or changing addresses can lose access to that save. No data leaves the game.</p><p>Open <b>Home</b> to begin the dwelling. Together they gather fallen branches and loose river stones and raise the house in five stages. They work in daylight, rest at night, and keep the seventh day as rest.</p><p>The <b>Building</b> scale shows the house from outside. The <b>Home</b> scale looks inside.</p><p><b>Sound &amp; light.</b> The card at the bottom shows the Scripture for this moment and the verses read with it. The music and the motes of light follow what those words are about: water, light, growth, work, rest, the home. Tap ♪ for sound. Tap the verse to read it in full.</p><button id="helpClose">Back to the garden</button></aside>
+<div id="worldHint">Drag to explore · tap dry ground to walk</div>
+<div id="zoom" class="glass" role="group" aria-label="Camera controls"><button id="zoomOut" aria-label="Zoom out one scale" title="Zoom out">−</button><button id="zoomIn" aria-label="Zoom in one scale" title="Zoom in">+</button><span class="divider"></span><button id="recenter" aria-label="Return to the garden" title="Return to the garden">⌖</button></div>
+<div id="toast" class="glass" role="status" aria-live="polite" hidden></div>
+<button id="soundToggle" aria-label="Turn sound on" aria-pressed="false" title="Sound">♪</button>
+<div id="word" class="glass" role="button" tabindex="0" aria-label="Scripture for this moment. Tap to read in full."><p id="wordText"></p><small><b id="wordRef"></b><span id="wordWith"></span><span id="wordThemes"></span></small></div>
+</main>
+<div id="namingBar" role="group" aria-label="Walking, naming, and local saving">
+<div class="modeButtons"><button id="walkMode" class="active" aria-pressed="true">Walk</button><button id="nameMode" aria-pressed="false">Name</button><button id="namesBook" aria-label="Open the book of names">Names · 0/26</button><button id="homeBook" aria-label="Open the dwelling">Home · 0/5</button></div>
+<button id="saveStatus" aria-label="Local save information">Saved here</button>
+</div>
+<footer>
+<div class="people" role="group" aria-label="Select a person">
+<button class="person active" id="person0" aria-pressed="true"><span class="portrait" style="--shirt:#b68c53" aria-hidden="true"></span><span><strong id="personName0">Sono</strong><small id="activity0">Exploring</small></span></button>
+<button class="person" id="person1" aria-pressed="false"><span class="portrait" style="--shirt:#6d8e82" aria-hidden="true"></span><span><strong id="personName1">Lumina</strong><small id="activity1">Exploring</small></span></button>
+</div>
+<button class="follow" id="follow" aria-pressed="false">Follow</button>
+<div class="clockGroup"><div class="clock"><strong id="clock">Day 1 · 07:00</strong><small id="dayPhase">Morning light</small></div><div class="time" role="group" aria-label="Time controls"><button id="pause" aria-label="Pause the world" aria-pressed="false">Ⅱ</button><button id="normal" class="active" aria-label="Normal speed" aria-pressed="true">1×</button><button id="fast" aria-label="Three times speed" aria-pressed="false">3×</button></div></div>
+</footer>
+<div class="statusline"><span id="selectionHint">Sono selected · tap ground to guide a walk</span><span>Single player · browser-local names · no outside connections</span></div>
+</div>
+<dialog id="namingDialog" aria-labelledby="namingTitle">
+<div class="dialogHeading"><div><small>The first work</small><h2 id="namingTitle">Give a name</h2></div><button id="closeNaming" type="button" aria-label="Close naming">×</button></div>
+<p class="dialogIntro">Names belong to the people and places, at every scale.</p>
+<form id="namingForm" novalidate>
+<label for="entitySelect">Person or part of creation</label><select id="entitySelect"></select>
+<p id="nameDescription"></p>
+<label for="nameInput">The name you choose</label><input id="nameInput" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="A gentle, lasting name" aria-describedby="nameLimit nameError">
+<div id="nameLimit">1–40 characters. Blank input never removes a name.</div>
+<p id="nameError" role="alert"></p>
+<div class="dialogActions"><button id="findEntity" type="button">Find in the world</button><button id="giveName" type="submit" class="active">Give this name</button></div>
+<button id="cancelNamingWalk" type="button" hidden>Cancel this naming walk</button>
+<p id="saveNote"></p>
+</form>
+</dialog>
+<dialog id="storageDialog" aria-labelledby="storageTitle"><div class="dialogHeading"><h2 id="storageTitle">Your garden stays here</h2><button id="closeStorage" aria-label="Close save information">×</button></div><p id="storageMessage"></p><p>Names and world progress belong to this browser and this address or file. Nothing is sent anywhere. Keep using the same browser and location. Private browsing or clearing browser data may erase the save.</p><button id="reloadSaved" hidden>Reload the saved garden</button><button id="storageDone">Continue playing</button></dialog>
+<dialog id="dwellingDialog" aria-labelledby="dwellingTitle"><div class="dialogHeading"><div><small>Gate 3 · The dwelling</small><h2 id="dwellingTitle">A place to dwell</h2></div><button id="closeDwelling" type="button" aria-label="Close the dwelling">×</button></div>
+<p class="dialogIntro" id="dwellingIntro"></p>
+<ol id="stageList"></ol>
+<div class="dialogActions"><button id="showHome" type="button">Show the home</button><button id="toggleWork" type="button" class="active">Begin the work together</button></div>
+<p id="dwellingNote">They gather only fallen branches and loose river stones. Living trees and named stones are left alone. Work happens in daylight, 07:00–18:00. At night they rest, and the seventh day is kept as rest.</p>
+</dialog>
+<script>
+'use strict';
+(() => {
+// FOUNDATION — defined before people, landscape, or any available action.
+// No public rule poster, morality points, harmful choices, or external services.
+const FOUNDATION = Object.freeze({
+  inwardLaw: 'Jeremiah 31:33',
+  commandments: Object.freeze([
+    'Thou shalt have no other gods before me.',
+    'Thou shalt not make unto thee any graven image.',
+    'Thou shalt not take the name of the LORD thy God in vain.',
+    'Remember the sabbath day, to keep it holy.',
+    'Honour thy father and thy mother.',
+    'Thou shalt not kill.',
+    'Thou shalt not commit adultery.',
+    'Thou shalt not steal.',
+    'Thou shalt not bear false witness against thy neighbour.',
+    'Thou shalt not covet.'
+  ]),
+  commandmentSource: 'Exodus 20',
+  sum: 'Love the Lord thy God with all thy heart, and thy neighbour as thyself.',
+  sumSource: 'Matthew 22:37–40',
+  restDay: 7,
+  allowedActions: Object.freeze(['walk', 'observe', 'name', 'gather', 'build', 'rest']),
+  // Gate 3 adds work, and the work keeps the foundation: labour only in daylight,
+  // rest every night, the seventh day kept holy, and creation gathered only where
+  // it is freely given (fallen branches, loose river stones), never taken.
+  peaceful: true
+});
+const $ = id => document.getElementById(id);
+const canvas = $('world'), ctx = canvas.getContext('2d');
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const mix = (a,b,t) => a+(b-a)*t;
+const distance = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
+let seed = 61733;
+const random = () => { seed = (Math.imul(1664525,seed)+1013904223)>>>0; return seed/4294967296; };
+const range = (a,b) => mix(a,b,random());
+const trees = [
+  [-250,-230,31],[-80,-270,40],[68,-235,29],[-332,-90,28],
+  [-290,140,38],[-180,255,31],[15,235,30],[320,240,35],
+  [345,-160,31],[278,-300,27],[350,60,28],[-60,90,25]
+].map((t,i)=>({id:'tree-'+i,x:t[0],y:t[1],radius:t[2],kind:'tree',name:null}));
+const stones = [[-220,30],[-90,210],[75,-85],[305,115]].map((s,i)=>({id:'stone-'+i,x:s[0],y:s[1],radius:10,kind:'stone',name:null}));
+// GATE 3 · THE DWELLING — a home raised together, in daylight, with rest kept.
+const HOUSE = Object.freeze({x0:-210,x1:-90,y0:-140,y1:-60,wall:34});
+const DOOR = Object.freeze({x:-150,y:-46});
+const DELIVER = Object.freeze({x:-236,y:-96});
+const REST_SPOTS = Object.freeze([{x:-172,y:-30},{x:-128,y:-30}]);
+const PILES = Object.freeze({wood:{x:-256,y:-72},stone:{x:-256,y:-122}});
+const STAGES = Object.freeze([
+  {name:'Foundation stones',done:'The foundation stones are laid.',wood:0,stone:8},
+  {name:'Timber frame',done:'The timber frame stands.',wood:8,stone:0},
+  {name:'Walls',done:'The walls are raised.',wood:6,stone:6},
+  {name:'Roof',done:'The roof is thatched and closed.',wood:8,stone:0},
+  {name:'Door & hearth',done:'The door is hung and the hearth is lit. The home is finished.',wood:2,stone:4}
+]);
+const WORK_START=7*60,WORK_END=18*60,NIGHT_START=21*60,NIGHT_END=6*60;
+const TASKS = [null,'gather-wood','gather-stone','deliver','rest'];
+const inHouse = (x,y,m=6) => x>HOUSE.x0-m&&x<HOUSE.x1+m&&y>HOUSE.y0-m&&y<HOUSE.y1+m;
+function createWorld() {
+  // Each person's inward foundation precedes creation of their surroundings.
+  const people = [
+    {id:'person-1',name:'Sono',x:-144,y:-64,color:'#b68c53',skin:'#d6ae86',hair:'#4c3c2b',heart:FOUNDATION},
+    {id:'person-2',name:'Lumina',x:-32,y:-16,color:'#6d8e82',skin:'#c49776',hair:'#493629',heart:FOUNDATION}
+  ].map(p=>({...p,path:[],wait:0,travel:0,intent:'walk',directed:false,angle:0,pendingName:null,speech:null,task:null,carrying:null,inside:false}));
+  return {id:'first-world',galaxy:'Sonolumina',people,trees,stones,
+    river:{id:'river-1',name:null,kind:'river',x:180,y:0},animal:{id:'deer-1',name:null,kind:'deer',x:40,y:170},
+    garden:{id:'garden-1',name:null,kind:'garden',x:-40,y:0},
+    hills:[[-280,-320,385,285,-210,-205],[380,350,340,285,255,240],[400,-330,260,195,290,-230],[-380,350,285,150,-240,230]].map((h,i)=>({id:'hill-'+i,name:null,kind:'hill',x:h[0],y:h[1],rx:h[2],ry:h[3],approach:{x:h[4],y:h[5]}})),
+    homeSite:{id:'home-site-1',name:null,kind:'site',x:-150,y:-100,approach:DOOR},
+    dwelling:{stage:0,wood:0,stone:0,working:false},
+    minutes:420,day:1,ticks:0,speed:1,paused:false};
+}
+const world = createWorld();
+const ui = {selected:0,following:false,toastUntil:0,lastHud:0,namingMode:false,namingOpen:false,inspected:'person-1'};
+const DEFAULT_NAMES = ['Sono','Lumina'];
+const personLabel = i => world.people[i].name || DEFAULT_NAMES[i];
+const entities = [...world.people,...world.trees,...world.stones,world.river,world.animal,...world.hills,world.garden,world.homeSite];
+const byId = new Map(entities.map(e=>[e.id,e]));
+const description = e => {
+  if(world.people.includes(e))return DEFAULT_NAMES[world.people.indexOf(e)];
+  if(e.kind==='tree')return 'Tree '+(world.trees.indexOf(e)+1);
+  if(e.kind==='stone')return 'Stone '+(world.stones.indexOf(e)+1);
+  if(e.kind==='hill')return 'Hill '+(world.hills.indexOf(e)+1);
+  return {river:'River',deer:'Deer',garden:'Garden',site:'Future home site'}[e.kind];
+};
+const camera = {x:0,y:0,z:.2,tx:0,ty:0,tz:.2};
+let W=800,H=500,DPR=1,frameTime=0,hasSized=false;
+const levels = [
+  {label:'Universe',extent:6200000,title:'The wider universe',detail:'Sonolumina lies within.',x:0,y:0},
+  {label:'Galaxy',extent:650000,title:'Sonolumina',detail:'A place of sound and light.',x:0,y:0},
+  {label:'Town',extent:2100,title:'The first garden',detail:'The town begins here, with two people.',x:0,y:0},
+  {label:'Building',extent:510,title:'A place to dwell',detail:'Future building site · no building yet.',x:-150,y:-100},
+  {label:'Home',extent:225,title:'The home begins here',detail:'Future home site · not a finished house.',x:-150,y:-100},
+  {label:'Person',extent:58,title:'Beside one person',detail:'The same life, seen close.',x:0,y:0}
+];
+const scaleFor = i => Math.max(200,Math.min(W-40,H-80))/levels[i].extent;
+const currentLevel = () => {
+  let best=0, gap=Infinity;
+  levels.forEach((_,i)=>{const g=Math.abs(Math.log(camera.tz/scaleFor(i)));if(g<gap){gap=g;best=i;}});
+  return best;
+};
+function goLevel(i) {
+  i=clamp(i,0,levels.length-1);
+  camera.tz=scaleFor(i);
+  if(i===5){ui.following=true;camera.tx=world.people[ui.selected].x;camera.ty=world.people[ui.selected].y-4;}
+  else {ui.following=false;camera.tx=levels[i].x;camera.ty=levels[i].y;}
+  updateHud();saveWorld();
+}
+function resize() {
+  const r=canvas.getBoundingClientRect(),level=currentLevel(),old=scaleFor(level);
+  W=r.width;H=r.height;DPR=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+  const next=scaleFor(level);
+  if(hasSized){camera.z*=next/old;camera.tz*=next/old;}
+  else {camera.z=camera.tz=scaleFor(2);}
+  hasSized=true;
+}
+// DRY-GROUND ROUTING — the same routes at every camera scale.
+const GRID=32,HALF=448,COUNT=29;
+const riverX = y => 180+Math.sin(y/150)*64;
+function walkable(x,y) {
+  if(Math.hypot(x/1.1,y) > 400) return false;
+  const onBridge=Math.abs(y-128)<19 && Math.abs(x-riverX(128))<76;
+  if(Math.abs(x-riverX(y))<25 && !onBridge) return false;
+  if(world.trees.some(t=>Math.hypot(x-t.x,y-t.y)<12)) return false;
+  if(world.stones.some(t=>Math.hypot(x-t.x,y-t.y)<13)) return false;
+  if(world.dwelling.stage>=3 && inHouse(x,y)) return false;
+  return true;
+}
+// Loose stones along the west bank, given by the river rather than taken from creation.
+const STONE_BANKS = [-150,40,230].map(y=>({x:riverX(y)-42,y}));
+const isRestDay = () => world.day%FOUNDATION.restDay===0;
+const isNight = () => world.minutes>=NIGHT_START||world.minutes<NIGHT_END;
+const isWorkTime = () => world.minutes>=WORK_START&&world.minutes<WORK_END;
+const houseDone = () => world.dwelling.stage>=STAGES.length;
+const cellPoint = n => ({x:(n%COUNT)*GRID-HALF,y:Math.floor(n/COUNT)*GRID-HALF});
+const validCell = n => n>=0 && n<COUNT*COUNT && walkable(cellPoint(n).x,cellPoint(n).y);
+function nearestCell(x,y) {
+  let best=-1,gap=Infinity;
+  for(let n=0;n<COUNT*COUNT;n++){if(!validCell(n))continue;const q=cellPoint(n),d=Math.hypot(q.x-x,q.y-y);if(d<gap){gap=d;best=n;}}
+  return best;
+}
+function clearSegment(a,b) {
+  const steps=Math.ceil(distance(a,b)/5);
+  for(let i=0;i<=steps;i++){const t=steps?i/steps:0;if(!walkable(mix(a.x,b.x,t),mix(a.y,b.y,t)))return false;}
+  return true;
+}
+function route(person,target) {
+  if(!walkable(target.x,target.y)) return [];
+  if(clearSegment(person,target))return [target];
+  const start=nearestCell(person.x,person.y),goal=nearestCell(target.x,target.y);
+  if(start<0||goal<0)return [];
+  const frontier=[start],parent=new Map(),g=new Map([[start,0]]),closed=new Set();
+  while(frontier.length){
+    let pick=0,best=Infinity;
+    frontier.forEach((n,i)=>{const f=g.get(n)+distance(cellPoint(n),cellPoint(goal));if(f<best){pick=i;best=f;}});
+    const n=frontier.splice(pick,1)[0];
+    if(n===goal){const result=[];let a=n;while(a!==start){result.push(cellPoint(a));a=parent.get(a);}result.reverse();
+      const first=cellPoint(start);if(!clearSegment(person,result[0]||target))result.unshift(first);
+      const last=result[result.length-1]||person;if(clearSegment(last,target))result.push(target);
+      return result;
+    }
+    closed.add(n);const x=n%COUNT,y=Math.floor(n/COUNT);
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
+      if(x+dx<0||x+dx>=COUNT||y+dy<0||y+dy>=COUNT)continue;
+      const v=n+dx+dy*COUNT;if(closed.has(v)||!validCell(v)||!clearSegment(cellPoint(n),cellPoint(v)))continue;
+      const cost=g.get(n)+Math.hypot(dx,dy)*GRID;
+      if(!g.has(v)||cost<g.get(v)){g.set(v,cost);parent.set(v,n);if(!frontier.includes(v))frontier.push(v);}
+    }
+  }
+  return [];
+}
+// BROWSER-LOCAL PERSISTENCE — no fetches, accounts, or remote fallback.
+const SAVE_KEY='sonolumina.first-garden.v3',LEGACY_KEY='sonolumina.first-garden.v2';
+const storage={mode:'ready',expectedRaw:null,message:'Names and progress save automatically in this browser.',lastSaved:0};
+const cleanName = value => value.normalize('NFC').trim().replace(/\s+/gu,' ');
+const validName = value => typeof value==='string'&&value.length>=1&&value.length<=40&&!/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u206f]/u.test(value)&&cleanName(value)===value;
+const finite=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
+function decodeSave(raw,legacy=false){
+  if(raw.length>180000)throw new Error('Save is too large');
+  const data=JSON.parse(raw);
+  if(!(data?.version===3||(legacy&&data?.version===2))||data.worldId!==world.id)throw new Error('Unrecognized save');
+  if(data.version===2){
+    data.dwelling={stage:0,wood:0,stone:0,working:false};
+    if(Array.isArray(data.people))data.people.forEach(row=>{if(row&&typeof row==='object')Object.assign(row,{task:null,carrying:null,inside:false});});
+  }
+  const d=data.dwelling;
+  if(!d||!Number.isInteger(d.stage)||d.stage<0||d.stage>STAGES.length||!Number.isInteger(d.wood)||d.wood<0||d.wood>99||!Number.isInteger(d.stone)||d.stone<0||d.stone>99||typeof d.working!=='boolean')throw new Error('Invalid dwelling');
+  // Walkability depends on the saved house, so check people against that house.
+  const liveStage=world.dwelling.stage;world.dwelling.stage=d.stage;
+  try{checkSavedPeople(data);}finally{world.dwelling.stage=liveStage;}
+  return data;
+}
+function checkSavedPeople(data){
+  if(!Array.isArray(data.names)||data.names.length!==entities.length)throw new Error('Incomplete names');
+  const seen=new Set();
+  for(const row of data.names){
+    if(!row||!byId.has(row.id)||seen.has(row.id)||(row.name!==null&&!validName(row.name)))throw new Error('Invalid name record');
+    seen.add(row.id);
+  }
+  if(!Array.isArray(data.people)||data.people.length!==2)throw new Error('Invalid people');
+  const peopleSeen=new Set(),pendingTargets=new Set();
+  for(const row of data.people){
+    if(!world.people.some(p=>p.id===row.id)||peopleSeen.has(row.id))throw new Error('Wrong person');
+    peopleSeen.add(row.id);
+    if(!TASKS.includes(row.task)||![null,'wood','stone'].includes(row.carrying)||typeof row.inside!=='boolean'||(row.inside&&data.dwelling.stage<STAGES.length))throw new Error('Invalid work state');
+    if(!finite(row.x,-450,450)||!finite(row.y,-450,450)||!walkable(row.x,row.y)||!finite(row.wait,0,10)||!finite(row.travel,0,1e12)||!finite(row.angle,-Math.PI,Math.PI)||!FOUNDATION.allowedActions.includes(row.intent)||typeof row.directed!=='boolean'||!Array.isArray(row.path)||row.path.length>900)throw new Error('Invalid person state');
+    let prev=row;
+    for(const point of row.path){
+      if(!point||!finite(point.x,-450,450)||!finite(point.y,-450,450)||!walkable(point.x,point.y)||!clearSegment(prev,point))throw new Error('Invalid route');
+      prev=point;
+    }
+    if(row.pendingName!==null){
+      const job=row.pendingName;
+      if(!job||!byId.has(job.targetId)||world.people.some(p=>p.id===job.targetId)||!validName(job.value)||pendingTargets.has(job.targetId)||!row.path.length||row.intent!=='name')throw new Error('Invalid naming walk');
+      pendingTargets.add(job.targetId);
+    }
+  }
+  if(!Number.isInteger(data.day)||!finite(data.day,1,1e8)||!finite(data.minutes,0,1439.999999)||!finite(data.ticks,0,1e12)||![1,3].includes(data.speed)||typeof data.paused!=='boolean')throw new Error('Invalid time');
+  if(![0,1].includes(data.selected)||typeof data.following!=='boolean'||!data.camera||!finite(data.camera.x,-3100000,3100000)||!finite(data.camera.y,-3100000,3100000)||!finite(data.camera.extent,58,6200000))throw new Error('Invalid camera');
+}
+function restoreSavedWorld(){
+  let raw,legacyRaw=null;
+  try{raw=localStorage.getItem(SAVE_KEY);if(raw===null)legacyRaw=localStorage.getItem(LEGACY_KEY);}catch(error){
+    storage.mode='unavailable';storage.message='Saving is unavailable in this browser. You can play and name things, but changes last only in this session.';return false;
+  }
+  storage.expectedRaw=raw;
+  if(raw===null&&legacyRaw===null)return false;
+  let data;
+  try{data=raw!==null?decodeSave(raw):decodeSave(legacyRaw,true);}catch(error){
+    if(raw===null){storage.message='An older saved garden could not be read. It has been left untouched, and a new garden begins here.';return false;}
+    storage.mode='invalid';storage.message='An unreadable or unsupported saved garden was found. It has been left untouched. This temporary session will not replace it.';return false;
+  }
+  // Only apply after the entire save has passed validation.
+  Object.assign(world.dwelling,{stage:data.dwelling.stage,wood:data.dwelling.wood,stone:data.dwelling.stone,working:data.dwelling.working});
+  data.names.forEach(row=>{const e=byId.get(row.id),pi=world.people.indexOf(e);e.name=row.name===null&&pi>=0?DEFAULT_NAMES[pi]:row.name;});
+  data.people.forEach(row=>{const person=byId.get(row.id);Object.assign(person,{x:row.x,y:row.y,path:row.path.map(q=>({...q})),wait:row.wait,travel:row.travel,angle:row.angle,intent:row.intent,directed:row.directed,pendingName:row.pendingName?{...row.pendingName}:null,task:row.task,carrying:row.carrying,inside:row.inside});});
+  for(const key of ['day','minutes','ticks','speed','paused'])world[key]=data[key];
+  ui.selected=data.selected;ui.following=data.following;ui.inspected=world.people[ui.selected].id;
+  camera.x=camera.tx=data.camera.x;camera.y=camera.ty=data.camera.y;
+  camera.z=camera.tz=Math.max(200,Math.min(W-40,H-80))/data.camera.extent;
+  storage.message=raw===null?'Your Gate 2 garden and names were carried into Gate 3. The older save is left untouched.':'Your saved garden and names have been restored in this browser.';
+  return true;
+}
+function saveWorld(){
+  if(storage.mode!=='ready')return false;
+  try{
+    const current=localStorage.getItem(SAVE_KEY);
+    if(current!==storage.expectedRaw){storage.mode='conflict';storage.message='Another tab changed this garden’s save. This tab will not overwrite it. Reload to continue from that save.';updateSaveStatus();return false;}
+    const data={version:3,worldId:world.id,
+      names:entities.map(e=>({id:e.id,name:e.name})),
+      people:world.people.map(p=>({id:p.id,x:p.x,y:p.y,path:p.path.map(q=>({...q})),wait:clamp(p.wait,0,10),travel:p.travel,angle:p.angle,intent:p.intent,directed:p.directed,pendingName:p.pendingName?{...p.pendingName}:null,task:p.task,carrying:p.carrying,inside:p.inside})),
+      dwelling:{...world.dwelling},
+      day:world.day,minutes:world.minutes,ticks:world.ticks,speed:world.speed,paused:world.paused,
+      selected:ui.selected,following:ui.following,camera:{x:camera.tx,y:camera.ty,extent:clamp(Math.max(200,Math.min(W-40,H-80))/camera.tz,58,6200000)}
+    };
+    const raw=JSON.stringify(data);localStorage.setItem(SAVE_KEY,raw);storage.expectedRaw=raw;storage.lastSaved=Date.now();storage.message='Names and progress are saved in this browser.';updateSaveStatus();return true;
+  }catch(error){storage.mode='unavailable';storage.message='This browser could not save your changes. Existing saved data has not been replaced. Keep this page open: new names are session-only.';updateSaveStatus();return false;}
+}
+function updateSaveStatus(){
+  $('saveStatus').textContent=storage.mode==='ready'?'Saved here':storage.mode==='invalid'?'Save protected':storage.mode==='conflict'?'Other tab saved':'Not saved';
+  $('saveStatus').classList.toggle('warning',storage.mode!=='ready');
+  $('saveStatus').title=storage.message;
+  $('storageMessage').textContent=storage.message;
+  $('reloadSaved').hidden=storage.mode!=='conflict';
+  $('saveNote').textContent=storage.mode==='ready'?'Names stay in this browser at this same address or file. Nothing is sent elsewhere.':storage.message;
+}
+// THE NAMING — the selected person walks, speaks, and leaves a lasting name.
+function shortName(name,max=24){return name.length>max?name.slice(0,max-1)+'…':name;}
+function refreshBook(){
+  const selected=$('entitySelect').value||ui.inspected;
+  $('entitySelect').replaceChildren();
+  for(const [label,list] of [['The two people',world.people],['Creation',[...world.trees,...world.stones,world.river,world.animal,...world.hills,world.garden]],['A place to dwell',[world.homeSite]]]){
+    const group=document.createElement('optgroup');group.label=label;
+    list.forEach(e=>{const option=document.createElement('option');option.value=e.id;option.textContent=description(e)+' — '+(e.name||'unnamed');group.append(option);});
+    $('entitySelect').append(group);
+  }
+  $('entitySelect').value=byId.has(selected)?selected:ui.inspected;
+}
+function namingDetails(){
+  const entity=byId.get($('entitySelect').value);ui.inspected=entity.id;
+  const owner=world.people.find(p=>p.pendingName?.targetId===entity.id);
+  $('namingTitle').textContent=entity.name?'Keep or revise a name':'Give a name';
+  $('nameDescription').textContent=owner?personLabel(world.people.indexOf(owner))+' is walking here to name it “'+owner.pendingName.value+'”.':description(entity)+(entity.name?' is named “'+entity.name+'”.':' is still unnamed.')+(world.people.includes(entity)?' Give this person a name.':' '+personLabel(ui.selected)+' will walk nearby and speak the name.');
+  $('nameInput').value=owner?owner.pendingName.value:entity.name||'';
+  $('nameInput').disabled=!!owner;
+  $('giveName').disabled=!!owner;
+  $('giveName').textContent=world.people.includes(entity)?'Give this name':entity.name?'Walk & revise':'Walk & name';
+  $('cancelNamingWalk').hidden=!owner;
+  $('nameError').textContent='';updateSaveStatus();
+}
+function openNaming(id){
+  ui.inspected=id||ui.inspected;refreshBook();$('entitySelect').value=ui.inspected;namingDetails();
+  help(false);ui.namingOpen=true;$('namingDialog').showModal();
+}
+function approachRoute(person,entity){
+  const anchor=entity.approach||(entity.kind==='river'?{x:riverX(0)-44,y:0}:entity);
+  const candidates=[];
+  for(const radius of [0,20,32,40])for(let i=0;i<(radius?16:1);i++){
+    const angle=i*Math.PI/8,point={x:anchor.x+Math.cos(angle)*radius,y:anchor.y+Math.sin(angle)*radius};
+    if(walkable(point.x,point.y))candidates.push(point);
+  }
+  candidates.sort((a,b)=>distance(person,a)-distance(person,b));
+  for(const point of candidates){const path=route(person,point);if(path.length)return path;}
+  return [];
+}
+function announceName(person,entity,value){
+  entity.name=value;
+  const isPerson=world.people.includes(entity);
+  hearMoment('Genesis 2:19');music.callMotif=true;
+  person.speech={text:isPerson?'I am '+value+'.':value,until:performance.now()+5200};
+  ui.inspected=entity.id;refreshBook();
+  const saved=saveWorld();notify(isPerson?value+' has a name.'+(saved?' Saved here.':' Session only.'):personLabel(world.people.indexOf(person))+' named '+description(entity).toLowerCase()+' “'+value+'”.'+(saved?' Saved here.':' Session only.'));
+  updateHud();
+}
+function completeNaming(person){
+  const job=person.pendingName;person.pendingName=null;
+  person.intent='observe';person.wait=1;person.directed=false;
+  announceName(person,byId.get(job.targetId),job.value);
+}
+function submitName(event){
+  event.preventDefault();const entity=byId.get($('entitySelect').value),raw=$('nameInput').value,value=cleanName(raw);
+  if(!validName(value)){$('nameError').textContent=value?'Choose a name of 1–40 ordinary text characters.':'Please enter a name. Nothing has been changed.';$('nameInput').focus();return;}
+  const owner=world.people.find(p=>p.pendingName?.targetId===entity.id);
+  if(owner){$('nameError').textContent='A naming walk is already on its way here.';return;}
+  if(world.people.includes(entity)){
+    announceName(entity,entity,value);$('namingDialog').close();return;
+  }
+  const person=world.people[ui.selected];
+  if(person.pendingName){$('nameError').textContent='Finish or cancel '+personLabel(ui.selected)+'’s current naming walk first.';return;}
+  const path=approachRoute(person,entity);
+  if(!path.length){$('nameError').textContent='This place cannot be reached safely yet. Choose another part of creation.';return;}
+  person.path=path;person.wait=0;person.intent='name';person.directed=true;person.task=null;person.inside=false;person.pendingName={targetId:entity.id,value};
+  saveWorld();$('namingDialog').close();
+  // Keep the walking person visible, without changing the player’s paused state.
+  ui.following=true;camera.tz=scaleFor(3);camera.tx=person.x;camera.ty=person.y-4;
+  notify(world.paused?'Name chosen. Press play to walk there and speak it.':personLabel(ui.selected)+' will walk there and speak “'+value+'”.');updateHud();saveWorld();
+}
+function pickEntity(x,y){
+  const point=fromScreen(x,y);let nearest=null,best=Infinity;
+  for(const entity of [...world.people,...world.trees,...world.stones,world.animal]){
+    const lift=world.trees.includes(entity)?entity.radius*.55:world.people.includes(entity)?5:0;
+    const q=screen(entity.x,entity.y-lift),d=Math.hypot(x-q.x,y-q.y);
+    const threshold=world.trees.includes(entity)?Math.max(13,entity.radius*camera.z):Math.max(13,8*camera.z);
+    if(d<threshold&&d<best){nearest=entity;best=d;}
+  }
+  if(nearest)return nearest;
+  if(Math.abs(point.x-riverX(point.y))<30&&Math.abs(point.y)<740)return world.river;
+  if(Math.abs(point.x-world.homeSite.x)<84&&Math.abs(point.y-world.homeSite.y)<60)return world.homeSite;
+  for(const hill of world.hills)if(Math.hypot((point.x-hill.x)/hill.rx,(point.y-hill.y)/hill.ry)<.72)return hill;
+  if(Math.hypot(point.x/1.1,point.y)<400)return world.garden;
+  return null;
+}
+function nameTag(text,x,y,speech=false){
+  if(x<-20||x>W+20||y<0||y>H-15)return;
+  text=shortName(text,speech?42:25);ctx.save();ctx.font='11px system-ui,sans-serif';
+  while(text.length>1&&ctx.measureText(text).width>W-50)text=text.slice(0,-2)+'…';
+  const width=Math.min(W-30,ctx.measureText(text).width+16),left=clamp(x-width/2,8,W-width-8);
+  ctx.fillStyle=speech?'#fff9de':'#f6f3e9e8';roundedRect(left,y-17,width,23,5);ctx.fill();
+  ctx.fillStyle='#284d3d';ctx.textAlign='center';ctx.fillText(text,left+width/2,y-2);ctx.restore();
+}
+function paintNames(){
+  if(camera.z<.07)return;
+  const inspected=byId.get(ui.inspected);
+  if(inspected&&!world.people.includes(inspected)){
+    const q=screen(inspected.x,inspected.y);ctx.beginPath();ctx.arc(q.x,q.y,Math.max(7,14*camera.z),0,Math.PI*2);ctx.strokeStyle='#e5cd82';ctx.lineWidth=2;ctx.stroke();
+    if(inspected.name)nameTag(inspected.name,q.x,q.y-22);
+  }
+  if(camera.z>.42){
+    for(const entity of [...world.trees,...world.stones,world.river,world.animal,...world.hills]){
+      if(!entity.name||entity===inspected)continue;
+      const q=screen(entity.x,entity.y-(entity.kind==='tree'?entity.radius:0));
+      nameTag(entity.name,q.x,q.y-12);
+    }
+  }
+  for(const person of world.people){
+    if(!person.speech||performance.now()>person.speech.until)continue;
+    const q=screen(person.x,person.y);nameTag(person.speech.text,q.x,q.y-Math.max(38,23*camera.z),true);
+  }
+}
+$('walkMode').onclick=()=>{ui.namingMode=false;updateHud();};
+$('nameMode').onclick=()=>{ui.namingMode=true;updateHud();notify('Tap creation to name it, or open the Names book.');};
+$('namesBook').onclick=()=>openNaming(ui.inspected);
+$('entitySelect').onchange=namingDetails;
+$('namingForm').addEventListener('submit',submitName);
+$('closeNaming').onclick=()=>{$('namingDialog').close();};
+$('namingDialog').addEventListener('close',()=>{ui.namingOpen=false;updateHud();saveWorld();$('namesBook').focus();});
+$('findEntity').onclick=()=>{
+  const entity=byId.get($('entitySelect').value);ui.inspected=entity.id;
+  if(world.people.includes(entity)){selectPerson(world.people.indexOf(entity));goLevel(5);}
+  else {ui.following=false;camera.tz=scaleFor(entity.kind==='hill'||entity.kind==='garden'?2:3);camera.tx=entity.x;camera.ty=entity.y;}
+  $('namingDialog').close();notify('Showing '+(entity.name||description(entity))+'. In Name mode, tap it to name or revise it.');
+};
+$('cancelNamingWalk').onclick=()=>{
+  const owner=world.people.find(p=>p.pendingName?.targetId===$('entitySelect').value);
+  if(owner){owner.pendingName=null;owner.path=[];owner.intent='observe';owner.wait=1;owner.directed=false;saveWorld();namingDetails();notify('Naming walk cancelled. Existing names are unchanged.');}
+};
+$('saveStatus').onclick=()=>{updateSaveStatus();$('storageDialog').showModal();};
+$('closeStorage').onclick=$('storageDone').onclick=()=>{$('storageDialog').close();};
+$('reloadSaved').onclick=()=>location.reload();
+function wander(p){
+  for(let i=0;i<16;i++){
+    const target={x:range(-355,355),y:range(-330,330)};
+    if(distance(p,target)<45)continue;
+    const path=route(p,target);if(path.length){p.path=path;p.intent='walk';p.directed=false;p.task=null;return;}
+  }
+  p.wait=1;p.intent='observe';
+}
+// THE DWELLING — what each person does when nothing else is asked of them.
+function walkTo(p,point,task){
+  // Walkable places (the door, the pile, a resting spot) are reached exactly;
+  // trees and riverbanks are approached as closely as dry ground allows.
+  let path=walkable(point.x,point.y)?route(p,point):[];
+  if(!path.length)path=approachRoute(p,point);
+  if(!path.length)return false;
+  p.path=path;p.task=task;p.intent='walk';p.directed=false;p.wait=0;return true;
+}
+function workStep(p){
+  const d=world.dwelling,need=STAGES[d.stage];
+  if(p.carrying)return walkTo(p,DELIVER,'deliver');
+  const others=world.people.filter(o=>o!==p);
+  const inFlight=m=>others.filter(o=>o.carrying===m||o.task==='gather-'+m).length;
+  const left={wood:need.wood-d.wood-inFlight('wood'),stone:need.stone-d.stone-inFlight('stone')};
+  let material=null;
+  if(left.wood>0&&left.stone>0)material=left.wood===left.stone?(world.people.indexOf(p)===0?'wood':'stone'):left.wood>left.stone?'wood':'stone';
+  else if(left.wood>0)material='wood';else if(left.stone>0)material='stone';
+  if(!material){p.intent='build';p.task=null;p.wait=2;return true;}
+  const sources=material==='wood'?[...world.trees]:[...STONE_BANKS];
+  sources.sort((a,b)=>distance(p,a)-distance(p,b));
+  const pick=sources.slice(0,3);
+  for(let i=0;i<pick.length;i++){const s=pick[(i+Math.floor(random()*pick.length))%pick.length];if(walkTo(p,s,'gather-'+material))return true;}
+  return false;
+}
+function decide(p){
+  if(p.pendingName)return;
+  if(isNight()){
+    const spot=houseDone()?DOOR:REST_SPOTS[world.people.indexOf(p)];
+    p.task=null;
+    if(distance(p,spot)<6){p.intent='rest';p.wait=4;if(houseDone())p.inside=true;return;}
+    if(walkTo(p,spot,'rest'))return;
+    p.intent='rest';p.wait=4;return;
+  }
+  p.inside=false;
+  const d=world.dwelling;
+  if(d.working&&!isRestDay()&&isWorkTime()&&!houseDone()&&workStep(p))return;
+  // A load already gathered is set down at the pile rather than carried all evening.
+  if(p.carrying&&!houseDone()&&!isRestDay()&&walkTo(p,DELIVER,'deliver'))return;
+  wander(p);
+}
+function deposit(p){
+  const d=world.dwelling,material=p.carrying;p.carrying=null;
+  if(!material||houseDone())return;
+  d[material]=Math.min(99,d[material]+1);
+  while(!houseDone()&&d.wood>=STAGES[d.stage].wood&&d.stone>=STAGES[d.stage].stone){
+    const stage=STAGES[d.stage],before=d.stage;
+    d.wood-=stage.wood;d.stone-=stage.stone;d.stage++;
+    stageRaised(before,d.stage);notify(stage.done);
+    hearMoment(houseDone()?'Genesis 1:31':'Psalm 127:1');
+  }
+  if(houseDone()){d.working=false;}
+  refreshDwelling();saveWorld();
+}
+function stageRaised(before,after){
+  if(before>=3||after<3)return;
+  // Walls now stand: nobody is left inside them, and no route passes through them.
+  world.people.forEach(p=>{
+    if(inHouse(p.x,p.y)){p.x=DOOR.x;p.y=DOOR.y;}
+    let prev=p;const clear=p.path.every(q=>{const ok=walkable(q.x,q.y)&&clearSegment(prev,q);prev=q;return ok;});
+    if(clear)return;
+    if(p.pendingName){const path=approachRoute(p,byId.get(p.pendingName.targetId));if(path.length){p.path=path;return;}p.pendingName=null;}
+    p.path=[];p.task=null;p.intent='observe';p.directed=false;p.wait=.3;
+  });
+}
+function arrive(p){
+  if(p.pendingName){p.task=null;completeNaming(p);return;}
+  const task=p.task;p.task=null;p.directed=false;
+  if(task==='gather-wood'||task==='gather-stone'){p.carrying=task.slice(7);p.intent='gather';p.wait=2.2;return;}
+  if(task==='deliver'){deposit(p);p.intent='build';p.wait=2.6;return;}
+  if(task==='rest'){p.intent='rest';p.wait=.2;return;}
+  p.intent='observe';p.wait=range(1,3);
+}
+// Initial wandering starts only after a validated local save is restored.
+function simulate(dt){
+  if(world.paused||ui.namingOpen)return;
+  dt*=world.speed;world.ticks+=dt;world.minutes+=dt*4;
+  if(world.minutes>=1440){world.minutes-=1440;world.day++;if(isRestDay())notify('The seventh day. The work is set aside, and the garden rests.');}
+  world.people.forEach(p=>{
+    if(p.path.length){const target=p.path[0],d=distance(p,target),step=dt*23;
+      p.inside=false;
+      p.angle=Math.atan2(target.y-p.y,target.x-p.x);p.travel+=Math.min(step,d);
+      if(d<=step){p.x=target.x;p.y=target.y;p.path.shift();if(!p.path.length)arrive(p);}
+      else {p.x+=(target.x-p.x)/d*step;p.y+=(target.y-p.y)/d*step;}
+    }else{p.wait-=dt;if(p.wait<=0)decide(p);}
+  });
+}
+// GATE 4 · SOUND & LIGHT — Scripture heard and seen.
+// The words are the King James text (public domain), carried inside this file.
+// Nothing here turns letters into numbers or gives any frequency a meaning of its own:
+// tuning is ordinary A=440 equal temperament. What the conductor follows is MEANING —
+// the themes of the verse for this moment and of the verses read together with it.
+// The pairing of words to themes is an interpretation, written by hand, open to revision.
+const SCRIPTURE = Object.freeze({
+  'Genesis 1:3':{text:'And God said, Let there be light: and there was light.',themes:['light'],with:['John 1:5','Psalm 119:105','Psalm 19:1']},
+  'Genesis 1:5':{text:'And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.',themes:['light','rest','name'],with:['Psalm 30:5','Genesis 1:16']},
+  'Genesis 1:16':{text:'And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.',themes:['heavens','light'],with:['Psalm 19:1','Psalm 147:4']},
+  'Genesis 1:31':{text:'And God saw every thing that he had made, and, behold, it was very good. And the evening and the morning were the sixth day.',themes:['praise','growth','home'],with:['Psalm 127:1','Psalm 90:17','Genesis 2:2']},
+  'Genesis 2:2':{text:'And on the seventh day God ended his work which he had made; and he rested on the seventh day from all his work which he had made.',themes:['rest'],with:['Genesis 2:3','Exodus 20:11','Matthew 11:28']},
+  'Genesis 2:3':{text:'And God blessed the seventh day, and sanctified it: because that in it he had rested from all his work which God created and made.',themes:['rest','praise'],with:['Exodus 20:11','Genesis 2:2']},
+  'Genesis 2:8':{text:'And the LORD God planted a garden eastward in Eden; and there he put the man whom he had formed.',themes:['growth','home'],with:['Genesis 2:15','Psalm 1:3']},
+  'Genesis 2:9':{text:'And out of the ground made the LORD God to grow every tree that is pleasant to the sight, and good for food; the tree of life also in the midst of the garden, and the tree of knowledge of good and evil.',themes:['growth'],with:['Psalm 1:3','Revelation 22:2']},
+  'Genesis 2:10':{text:'And a river went out of Eden to water the garden; and from thence it was parted, and became into four heads.',themes:['water','growth'],with:['Psalm 46:4','Revelation 22:1','Psalm 1:3']},
+  'Genesis 2:15':{text:'And the LORD God took the man, and put him into the garden of Eden to dress it and to keep it.',themes:['work','growth'],with:['Psalm 104:23','Psalm 90:17','Genesis 2:8']},
+  'Genesis 2:19':{text:'And out of the ground the LORD God formed every beast of the field, and every fowl of the air; and brought them unto Adam to see what he would call them: and whatsoever Adam called every living creature, that was the name thereof.',themes:['name','growth'],with:['Psalm 147:4','Genesis 1:5']},
+  'Exodus 20:11':{text:'For in six days the LORD made heaven and earth, the sea, and all that in them is, and rested the seventh day: wherefore the LORD blessed the sabbath day, and hallowed it.',themes:['rest','praise','heavens'],with:['Genesis 2:3']},
+  'Psalm 1:3':{text:'And he shall be like a tree planted by the rivers of water, that bringeth forth his fruit in his season; his leaf also shall not wither; and whatsoever he doeth shall prosper.',themes:['growth','water'],with:['Genesis 2:9']},
+  'Psalm 4:8':{text:'I will both lay me down in peace, and sleep: for thou, LORD, only makest me dwell in safety.',themes:['rest','peace','home'],with:['Psalm 127:2','Matthew 11:28']},
+  'Psalm 19:1':{text:'The heavens declare the glory of God; and the firmament sheweth his handywork.',themes:['heavens','praise'],with:['Genesis 1:16','Psalm 147:4','Psalm 150:3']},
+  'Psalm 30:5':{text:'For his anger endureth but a moment; in his favour is life: weeping may endure for a night, but joy cometh in the morning.',themes:['light','peace'],with:['Lamentations 3:22–23']},
+  'Psalm 46:4':{text:'There is a river, the streams whereof shall make glad the city of God, the holy place of the tabernacles of the most High.',themes:['water','praise','peace'],with:['Revelation 22:1']},
+  'Psalm 90:17':{text:'And let the beauty of the LORD our God be upon us: and establish thou the work of our hands upon us; yea, the work of our hands establish thou it.',themes:['work','praise'],with:['Psalm 127:1','Genesis 2:15']},
+  'Psalm 104:23':{text:'Man goeth forth unto his work and to his labour until the evening.',themes:['work'],with:['Genesis 1:5']},
+  'Psalm 119:105':{text:'Thy word is a lamp unto my feet, and a light unto my path.',themes:['light','peace'],with:['John 1:5']},
+  'Psalm 127:1':{text:'Except the LORD build the house, they labour in vain that build it: except the LORD keep the city, the watchman waketh but in vain.',themes:['home','work'],with:['Proverbs 24:3','Matthew 7:24','Psalm 90:17']},
+  'Psalm 127:2':{text:'It is vain for you to rise up early, to sit up late, to eat the bread of sorrows: for so he giveth his beloved sleep.',themes:['rest','peace'],with:['Psalm 4:8','Matthew 11:28']},
+  'Psalm 147:4':{text:'He telleth the number of the stars; he calleth them all by their names.',themes:['heavens','name'],with:['Genesis 1:16','Psalm 19:1','Genesis 2:19']},
+  'Psalm 150:3':{text:'Praise him with the sound of the trumpet: praise him with the psaltery and harp.',themes:['praise'],with:['Psalm 19:1']},
+  'Proverbs 24:3':{text:'Through wisdom is an house builded; and by understanding it is established:',themes:['home'],with:['Psalm 127:1','Matthew 7:24']},
+  'Lamentations 3:22–23':{text:'It is of the LORD’s mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness.',themes:['light','peace'],with:['Psalm 30:5','Genesis 1:3']},
+  'Matthew 7:24':{text:'Therefore whosoever heareth these sayings of mine, and doeth them, I will liken him unto a wise man, which built his house upon a rock:',themes:['home','work'],with:['Psalm 127:1']},
+  'Matthew 11:28':{text:'Come unto me, all ye that labour and are heavy laden, and I will give you rest.',themes:['rest','peace'],with:['Psalm 4:8','Genesis 2:2']},
+  'John 1:5':{text:'And the light shineth in darkness; and the darkness comprehended it not.',themes:['light'],with:['Genesis 1:3','Psalm 119:105']},
+  'Revelation 22:1':{text:'And he shewed me a pure river of water of life, clear as crystal, proceeding out of the throne of God and of the Lamb.',themes:['water','light','praise'],with:['Revelation 22:2','Psalm 46:4']},
+  'Revelation 22:2':{text:'In the midst of the street of it, and on either side of the river, was there the tree of life, which bare twelve manner of fruits, and yielded her fruit every month: and the leaves of the tree were for the healing of the nations.',themes:['growth','water'],with:['Genesis 2:9','Revelation 22:1']}
+});
+const THEMES = ['light','water','growth','work','rest','name','home','heavens','peace','praise'];
+const word = {ref:'Genesis 1:3',candidate:null,since:0,event:null,target:{},live:Object.fromEntries(THEMES.map(t=>[t,0])),lastTarget:0};
+// Which words belong to this moment: an event, then the scale, then the hour and what is happening.
+function momentVerse(){
+  const now=performance.now();
+  if(word.event&&now<word.event.until)return word.event.ref;
+  const lv=currentLevel(),hr=world.minutes/60;
+  if(lv===0)return 'Psalm 147:4';
+  if(lv===1)return 'Psalm 19:1';
+  if(isNight())return houseDone()?'Psalm 4:8':hr>=21?'Psalm 127:2':'Matthew 11:28';
+  if(isRestDay())return hr<12?'Genesis 2:2':hr<18?'Genesis 2:3':'Exodus 20:11';
+  if(hr<8)return world.day===1?'Genesis 1:3':'Lamentations 3:22–23';
+  if(hr>=18)return 'Genesis 1:5';
+  const p=world.people[ui.selected];
+  if(world.people.some(q=>(q.task&&q.task!=='rest')||q.intent==='gather'||q.intent==='build'))return lv>=3?'Psalm 90:17':'Genesis 2:15';
+  if(Math.abs(p.x-riverX(p.y))<85)return 'Genesis 2:10';
+  if(lv>=3&&world.dwelling.stage>0)return houseDone()?'Proverbs 24:3':'Psalm 127:1';
+  return hr<12?'Genesis 2:8':'Genesis 2:9';
+}
+// The verse and everything read with it, gathered into one sense of what this moment is about.
+function hearVerse(ref){
+  const w=Object.fromEntries(THEMES.map(t=>[t,0])),add=(r,k)=>SCRIPTURE[r]?.themes.forEach(t=>w[t]+=k);
+  add(ref,1);SCRIPTURE[ref].with.forEach(r=>add(r,.45));
+  // Time is part of the hearing: night leans toward rest, the sky, and quiet.
+  if(isNight()){w.rest+=.3;w.heavens+=.25;w.work*=.3;}
+  if(world.paused){THEMES.forEach(t=>w[t]*=.4);w.rest+=.4;}
+  const top=Math.max(...Object.values(w),.001);THEMES.forEach(t=>w[t]=Math.min(1,w[t]/top));
+  return w;
+}
+function showWord(){
+  const v=SCRIPTURE[word.ref],card=$('word');
+  card.classList.add('fade');
+  setTimeout(()=>{
+    $('wordText').textContent=v.text;$('wordRef').textContent=word.ref;
+    $('wordWith').textContent=v.with.length?' · read with '+v.with.join(', '):'';
+    $('wordThemes').textContent=THEMES.filter(t=>word.target[t]>.32).sort((a,b)=>word.target[b]-word.target[a]).join(' · ');
+    card.classList.remove('fade');
+  },reducedMotion?0:450);
+}
+function setVerse(ref){word.ref=ref;word.target=hearVerse(ref);word.lastTarget=performance.now();showWord();}
+function hearMoment(ref){word.event={ref,until:performance.now()+30000};setVerse(ref);}
+function updateWord(now,dt){
+  const next=momentVerse();
+  if(next!==word.ref){
+    if(next!==word.candidate){word.candidate=next;word.since=now;}
+    else if(now-word.since>2200)setVerse(next);
+  } else word.candidate=null;
+  if(now-word.lastTarget>1500){word.target=hearVerse(word.ref);word.lastTarget=now;}
+  // The orchestra turns gradually toward the new meaning rather than switching.
+  const ease=1-Math.exp(-dt*.6);THEMES.forEach(t=>word.live[t]=mix(word.live[t],word.target[t]||0,ease));
+}
+$('word').onclick=()=>$('word').classList.toggle('open');
+$('word').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('word').classList.toggle('open');}};
+// THE CONDUCTOR — a live arrangement, never the same twice: the hour sets the mode and
+// pace, the themes decide which voices play and how strongly, and each bar's harmony is
+// chosen in the moment.
+const MODES={ionian:[0,2,4,5,7,9,11],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10]};
+const PHASES={dawn:{mode:'lydian',tempo:64},day:{mode:'ionian',tempo:80},evening:{mode:'mixolydian',tempo:68},night:{mode:'ionian',tempo:52},rest:{mode:'ionian',tempo:60}};
+const NEXT_CHORD={0:[3,4,5,3],1:[4,4,3],2:[5,3],3:[4,0,1,0],4:[0,0,5,3],5:[3,1,4]};
+const ROOT=45 /* A2 = 110 Hz, the home note shared with the main app (was 50 = D3) */,midiHz=m=>440*Math.pow(2,(m-69)/12);
+const music={ctx:null,master:null,send:null,on:false,nextTime:0,step:0,chord:0,tempo:72,callMotif:false};
+const dayPhase=()=>isNight()?'night':isRestDay()?'rest':world.minutes<8*60?'dawn':world.minutes>=18*60?'evening':'day';
+const pitch=(degree,octave=0)=>{const mode=MODES[PHASES[dayPhase()].mode],d=Math.floor(degree);return ROOT+12*(octave+Math.floor(d/7))+mode[((d%7)+7)%7];};
+const clockNow=()=>music.on&&music.ctx&&music.ctx.state==='running'?music.ctx.currentTime:performance.now()/1000;
+function startAudio(){
+  if(!music.ctx){
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+    const c=new AC();music.ctx=c;
+    const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;comp.connect(c.destination);
+    music.master=c.createGain();music.master.gain.value=.8;music.master.connect(comp);
+    // A small room made in code: a few seconds of softly fading air.
+    const len=Math.floor(c.sampleRate*2.6),buffer=c.createBuffer(2,len,c.sampleRate);
+    for(let ch=0;ch<2;ch++){const data=buffer.getChannelData(ch);for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.4);}
+    const verb=c.createConvolver();verb.buffer=buffer;music.send=c.createGain();music.send.gain.value=.32;music.send.connect(verb);verb.connect(music.master);
+  }
+  music.ctx.resume();return true;
+}
+function tone(when,midi,{type='sine',gain=.04,attack=.01,hold=.2,release=.6,filter=0,detune=0,pan=0}={}){
+  const c=music.ctx,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=midiHz(midi);o.detune.value=detune;
+  let node=o;if(filter){const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=filter;o.connect(f);node=f;}
+  if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;node.connect(p);node=p;}
+  node.connect(g);g.connect(music.master);g.connect(music.send);
+  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(gain,when+attack);g.gain.setTargetAtTime(0,when+attack+hold,release/3);
+  o.start(when);o.stop(when+attack+hold+release*2.5);
+}
+// Every sounded note is also a light: the voice of water glints on the river, growth on the trees.
+function voice(theme,when,midi,opts){
+  if(music.on&&music.ctx&&music.ctx.state==='running')tone(when,midi,opts);
+  spawnMote(theme,performance.now()+Math.max(0,(when-clockNow())*1000),midi);
+}
+function playStep(step,when){
+  const L=word.live,stepDur=60/music.tempo/2,bar=stepDur*8,c=music.chord,triad=[c,c+2,c+4],rnd=Math.random;
+  if(step===0){
+    const options=NEXT_CHORD[c]||[0];music.chord=options[Math.floor(rnd()*options.length)];
+    const k=music.chord,chord=[k,k+2,k+4];
+    music.tempo=Math.max(48,PHASES[dayPhase()].tempo+L.work*10-L.rest*6+(rnd()-.5)*4);
+    if(L.rest>.1)[0,4].forEach((d,i)=>voice('rest',when,pitch(d,-2),{type:'sine',gain:.07*L.rest,attack:1.2,hold:bar,release:2,pan:i?.2:-.2}));
+    if(L.growth>.1)chord.forEach((d,i)=>voice('growth',when,pitch(d,-1),{type:'sawtooth',gain:.018*L.growth,attack:1.4,hold:bar*.8,release:1.6,filter:850,detune:(i-1)*7,pan:(i-1)*.4}));
+    if(L.home>.1)[k,k+2].forEach(d=>voice('home',when,pitch(d,-2),{type:'triangle',gain:.05*L.home,attack:.5,hold:bar*.7,release:1.4,filter:520}));
+    if(L.praise>.1&&rnd()<.7)chord.forEach((d,i)=>voice('praise',when+i*.04,pitch(d,1),{type:'triangle',gain:.022*L.praise,attack:.7,hold:bar*.4,release:1.5,filter:2600,pan:(i-1)*.5}));
+    if(music.callMotif||(L.name>.15&&rnd()<.35*L.name)){
+      // A call, and an answer: something spoken, and something named.
+      [k+4,k+5,k+7,null,k+7,k+5,k+4].forEach((d,i)=>{if(d!==null)voice('name',when+i*stepDur,pitch(d,1),{type:'sine',gain:.05*Math.max(.5,L.name),attack:.02,hold:stepDur*.8,release:.5,pan:i<3?-.3:.3});});
+      music.callMotif=false;
+    }
+  }
+  if(L.peace>.1&&step%4===0)[c+2,c+4].forEach(d=>voice('peace',when,pitch(d,0),{type:'sine',gain:.022*L.peace,attack:.6,hold:bar*.4,release:1.2}));
+  if(L.water>.1&&rnd()<.9){const arp=[0,1,2,3,2,1,2,3][step],d=arp===3?c+7:triad[arp];voice('water',when,pitch(d,0),{type:'triangle',gain:.032*L.water,attack:.008,hold:stepDur*.5,release:.5,pan:Math.sin(step)*.5});}
+  if(L.work>.1&&[1,0,0,1,1,0,1,0][step])voice('work',when,pitch(step%3?c+4:c,-1),{type:'triangle',gain:.045*L.work,attack:.004,hold:.05,release:.18,filter:1800});
+  if(L.light>.1&&rnd()<.24*L.light)voice('light',when,pitch(triad[Math.floor(rnd()*3)],2),{type:'sine',gain:.03*L.light,attack:.005,hold:.05,release:1.6,pan:rnd()-.5});
+  if(L.heavens>.1&&rnd()<.12*L.heavens)voice('heavens',when,pitch(triad[Math.floor(rnd()*3)]+7,2),{type:'sine',gain:.014*L.heavens,attack:.4,hold:.3,release:2.4,pan:rnd()*1.4-.7});
+}
+function conduct(){
+  const now=clockNow();
+  if(world.paused||ui.namingOpen||document.hidden){music.nextTime=now+.08;return;}
+  if(music.nextTime<now-.5)music.nextTime=now+.05;
+  while(music.nextTime<now+.3){
+    playStep(music.step,music.nextTime);
+    music.nextTime+=60/music.tempo/2;music.step=(music.step+1)%8;
+  }
+}
+setInterval(conduct,60);
+function setSound(on){
+  if(on&&!startAudio()){notify('Sound is not available in this browser.');return;}
+  music.on=on;music.nextTime=clockNow()+.05;
+  if(!on&&music.ctx)music.ctx.suspend();
+  $('soundToggle').classList.toggle('active',on);$('soundToggle').setAttribute('aria-pressed',String(on));
+  $('soundToggle').setAttribute('aria-label',on?'Turn sound off':'Turn sound on');
+  notify(on?'Sound on. The music follows the words of this moment.':'Sound off. The light still follows the words.');
+}
+$('soundToggle').onclick=()=>setSound(!music.on);
+// LUMINA — each note becomes a short-lived mote of light where its meaning lives in the world.
+const LIGHT_COLORS={light:'255,241,184',water:'191,232,242',growth:'214,240,168',work:'242,207,143',rest:'201,195,240',name:'255,224,138',home:'255,199,122',heavens:'232,240,255',peace:'230,220,255',praise:'255,246,214'};
+const motes=[],pendingMotes=[];
+function spawnMote(theme,at,midi){if(pendingMotes.length<200)pendingMotes.push({theme,at,midi});}
+function moteHome(theme){
+  const pick=a=>a[Math.floor(Math.random()*a.length)],jit=r=>(Math.random()-.5)*r;
+  const anyPoint=()=>{for(let i=0;i<12;i++){const x=range(-380,380),y=range(-330,330);if(Math.hypot(x/1.1,y)<400)return {x,y};}return {x:0,y:0};};
+  switch(theme){
+    case 'water':{const y=range(-380,400);return {x:riverX(y)+jit(30),y};}
+    case 'growth':{const t=pick(world.trees);return {x:t.x+jit(t.radius*1.4),y:t.y-t.radius*.6+jit(t.radius)};}
+    case 'work':return {x:DELIVER.x+jit(60),y:DELIVER.y+jit(50)};
+    case 'home':return {x:-150+jit(120),y:(houseDone()?HOUSE.y1-20:-100)+jit(60)};
+    case 'rest':case 'peace':{const p=pick(world.people);return {x:p.x+jit(70),y:p.y-6+jit(50)};}
+    case 'name':{const named=entities.filter(e=>e.name&&e.kind!=='hill'&&e.kind!=='garden');const e=named.length?pick(named):pick(world.people);return {x:e.x+jit(24),y:e.y-10+jit(16)};}
+    default:{const p=anyPoint();return {x:p.x,y:p.y-(theme==='heavens'?60:20)};}
+  }
+}
+function paintLight(now){
+  for(let i=pendingMotes.length-1;i>=0;i--){
+    const m=pendingMotes[i];if(m.at>now)continue;pendingMotes.splice(i,1);
+    const far=camera.z<.02,spot=far?null:moteHome(m.theme);
+    motes.push({theme:m.theme,born:now,life:m.theme==='rest'||m.theme==='heavens'||m.theme==='growth'?3200:1900,
+      x:spot?.x,y:spot?.y,sx:Math.random()*W,sy:Math.random()*H,far,size:m.theme==='rest'||m.theme==='home'?16:m.theme==='light'||m.theme==='heavens'?7:10});
+    if(motes.length>(reducedMotion?40:140))motes.shift();
+  }
+  const L=word.live;
+  ctx.save();
+  // A wash of the moment's meaning over the whole scene, very faint.
+  const wash=[['light',.07],['water',.04],['growth',.04],['home',.05],['praise',.05]].reduce((best,[t,k])=>L[t]*k>best[1]?[t,L[t]*k]:best,['light',0]);
+  if(wash[1]>.005&&camera.z>.015){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(${LIGHT_COLORS[wash[0]]},${wash[1]})`);g.addColorStop(1,`rgba(${LIGHT_COLORS[wash[0]]},0)`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  ctx.globalCompositeOperation='lighter';
+  for(let i=motes.length-1;i>=0;i--){
+    const m=motes[i],t=(now-m.born)/m.life;
+    if(t>=1){motes.splice(i,1);continue;}
+    const q=m.far?{x:m.sx,y:m.sy}:screen(m.x,m.y-t*(reducedMotion?0:14)),r=m.far?3+m.size*.25:clamp(m.size*camera.z,6,26);
+    if(q.x<-30||q.x>W+30||q.y<-30||q.y>H+30)continue;
+    const a=Math.sin(Math.PI*Math.min(1,t*1.15))*(isNight()?.95:.75),g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,r);
+    g.addColorStop(0,`rgba(${LIGHT_COLORS[m.theme]},${a})`);g.addColorStop(.35,`rgba(${LIGHT_COLORS[m.theme]},${a*.45})`);g.addColorStop(1,`rgba(${LIGHT_COLORS[m.theme]},0)`);
+    ctx.fillStyle=g;ctx.fillRect(q.x-r,q.y-r,r*2,r*2);
+  }
+  ctx.restore();
+}
+// CAMERA — independent of the simulation and never rebuilds the world.
+const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function updateCamera(dt){
+  if(ui.following){const p=world.people[ui.selected];camera.tx=p.x;camera.ty=p.y-4;}
+  const ease=1-Math.exp(-dt*(reducedMotion?14:7));
+  camera.x=mix(camera.x,camera.tx,ease);camera.y=mix(camera.y,camera.ty,ease);
+  camera.z=Math.exp(mix(Math.log(camera.z),Math.log(camera.tz),ease));
+}
+const screen = (x,y) => ({x:(x-camera.x)*camera.z+W/2,y:(y-camera.y)*camera.z+H/2});
+const fromScreen=(x,y)=>({x:(x-W/2)/camera.z+camera.x,y:(y-H/2)/camera.z+camera.y});
+const skyStars=Array.from({length:160},()=>({x:range(-2900000,2900000),y:range(-2400000,2400000),r:range(.6,1.7)}));
+const galaxyStars=Array.from({length:230},(_,i)=>{
+  const r=range(6000,235000),angle=r/29000+(i%4)*Math.PI/2+range(-.26,.26);
+  return {x:Math.cos(angle)*r,y:Math.sin(angle)*r*.65,r:range(.6,1.8)};
+});
+const grass=Array.from({length:260},()=>({x:range(-820,820),y:range(-700,700),r:range(1,3)}));
+function ellipse(x,y,rx,ry,color){ctx.beginPath();ctx.ellipse(x,y,Math.max(.01,rx),Math.max(.01,ry),0,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+function line(points,color,width,dash=[]){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);}
+function worldEllipse(x,y,rx,ry,color){const p=screen(x,y);ellipse(p.x,p.y,rx*camera.z,ry*camera.z,color);}
+function caption(text,x,y,color='#f4efdf',size=12){ctx.font=`${size}px system-ui,sans-serif`;ctx.fillStyle=color;ctx.textAlign='center';ctx.fillText(text,x,y);}
+function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+function paintCosmos(){
+  ctx.fillStyle='#10251f';ctx.fillRect(0,0,W,H);
+  const log=Math.log10(camera.z),galaxyFade=clamp((-log-1.1)/2,0,1);
+  ctx.save();ctx.globalAlpha=galaxyFade;
+  skyStars.forEach(s=>{const p=screen(s.x,s.y);if(p.x>-5&&p.x<W+5&&p.y>-5&&p.y<H+5)ellipse(p.x,p.y,s.r,s.r,'#c6d7c1');});
+  const origin=screen(0,0),rx=240000*camera.z,ry=rx*.65;
+  if(rx<Math.max(W,H)*3){
+    const glow=ctx.createRadialGradient(origin.x,origin.y,0,origin.x,origin.y,Math.max(1,rx));
+    glow.addColorStop(0,'#c4ba7633');glow.addColorStop(.45,'#6b937529');glow.addColorStop(1,'#10251f00');
+    ellipse(origin.x,origin.y,rx,Math.max(1,ry),glow);
+    for(let arm=0;arm<4;arm++){
+      const pts=[];for(let r=4000;r<235000;r+=4000){const a=r/29000+arm*Math.PI/2;pts.push(screen(Math.cos(a)*r,Math.sin(a)*r*.65));}
+      line(pts,'#94b0983b',Math.max(1,rx*.035));
+    }
+    galaxyStars.forEach(s=>{const p=screen(s.x,s.y);ellipse(p.x,p.y,s.r,s.r,'#ddce91');});
+    if(rx<90){ellipse(origin.x,origin.y,3,3,'#d8c488');caption('SONOLUMINA',origin.x,origin.y+Math.max(22,ry+15),'#e4dec6',11);}
+    else {caption(shortName(world.garden.name||'THE FIRST GARDEN',26),origin.x,origin.y+24,'#f4efdf',10);ellipse(origin.x,origin.y,4,4,'#f6df93');}
+  }
+  ctx.restore();
+}
+function paintGround(){
+  if(camera.z<.012)return;
+  ctx.save();ctx.globalAlpha=clamp((Math.log10(camera.z)+1.92)*1.3,0,1);
+  worldEllipse(0,35,985,830,'#203d2c');worldEllipse(-10,0,900,750,'#6e9767');
+  worldEllipse(-280,-320,385,285,'#83a371');worldEllipse(380,350,340,285,'#81a170');
+  worldEllipse(400,-330,260,195,'#91a679');worldEllipse(-380,350,285,150,'#779b69');
+  worldEllipse(-40,0,465,400,'#b5c796');worldEllipse(-30,-10,400,345,'#becfa2');
+  grass.forEach(g=>{if(Math.hypot(g.x/1.15,g.y)>735)return;const p=screen(g.x,g.y);ellipse(p.x,p.y,Math.max(.5,g.r*camera.z),Math.max(.5,g.r*.45*camera.z),'#a0b58455');});
+  // A river belongs to the same landscape, not a decorative screen overlay.
+  const river=[];for(let y=-740;y<=740;y+=16)river.push(screen(riverX(y),y));
+  line(river,'#698f87',52*camera.z);line(river,'#86b1a9',37*camera.z);line(river,'#b6d8c54f',2*camera.z);
+  if(camera.z>.11){const ripples=[];for(let y=-360;y<400;y+=60){const x=riverX(y);ripples.push([screen(x-9,y),screen(x+8,y+4)]);}ripples.forEach(a=>line(a,'#d9e5cc88',Math.max(.6,camera.z)));}
+  // Simple paths lead through the garden, with a single walkable bridge.
+  line([screen(-290,180),screen(-150,55),screen(-115,-55),screen(0,-100),screen(105,-28)],'#d7d3aa',16*camera.z);
+  line([screen(-150,55),screen(-15,130),screen(riverX(128),128),screen(325,150)],'#d7d3aa',14*camera.z);
+  const bridge=screen(riverX(128)-70,113),bw=140*camera.z,bh=30*camera.z;
+  ctx.fillStyle='#a28b65';ctx.fillRect(bridge.x,bridge.y,bw,bh);
+  for(let i=0;i<11;i++){const x=bridge.x+i*bw/10;line([{x,y:bridge.y},{x,y:bridge.y+bh}],'#7b7053',Math.max(.5,camera.z));}
+  const site=world.homeSite,sp=screen(site.x-84,site.y-60),sw=168*camera.z,sh=120*camera.z,stage=world.dwelling.stage;
+  if(stage===0){ctx.fillStyle='#ede4b427';ctx.fillRect(sp.x,sp.y,sw,sh);ctx.strokeStyle='#6d855a99';ctx.lineWidth=Math.max(1,1.2*camera.z);ctx.setLineDash([6*camera.z,5*camera.z]);ctx.strokeRect(sp.x,sp.y,sw,sh);ctx.setLineDash([]);}
+  else {ctx.fillStyle='#d6cb9c66';roundedRect(sp.x,sp.y,sw,sh,8*camera.z);ctx.fill();}
+  paintHouseGround();
+  if(camera.z>.45 && camera.z<4.5 && camera.z<interiorZ()){caption(shortName(site.name||(stage===0?'FUTURE HOME SITE':houseDone()?'THE HOME':'THE HOME · RISING'),30),sp.x+sw/2,sp.y+sh+15,'#486349',10);}
+  // What creation freely gives: fallen branches beneath the trees, loose stones on the bank.
+  if(camera.z>.3){
+    const w=Math.max(1,1.4*camera.z);
+    world.trees.forEach(t=>{line([screen(t.x+t.radius*.45,t.y+10),screen(t.x+t.radius*.45+9,t.y+13)],'#8a6f4c',w);line([screen(t.x-t.radius*.45,t.y+12),screen(t.x-t.radius*.45+7,t.y+9)],'#8a6f4c',w);});
+    STONE_BANKS.forEach(s=>[[0,0,4],[6,3,3],[-5,4,3],[2,-4,2.5],[-7,-2,2]].forEach(([dx,dy,r])=>worldEllipse(s.x+dx,s.y+dy,r,r*.7,'#a4ab98')));
+  }
+  paintPile('wood',world.dwelling.wood);paintPile('stone',world.dwelling.stone);
+  world.stones.forEach(s=>{worldEllipse(s.x+2,s.y+3,13,7,'#83946e66');worldEllipse(s.x,s.y,10,7,'#8d9d85');worldEllipse(s.x-3,s.y-2,5,3,'#aeb99c');});
+  // Simple animals and trees are placeholders; none are named yet.
+  const a=world.animal,q=screen(a.x,a.y),z=camera.z;
+  if(z>.14){ellipse(q.x,q.y,8*z,4*z,'#a88e69');ellipse(q.x+7*z,q.y-4*z,3*z,3*z,'#b49b76');line([{x:q.x-4*z,y:q.y},{x:q.x-5*z,y:q.y+8*z}],'#806a4d',1.5*z);line([{x:q.x+3*z,y:q.y},{x:q.x+3*z,y:q.y+8*z}],'#806a4d',1.5*z);line([{x:q.x+8*z,y:q.y-6*z},{x:q.x+11*z,y:q.y-10*z}],'#806a4d',1.4*z);}
+  ctx.restore();
+}
+const interiorZ = () => Math.sqrt(scaleFor(3)*scaleFor(4));
+function poly(points,fill,stroke,width=1){
+  ctx.beginPath();points.forEach(([x,y],i)=>{const q=screen(x,y);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);});ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=Math.max(.8,width*camera.z);ctx.stroke();}
+}
+function worldRect(x0,y0,x1,y1,fill,stroke,dash){
+  const a=screen(x0,y0),b=screen(x1,y1);ctx.beginPath();ctx.rect(a.x,a.y,b.x-a.x,b.y-a.y);
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=Math.max(1,camera.z*.8);if(dash)ctx.setLineDash([4*camera.z,3*camera.z]);ctx.stroke();ctx.setLineDash([]);}
+}
+function paintPile(material,count){
+  if(!count||camera.z<.25)return;
+  const base=PILES[material];
+  for(let i=0;i<Math.min(count,12);i++){
+    const row=Math.floor(i/4),col=i%4,x=base.x-9+col*6-row*1.5,y=base.y+6-row*4;
+    if(material==='wood'){const a=screen(x-6,y-1.5),b=screen(x+6,y+1.5);ctx.fillStyle=i%2?'#8d6c45':'#9b7a50';roundedRect(a.x,a.y,b.x-a.x,b.y-a.y,1.5*camera.z);ctx.fill();}
+    else worldEllipse(x,y,3.4,2.5,i%2?'#9aa08f':'#adb2a2');
+  }
+}
+// Laid on the ground beneath everyone: foundation, floor, and (looking inside) the rooms.
+function paintHouseGround(){
+  const st=world.dwelling.stage,{x0,x1,y0,y1}=HOUSE,inside=camera.z>=interiorZ();
+  if(st>=1){
+    worldRect(x0,y0,x1,y1,st>=3&&inside?'#cdb68b':'#c6b98f');
+    if(st>=3&&inside&&camera.z>.8)for(let y=y0+8;y<y1;y+=8)line([screen(x0,y),screen(x1,y)],'#b39c70',Math.max(.6,.5*camera.z));
+    if(camera.z>.25){for(let x=x0;x<=x1;x+=10){worldEllipse(x,y0,5.5,3.6,'#959a88');worldEllipse(x,y1,5.5,3.6,'#a1a593');}for(let y=y0+9;y<y1;y+=9){worldEllipse(x0,y,3.6,4.6,'#999d8c');worldEllipse(x1,y,3.6,4.6,'#999d8c');}}
+  }
+  if(!inside)return;
+  // Looking inside: what is built is drawn, and what is still to come is a dashed plan.
+  const plan='#6d855a',label=(t,x,y)=>{if(camera.z>.9){const q=screen(x,y);caption(t,q.x,q.y,'#486349',Math.max(9,Math.min(12,4*camera.z)));}};
+  if(st>=5){
+    worldEllipse(-150,-124,12,7,'#8e9283');worldEllipse(-150,-124,8,4.5,'#4a3d30');
+    const flick=.75+Math.sin(performance.now()/130)*.12;ctx.save();ctx.globalAlpha=flick;worldEllipse(-150,-126,5,3.5,'#f0a54a');worldEllipse(-150,-127,2.6,2,'#ffe2a0');ctx.restore();
+  } else {const q=screen(-150,-124);ctx.beginPath();ctx.ellipse(q.x,q.y,12*camera.z,7*camera.z,0,0,Math.PI*2);ctx.strokeStyle=plan;ctx.lineWidth=Math.max(1,.8*camera.z);ctx.setLineDash([4*camera.z,3*camera.z]);ctx.stroke();ctx.setLineDash([]);label('Hearth',-150,-109);}
+  const mats=[[-203,-132,-173,-119],[-203,-111,-173,-98]];
+  mats.forEach(([a,b,c,e],i)=>{
+    if(st>=4){worldRect(a,b,c,e,'#d9c99b','#b9a676');if(camera.z>1)for(let x=a+4;x<c;x+=4)line([screen(x,b+1),screen(x,e-1)],'#c7b585',Math.max(.5,.35*camera.z));}
+    else {worldRect(a,b,c,e,null,plan,true);if(i===1)label('Sleeping place',-188,-91);}
+  });
+  if(st>=4){worldRect(-122,-104,-100,-90,'#9b7a50','#7b5f3c');worldEllipse(-128,-97,3.5,3.5,'#8d6c45');worldEllipse(-94,-97,3.5,3.5,'#8d6c45');}
+  else {worldRect(-122,-104,-100,-90,null,plan,true);label('Table',-111,-84);}
+  if(st<5){worldRect(-160,y1-3,-140,y1+3,null,plan,true);label('Door',-150,y1+14);}
+  // At night, a finished home holds both people, resting.
+  world.people.forEach((p,i)=>{
+    if(!p.inside)return;const [a,b,c,e]=mats[i],cy=(b+e)/2;
+    worldRect(a+8,cy-3.5,c-2,cy+3.5,p.color);worldEllipse(a+5,cy,2.6,2.6,p.skin);worldEllipse(a+4,cy,2.3,2.8,p.hair);worldEllipse(a+5.4,cy,1.9,2.1,p.skin);
+  });
+}
+// Standing structure, drawn in depth order with people and trees.
+function paintHouse(){
+  const st=world.dwelling.stage;if(st<2)return;
+  const {x0,x1,y0,y1,wall}=HOUSE,z=camera.z,inside=z>=interiorZ();
+  const wood='#9c7a52',dark='#6f5537',post=(x,y,h=wall)=>line([screen(x,y),screen(x,y-h)],'#7d6040',Math.max(1.2,3*z));
+  if(st===2){
+    [x0,-150,x1].forEach(x=>post(x,y0));
+    line([screen(x0,y0-wall),screen(x1,y0-wall)],'#866846',Math.max(1,2.4*z));
+    line([screen(x0,y0-wall),screen(x0,y1-wall)],'#866846',Math.max(1,2.4*z));line([screen(x1,y0-wall),screen(x1,y1-wall)],'#866846',Math.max(1,2.4*z));
+    [x0,-150,x1].forEach(x=>post(x,y1));
+    line([screen(x0,y1-wall),screen(x1,y1-wall)],'#866846',Math.max(1,2.4*z));
+    return;
+  }
+  const backTop=inside?y0-wall*.55:y0-wall;
+  poly([[x0,backTop],[x1,backTop],[x1,y0],[x0,y0]],'#8b6b46',dark,.6);
+  if(z>.6)for(let y=backTop+5;y<y0;y+=5)line([screen(x0,y),screen(x1,y)],'#7d5f3e',Math.max(.5,.35*z));
+  poly([[x0-3,backTop],[x0+3,backTop],[x0+3,y1-(inside?6:wall)],[x0-3,y1-(inside?6:wall)]],'#a3825a',dark,.5);
+  poly([[x1-3,backTop],[x1+3,backTop],[x1+3,y1-(inside?6:wall)],[x1-3,y1-(inside?6:wall)]],'#a3825a',dark,.5);
+  if(!inside){poly([[x0,y1-wall],[x1,y1-wall],[x1,y1],[x0,y1]],wood,dark,.8);if(z>.6)for(let y=y1-wall+5;y<y1;y+=5)line([screen(x0,y),screen(x1,y)],'#8e6d47',Math.max(.5,.35*z));
+    worldRect(x0,y1-5,x1,y1,'#9a9e8d');
+    const night=isNight()&&houseDone();
+    [[-196,-182],[-118,-104]].forEach(([a,b])=>worldRect(a,y1-26,b,y1-16,night?'#ffd98a':'#5b4a36','#5a4630'));
+    if(st>=5){worldRect(-160,y1-25,-140,y1,'#7b5a36','#5a4630');worldEllipse(-144,y1-12,1.2,1.2,'#d9c27f');}
+    else worldRect(-160,y1-25,-140,y1,'#4b3b2b');
+  } else {
+    poly([[x0,y1-6],[-160,y1-6],[-160,y1],[x0,y1]],wood,dark,.6);poly([[-140,y1-6],[x1,y1-6],[x1,y1],[-140,y1]],wood,dark,.6);
+    if(st>=5){poly([[-160,y1],[-160,y1-5],[-143,y1+6],[-143,y1+11]],'#7b5a36','#5a4630',.5);}
+  }
+  if(st>=4&&!inside){
+    const ridge=y0-wall-16;
+    poly([[x0-10,y1-wall+5],[x1+10,y1-wall+5],[x1+5,ridge],[x0-5,ridge]],'#b9a062','#8a7444',1);
+    if(z>.4)for(let i=1;i<8;i++){const t=i/8;line([screen(mix(x0-10,x1+10,t),y1-wall+5),screen(mix(x0-5,x1+5,t),ridge)],'#a58c52',Math.max(.5,.5*z));}
+    line([screen(x0-5,ridge),screen(x1+5,ridge)],'#8a7444',Math.max(1,2*z));
+    if(st>=5){worldRect(-116,ridge-12,-104,ridge+10,'#8d9180','#6d7163');
+      for(let i=0;i<3;i++){const t=((performance.now()/2600)+i/3)%1;ctx.save();ctx.globalAlpha=(1-t)*.5;worldEllipse(-110+t*12,ridge-16-t*34,3+t*6,2.4+t*4,'#e9e6dc');ctx.restore();}}
+  }
+}
+function paintTree(t){
+  const p=screen(t.x,t.y),z=camera.z,r=t.radius*z;
+  if(p.x+r<-20||p.x-r>W+20||p.y+r<-20||p.y-r>H+20)return;
+  ellipse(p.x+4*z,p.y+8*z,r*.85,r*.38,'#5b7a5133');
+  if(z>.2){ctx.fillStyle='#8c7955';ctx.fillRect(p.x-3*z,p.y-18*z,6*z,25*z);}
+  ellipse(p.x,p.y-r*.43,r*.8,r*.6,'#4f7957');ellipse(p.x-r*.37,p.y-r*.54,r*.57,r*.48,'#6b925f');ellipse(p.x+r*.23,p.y-r*.77,r*.61,r*.52,'#80a36a');
+}
+function paintPerson(p,index){
+  const q=screen(p.x,p.y),z=camera.z,selected=index===ui.selected;
+  if(p.inside||q.x<-80||q.x>W+80||q.y<-100||q.y>H+100)return;
+  if(z<.52){
+    const radius=selected?5:4;ellipse(q.x,q.y,radius,radius,p.color);
+    if(selected){ctx.beginPath();ctx.arc(q.x,q.y,radius+3,0,Math.PI*2);ctx.strokeStyle='#fff4bf';ctx.lineWidth=1.5;ctx.stroke();}
+    if(z>.12){caption(p.name ? shortName(p.name,15) : String(index+1),q.x,q.y-11,'#304b35',10);}return;
+  }
+  ctx.save();ctx.translate(q.x,q.y);
+  const stride=p.path.length&&!world.paused?Math.sin(p.travel*.55)*1.5:0;
+  ellipse(0,1.2*z,3.5*z,1.2*z,'#405a3a33');
+  if(selected){ctx.beginPath();ctx.ellipse(0,z,5*z,2*z,0,0,Math.PI*2);ctx.strokeStyle='#f8efb8';ctx.lineWidth=Math.max(1.5,z*.22);ctx.stroke();}
+  line([{x:-1.3*z,y:-3*z},{x:(-1.3+stride)*z,y:1*z}],'#5f644d',1.4*z);
+  line([{x:1.3*z,y:-3*z},{x:(1.3-stride)*z,y:1*z}],'#5f644d',1.4*z);
+  ctx.fillStyle=p.color;roundedRect(-2.8*z,-9*z,5.6*z,7*z,1.3*z);ctx.fill();
+  line([{x:-2.8*z,y:-7.5*z},{x:(-3.8-stride*.4)*z,y:-3.8*z}],p.skin,1.2*z);
+  line([{x:2.8*z,y:-7.5*z},{x:(3.8+stride*.4)*z,y:-3.8*z}],p.skin,1.2*z);
+  if(p.carrying==='wood'){ctx.save();ctx.rotate(-.22);ctx.fillStyle='#8a6a43';roundedRect(-5.5*z,-6.4*z,11*z,1.8*z,.8*z);ctx.fill();ctx.restore();}
+  else if(p.carrying==='stone'){ellipse(0,-4.6*z,2.6*z,1.8*z,'#9aa08f');ellipse(-.6*z,-5*z,1.1*z,.7*z,'#b8bdae');}
+  if(p.intent==='build'&&!world.paused){const swing=Math.sin(performance.now()/110)*.6;line([{x:3.8*z,y:-3.8*z},{x:(5+swing)*z,y:(-6.5-swing)*z}],'#6d5639',Math.max(1,.9*z));}
+  ellipse(0,-11.2*z,2.1*z,2.5*z,p.hair);ellipse(.3*z,-10.6*z,1.65*z,1.95*z,p.skin);
+  if(index===1){ellipse(-1.3*z,-10*z,.8*z,2.2*z,p.hair);}
+  if(z>3){ellipse(.8*z,-10.9*z,.15*z,.15*z,'#493c2e');}
+  if(selected){line([{x:-1.7*z,y:-16*z},{x:0,y:-17.6*z},{x:1.7*z,y:-16*z}],'#f8efb8',Math.max(1.5,z*.3));}
+  ctx.restore();
+  if(p.name&&z>.52)nameTag(p.name,q.x,q.y-21*z);
+}
+function paint(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+  paintCosmos();paintGround();
+  if(camera.z>.015){
+    const objects=[...world.trees.map(t=>({y:t.y,draw:()=>paintTree(t)})),...world.people.map((p,i)=>({y:p.y,draw:()=>paintPerson(p,i)})),{y:HOUSE.y1,draw:paintHouse}];
+    objects.sort((a,b)=>a.y-b.y).forEach(o=>o.draw());
+  }
+  paintNames();
+  // Dawn and night lighting; the finished home's windows and hearth glow through it.
+  if(camera.z>.04){const hr=world.minutes/60,night=hr<5||hr>20?.16:hr<7||hr>18?.07:0;if(night){ctx.fillStyle=`rgba(21,43,55,${night})`;ctx.fillRect(0,0,W,H);
+    if(houseDone()&&night>.1&&camera.z>.15){const inside=camera.z>=interiorZ(),c=screen(inside?-150:-150,inside?-124:HOUSE.y1-21),r=(inside?40:70)*camera.z;
+      const g=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,Math.max(1,r));g.addColorStop(0,'#ffd27a40');g.addColorStop(1,'#ffd27a00');ctx.fillStyle=g;ctx.fillRect(c.x-r,c.y-r,r*2,r*2);}}}
+  paintLight(performance.now());
+  if(world.paused&&W>=700){ctx.fillStyle='#f6f3e9';roundedRect(W/2-37,16,74,26,6);ctx.fill();caption('PAUSED',W/2,34,'#284d3d',10);}
+}
+function notify(text){$('toast').textContent=text;$('toast').hidden=false;ui.toastUntil=performance.now()+3400;}
+function selectPerson(i){ui.selected=i;ui.inspected=world.people[i].id;updateHud();saveWorld();}
+function updateHud(){
+  const lv=currentLevel(),info=levels[lv];
+  levels.forEach((_,i)=>{const b=$('scale'+i);b.classList.toggle('active',i===lv);b.setAttribute('aria-current',i===lv?'location':'false');});
+  const d=world.dwelling,done=houseDone();
+  $('scaleLabel').textContent=info.label+' scale';$('placeTitle').textContent=lv===2?(world.garden.name||info.title):lv===3?(world.homeSite.name||info.title):lv===4?(world.homeSite.name||(done?'Inside the home':info.title)):lv===5?personLabel(ui.selected):info.title;
+  $('placeDetail').textContent=lv===5?(world.people[ui.selected].name?'Named · ':'Unnamed · ')+activity(world.people[ui.selected]).toLowerCase()
+    :lv===3?(done?'The home is finished.':d.stage===0&&!d.working?'The ground is marked · open Home to begin.':'Stage '+(d.stage+1)+' of '+STAGES.length+' · '+STAGES[d.stage].name.toLowerCase())
+    :lv===4?(done?'Hearth, mats, and table · looking inside.':d.stage>=3?'Looking inside · the rooms take shape.':'Floor plan · where hearth and beds will be.')
+    :info.detail;
+  $('zoomOut').disabled=lv===0;$('zoomIn').disabled=lv===5;
+  world.people.forEach((p,i)=>{$('person'+i).classList.toggle('active',ui.selected===i);$('person'+i).setAttribute('aria-pressed',String(ui.selected===i));$('personName'+i).textContent=personLabel(i);$('person'+i).setAttribute('aria-label','Select '+personLabel(i));$('activity'+i).textContent=activity(p);});
+  $('follow').classList.toggle('active',ui.following);$('follow').setAttribute('aria-pressed',String(ui.following));$('follow').textContent=ui.following?'Following':'Follow';
+  $('pause').textContent=world.paused?'▶':'Ⅱ';$('pause').setAttribute('aria-label',world.paused?'Resume the world':'Pause the world');$('pause').setAttribute('aria-pressed',String(world.paused));
+  for(const [id,speed] of [['normal',1],['fast',3]]){$(id).classList.toggle('active',world.speed===speed&&!world.paused);$(id).setAttribute('aria-pressed',String(world.speed===speed&&!world.paused));}
+  const h=Math.floor(world.minutes/60),m=Math.floor(world.minutes%60);
+  $('clock').textContent=`Day ${world.day} · ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  $('dayPhase').textContent=world.paused?'Life is paused':(isRestDay()?'Day of rest · ':'')+(h<6?'Before dawn':h<12?'Morning light':h<18?'Afternoon light':h<21?'Evening light':'Nightfall');
+  $('selectionHint').textContent=`${personLabel(ui.selected)} selected · ${ui.namingMode?'tap creation to name it':lv<2?'zoom in to guide a walk':'tap dry ground to guide a walk'}`;
+  $('worldHint').textContent=ui.namingMode?'Tap creation to name · the Names book lists everything':lv<2?'One world · travel inward to the garden':ui.following?'Following '+personLabel(ui.selected)+' · drag to look elsewhere':'Drag to explore · tap dry ground to walk';
+  $('walkMode').classList.toggle('active',!ui.namingMode);$('walkMode').setAttribute('aria-pressed',String(!ui.namingMode));
+  $('nameMode').classList.toggle('active',ui.namingMode);$('nameMode').setAttribute('aria-pressed',String(ui.namingMode));
+  $('namesBook').textContent='Names · '+entities.filter(e=>e.name).length+'/'+entities.length;
+  $('homeBook').textContent='Home · '+d.stage+'/'+STAGES.length;$('homeBook').classList.toggle('active',d.working&&!done);
+  if($('dwellingDialog').open)refreshDwelling();
+  updateSaveStatus();
+}
+function activity(p){
+  if(world.paused)return 'Paused';
+  if(p.pendingName)return 'Walking to name';
+  if(p.inside)return 'Resting at home';
+  if(p.directed&&p.path.length)return 'Your chosen walk';
+  const load=p.carrying==='wood'?'branches':'stones';
+  if(p.task==='gather-wood')return 'Going for branches';
+  if(p.task==='gather-stone')return 'Going for stones';
+  if(p.task==='deliver')return 'Carrying '+load;
+  if(p.task==='rest')return 'Going to rest';
+  if(p.intent==='gather')return 'Gathering '+load;
+  if(p.intent==='build')return 'Building';
+  if(p.intent==='rest')return 'Resting';
+  if(isRestDay())return 'Keeping the rest day';
+  return p.intent==='walk'?'Exploring':'Looking around';
+}
+// THE DWELLING BOOK — the plan, what each stage needs, and the choice to begin.
+function refreshDwelling(){
+  const d=world.dwelling,done=houseDone();
+  $('dwellingTitle').textContent=world.homeSite.name||(done?'The home':'A place to dwell');
+  $('dwellingIntro').textContent=done?'The home is finished. At night they rest inside by the hearth.'
+    :!d.working?(d.stage===0?'The ground is marked. When you begin, both people gather and build together through the daylight hours.':'The work is set aside. Begin again whenever you like.')
+    :isRestDay()?'Today is the seventh day. The work waits until tomorrow.'
+    :isWorkTime()?'The work is under way.':'The work waits for daylight (07:00).';
+  const items=STAGES.map((s,i)=>{
+    const li=document.createElement('li'),name=document.createElement('strong'),note=document.createElement('em');
+    name.textContent=(i+1)+'. '+s.name;li.className=i<d.stage?'done':i===d.stage?'current':'';
+    const parts=[];if(s.wood)parts.push('Branches '+(i===d.stage?Math.min(d.wood,s.wood)+'/':'')+s.wood);if(s.stone)parts.push('Stones '+(i===d.stage?Math.min(d.stone,s.stone)+'/':'')+s.stone);
+    note.textContent=i<d.stage?'✓ Done':parts.join(' · ');li.append(name,note);return li;
+  });
+  $('stageList').replaceChildren(...items);
+  $('toggleWork').hidden=done;$('toggleWork').textContent=d.working?'Set the work aside':'Begin the work together';$('toggleWork').classList.toggle('active',!d.working);
+}
+function openDwelling(){refreshDwelling();help(false);if(!$('dwellingDialog').open)$('dwellingDialog').showModal();}
+$('homeBook').onclick=openDwelling;
+$('closeDwelling').onclick=()=>$('dwellingDialog').close();
+$('showHome').onclick=()=>{$('dwellingDialog').close();goLevel(3);};
+$('toggleWork').onclick=()=>{
+  const d=world.dwelling;d.working=!d.working;
+  if(d.working)world.people.forEach(p=>{if(!p.path.length)p.wait=Math.min(p.wait,.2);});
+  notify(!d.working?'The work is set aside.':isRestDay()?'The work will begin after the rest day.':isWorkTime()?'Together they begin the work.':'The work will begin with the morning light.');
+  refreshDwelling();updateHud();saveWorld();
+};
+// INPUT — every essential action has a visible touch-friendly control.
+levels.forEach((level,i)=>{
+  if(i){const sep=document.createElement('span');sep.className='sep';sep.textContent='›';sep.setAttribute('aria-hidden','true');$('scales').append(sep);}
+  const button=document.createElement('button');button.id='scale'+i;button.textContent=level.label;button.setAttribute('aria-label','Travel to '+level.label.toLowerCase()+' scale');button.addEventListener('click',()=>goLevel(i));$('scales').append(button);
+});
+$('zoomOut').onclick=()=>goLevel(currentLevel()-1);$('zoomIn').onclick=()=>goLevel(currentLevel()+1);$('recenter').onclick=()=>goLevel(2);
+$('person0').onclick=()=>{selectPerson(0);if(ui.namingMode)openNaming(world.people[0].id);};$('person1').onclick=()=>{selectPerson(1);if(ui.namingMode)openNaming(world.people[1].id);};
+$('follow').onclick=()=>{ui.following=!ui.following;if(ui.following){camera.tx=world.people[ui.selected].x;camera.ty=world.people[ui.selected].y-4;}updateHud();saveWorld();};
+$('pause').onclick=()=>{world.paused=!world.paused;updateHud();saveWorld();};
+$('normal').onclick=()=>{world.speed=1;world.paused=false;updateHud();saveWorld();};$('fast').onclick=()=>{world.speed=3;world.paused=false;updateHud();saveWorld();};
+function help(open){$('help').hidden=!open;$('helpToggle').setAttribute('aria-expanded',String(open));}
+$('helpToggle').onclick=()=>help($('help').hidden);$('helpClose').onclick=()=>help(false);
+function tap(x,y){
+  let hit=-1,best=Infinity;
+  world.people.forEach((p,i)=>{const q=screen(p.x,p.y-5),d=Math.hypot(q.x-x,q.y-y);if(d<Math.max(17,camera.z*8)&&d<best){hit=i;best=d;}});
+  if(ui.namingMode){
+    if(currentLevel()<2){notify('Use the Names book here, or zoom into the garden.');return;}
+    const entity=pickEntity(x,y);
+    if(entity){if(world.people.includes(entity))selectPerson(world.people.indexOf(entity));openNaming(entity.id);}
+    else notify('Tap a person, tree, stone, river, deer, hill, or the garden. The Names book can help.');
+    return;
+  }
+  if(hit>=0){selectPerson(hit);return;}
+  if(currentLevel()<2){goLevel(currentLevel()+1);return;}
+  const target=fromScreen(x,y);
+  if(world.dwelling.stage>=1&&inHouse(target.x,target.y,0)){openDwelling();return;}
+  if(!walkable(target.x,target.y)){notify('Choose dry garden ground. Use the footbridge to cross the river.');return;}
+  const person=world.people[ui.selected],path=route(person,target);
+  if(!path.length){notify('That place cannot be reached on foot yet. Choose nearby dry ground.');return;}
+  if(person.pendingName){notify('Finish the naming walk first, or cancel it in the Names book.');return;}
+  person.path=path;person.directed=true;person.intent='walk';person.wait=0;person.task=null;person.inside=false;
+  notify(world.paused?'Walk chosen. Press play when you are ready.':personLabel(ui.selected)+' is walking to your chosen place.');updateHud();saveWorld();
+}
+function zoomBy(factor,at){
+  const before=fromScreen(at.x,at.y),next=clamp(camera.tz*factor,scaleFor(0),scaleFor(5));
+  camera.tx=clamp(before.x-(at.x-W/2)/next,-3000000,3000000);camera.ty=clamp(before.y-(at.y-H/2)/next,-3000000,3000000);camera.tz=next;ui.following=false;updateHud();
+}
+canvas.addEventListener('wheel',event=>{event.preventDefault();const r=canvas.getBoundingClientRect();zoomBy(Math.exp(-clamp(event.deltaY,-120,120)*.003),{x:event.clientX-r.left,y:event.clientY-r.top});},{passive:false});
+const pointers=new Map();let drag=null,pinch=null,suppressTap=false;
+const local=event=>{const r=canvas.getBoundingClientRect();return {x:event.clientX-r.left,y:event.clientY-r.top};};
+function pinchState(){const p=[...pointers.values()];return {gap:distance(p[0],p[1]),mid:{x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2},z:camera.tz};}
+canvas.addEventListener('pointerdown',event=>{
+  if(event.button!==0&&event.pointerType==='mouse')return;
+  canvas.setPointerCapture(event.pointerId);const p=local(event);pointers.set(event.pointerId,p);
+  if(pointers.size===1){drag={start:p,last:p,moved:false};suppressTap=false;}
+  else if(pointers.size===2){pinch=pinchState();drag=null;suppressTap=true;ui.following=false;}
+});
+canvas.addEventListener('pointermove',event=>{
+  if(!pointers.has(event.pointerId))return;const p=local(event);pointers.set(event.pointerId,p);
+  if(pointers.size===2&&pinch){const now=pinchState();const factor=now.gap/Math.max(1,pinch.gap);zoomBy(factor,now.mid);pinch=now;return;}
+  if(pointers.size===1&&drag){
+    if(distance(p,drag.start)>5)drag.moved=true;
+    if(drag.moved){ui.following=false;camera.tx-=(p.x-drag.last.x)/camera.z;camera.ty-=(p.y-drag.last.y)/camera.z;
+      const limit=3000000;camera.tx=clamp(camera.tx,-limit,limit);camera.ty=clamp(camera.ty,-limit,limit);}
+    drag.last=p;
+  }
+});
+function release(event){
+  const p=local(event),wasPinch=!!pinch;
+  if(event.type==='pointerup'&&pointers.size===1&&drag&&!drag.moved&&!suppressTap&&!wasPinch)tap(p.x,p.y);
+  pointers.delete(event.pointerId);pinch=null;
+  if(pointers.size===1){const remain=[...pointers.values()][0];drag={start:remain,last:remain,moved:true};suppressTap=true;}
+  else{drag=null;suppressTap=false;}
+  saveWorld();
+}
+canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+canvas.addEventListener('keydown',event=>{
+  if(['+','=','-','Escape',' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','1','2','f','F','Home'].includes(event.key))event.preventDefault();
+  if(event.key==='+'||event.key==='=')goLevel(currentLevel()+1);
+  if(event.key==='-')goLevel(currentLevel()-1);
+  if(event.key===' '){world.paused=!world.paused;updateHud();saveWorld();}
+  if(event.key==='1'||event.key==='2')selectPerson(Number(event.key)-1);
+  if(event.key.toLowerCase()==='f')$('follow').click();
+  if(event.key==='Home')goLevel(2);
+  if(event.key==='Escape')help(false);
+  const delta={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[event.key];
+  if(delta){ui.following=false;camera.tx=clamp(camera.tx+delta[0]*65/camera.z,-3000000,3000000);camera.ty=clamp(camera.ty+delta[1]*65/camera.z,-3000000,3000000);}
+});
+window.addEventListener('resize',resize);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveWorld();frameTime=0;
+  if(music.ctx&&music.on){if(document.hidden)music.ctx.suspend();else music.ctx.resume().then(()=>{music.nextTime=clockNow()+.05;});}});
+window.addEventListener('pagehide',saveWorld);
+window.addEventListener('storage',event=>{if((event.key===SAVE_KEY||event.key===null)&&event.newValue!==storage.expectedRaw){storage.mode='conflict';storage.message='Another tab changed this garden’s save. This tab will not overwrite it. Reload to continue from that save.';updateSaveStatus();}});
+setInterval(()=>saveWorld(),3000);
+function frame(now){
+  const dt=frameTime?Math.min((now-frameTime)/1000,.05):0;frameTime=now;
+  simulate(dt);updateCamera(dt);updateWord(now,dt);paint();
+  if(now-ui.lastHud>200){updateHud();ui.lastHud=now;}
+  if(ui.toastUntil&&now>ui.toastUntil){$('toast').hidden=true;ui.toastUntil=0;}
+  requestAnimationFrame(frame);
+}
+// Read-only state snapshot for local play-tests; no transport or outside access.
+Object.defineProperty(window,'SonoLumina',{value:Object.freeze({snapshot:()=>({
+  people:world.people.map(p=>({id:p.id,name:p.name,x:p.x,y:p.y,intent:p.intent,directed:p.directed,pathLength:p.path.length,pendingName:p.pendingName?{...p.pendingName}:null,speech:p.speech?.text||null,task:p.task,carrying:p.carrying,inside:p.inside,activity:activity(p)})),
+  dwelling:{...world.dwelling,stages:STAGES.length,restDay:isRestDay()},
+  day:world.day,minutes:world.minutes,paused:world.paused,speed:world.speed,
+  camera:{...camera},scale:levels[currentLevel()].label,selected:ui.selected,following:ui.following,
+  foundation:{source:FOUNDATION.inwardLaw,commandments:FOUNDATION.commandments.length,restDay:FOUNDATION.restDay,allowedActions:[...FOUNDATION.allowedActions]},
+  viewport:{width:W,height:H},walkable:world.people.every(p=>walkable(p.x,p.y)),
+  entities:entities.map(e=>({id:e.id,name:e.name,description:description(e),x:e.x,y:e.y})),
+  naming:{mode:ui.namingMode,open:ui.namingOpen,inspected:ui.inspected},
+  storage:{key:SAVE_KEY,mode:storage.mode,message:storage.message},
+  word:{ref:word.ref,text:SCRIPTURE[word.ref].text,with:[...SCRIPTURE[word.ref].with],themes:Object.fromEntries(THEMES.map(t=>[t,+word.live[t].toFixed(2)]))},
+  music:{on:music.on,phase:dayPhase(),mode:PHASES[dayPhase()].mode,tempo:+music.tempo.toFixed(1),chord:music.chord,motes:motes.length},
+  scripture:{verses:Object.keys(SCRIPTURE).length,missingLinks:Object.values(SCRIPTURE).flatMap(v=>v.with).filter(r=>!SCRIPTURE[r])}
+})}),writable:false});
+resize();
+const restored=restoreSavedWorld(),migrated=restored&&storage.expectedRaw===null;
+if(!restored)world.people.forEach(decide);
+setVerse(momentVerse());Object.assign(word.live,word.target);
+refreshBook();updateHud();saveWorld();requestAnimationFrame(frame);
+if(migrated)notify('Your names came with you into Gate 3. Open Home to begin building.');
+else if(world.dwelling.stage===0&&!world.dwelling.working)notify('Gate 3 · Open Home to begin building together.');
+})();
+</script>
+</body>
+</html>

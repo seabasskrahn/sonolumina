@@ -74,8 +74,8 @@ and schedules; no missing cross-references; no console errors.
 
 ## To check
 
-- Proof the KJV verse text against a printed KJV (it was typed in, not
-  copied from a source).
+- ~~Proof the KJV verse text~~ Done 2026-10-24: all verse texts in
+  gates/sonolumina_gate4.html match data/kjv word for word (checked by script).
 
 - The theme tags and cross-reference choices are a first interpretation.
   Seabass should review them; they are meant to grow into the Craft.
